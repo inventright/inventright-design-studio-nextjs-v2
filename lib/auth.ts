@@ -1,22 +1,22 @@
-import { NextAuthOptions } from "next-auth";
-import GoogleProvider from "next-auth/providers/google";
+import NextAuth from "next-auth";
+import Google from "next-auth/providers/google";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { db } from "./db";
 import { users } from "./db/schema";
 import { eq } from "drizzle-orm";
 
-export const authOptions: NextAuthOptions = {
+export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: DrizzleAdapter(db) as any,
   providers: [
-    GoogleProvider({
+    Google({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
   ],
   callbacks: {
     async session({ session, user }) {
-      if (session.user) {
-        // Fetch user from database to get role and other info
+      if (session.user && user) {
+        // Fetch user from database to get role
         const dbUser = await db.query.users.findFirst({
           where: eq(users.email, user.email || ""),
         });
@@ -38,13 +38,13 @@ export const authOptions: NextAuthOptions = {
       });
 
       if (!existingUser) {
-        // Create new user with openId from OAuth
+        // Create new user
         await db.insert(users).values({
           email: user.email,
           name: user.name || "",
           openId: account?.providerAccountId || user.id,
           loginMethod: account?.provider || "google",
-          role: "client", // Default role
+          role: "client",
           lastSignedIn: new Date(),
         });
       } else {
@@ -66,4 +66,4 @@ export const authOptions: NextAuthOptions = {
     strategy: "jwt",
   },
   secret: process.env.NEXTAUTH_SECRET,
-};
+});
