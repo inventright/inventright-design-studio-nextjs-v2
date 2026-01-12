@@ -12,14 +12,15 @@ export async function GET(request: NextRequest) {
     const archived = searchParams.get("archived") === "true";
 
     let jobsList;
+    const userRole = (user as any).data?.role || "client";
 
-    if (user.role === "admin" || user.role === "manager") {
+    if (userRole === "admin" || userRole === "manager") {
       // Admin/Manager: See all jobs
       jobsList = await db
         .select()
         .from(jobs)
         .where(eq(jobs.archived, archived));
-    } else if (user.role === "designer") {
+    } else if (userRole === "designer") {
       // Designer: See assigned jobs
       jobsList = await db
         .select()

@@ -28,11 +28,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Check access permissions
+    const userRole = (user as any).data?.role || "client";
     const canUpload =
       job.clientId === parseInt(user.id) ||
       job.designerId === parseInt(user.id) ||
-      user.role === "admin" ||
-      user.role === "manager";
+      userRole === "admin" ||
+      userRole === "manager";
 
     if (!canUpload) {
       return NextResponse.json(

@@ -29,11 +29,12 @@ export async function GET(request: NextRequest) {
     }
 
     // Check access permissions
+    const userRole = (user as any).data?.role || "client";
     const canAccess =
       job.clientId === parseInt(user.id) ||
       job.designerId === parseInt(user.id) ||
-      user.role === "admin" ||
-      user.role === "manager";
+      userRole === "admin" ||
+      userRole === "manager";
 
     if (!canAccess) {
       return NextResponse.json(
