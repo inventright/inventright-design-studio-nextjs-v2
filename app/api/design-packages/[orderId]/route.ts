@@ -6,10 +6,10 @@ import { eq } from 'drizzle-orm';
 // GET - Fetch design package by order ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: { orderId: string } }
+  { params }: { params: Promise<{ orderId: string }> }
 ) {
   try {
-    const { orderId } = params;
+    const { orderId } = await params;
 
     const packages = await db
       .select()
@@ -40,10 +40,10 @@ export async function GET(
 // PATCH - Update design package status
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { orderId: string } }
+  { params }: { params: Promise<{ orderId: string }> }
 ) {
   try {
-    const { orderId } = params;
+    const { orderId } = await params;
     const body = await request.json();
 
     const updateData: any = {
