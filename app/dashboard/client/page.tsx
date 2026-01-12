@@ -8,6 +8,7 @@ import Header from "@/components/Header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, FileText, Package } from "lucide-react";
 import Link from "next/link";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface DesignPackage {
   id: number;
@@ -36,17 +37,50 @@ export default function ClientDashboard() {
   const [loadingPackages, setLoadingPackages] = useState(true);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loadingJobs, setLoadingJobs] = useState(true);
+  const [allClients, setAllClients] = useState<any[]>([]);
+  const [selectedClientId, setSelectedClientId] = useState<string>('');
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  // Check if user is admin
+  useEffect(() => {
+    if (user?.role === 'admin') {
+      setIsAdmin(true);
+    }
+  }, [user]);
+
+  // Fetch all clients for admin dropdown
+  useEffect(() => {
+    const fetchClients = async () => {
+      if (!isAdmin) return;
+
+      try {
+        const response = await fetch('/api/users');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            const clients = data.users.filter((u: any) => u.role === 'client');
+            setAllClients(clients);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching clients:', error);
+      }
+    };
+
+    fetchClients();
+  }, [isAdmin]);
 
   // Fetch design packages for the user
   useEffect(() => {
     const fetchDesignPackages = async () => {
-      if (!user?.id) {
+      const targetUserId = isAdmin && selectedClientId ? selectedClientId : user?.id;
+      if (!targetUserId) {
         setLoadingPackages(false);
         return;
       }
 
       try {
-        const response = await fetch(`/api/design-packages?clientId=${user.id}`);
+        const response = await fetch(`/api/design-packages?clientId=${targetUserId}`);
         if (response.ok) {
           const data = await response.json();
           if (data.success) {
@@ -61,12 +95,13 @@ export default function ClientDashboard() {
     };
 
     fetchDesignPackages();
-  }, [user]);
+  }, [user, isAdmin, selectedClientId]);
 
   // Fetch jobs for the user
   useEffect(() => {
     const fetchJobs = async () => {
-      if (!user?.id) {
+      const targetUserId = isAdmin && selectedClientId ? selectedClientId : user?.id;
+      if (!targetUserId) {
         setLoadingJobs(false);
         return;
       }
@@ -85,7 +120,7 @@ export default function ClientDashboard() {
     };
 
     fetchJobs();
-  }, [user]);
+  }, [user, isAdmin, selectedClientId]);
 
   const getStatusBadge = (status: string) => {
     const badges: Record<string, { text: string; className: string }> = {
@@ -110,9 +145,29 @@ export default function ClientDashboard() {
       <Header />
       <div className="p-8 max-w-7xl mx-auto pt-24">
         <div className="flex justify-between items-center mb-8">
-          <div>
+          <div className="flex-1">
             <h1 className="text-4xl font-bold text-gray-900">Welcome back, {user?.name || user?.email || "Client"}</h1>
             <p className="text-gray-600 mt-2">Manage your design projects and requests</p>
+            
+            {/* Admin Client Selector */}
+            {isAdmin && allClients.length > 0 && (
+              <div className="mt-4 flex items-center gap-3">
+                <label className="text-sm font-medium text-gray-700">View Client:</label>
+                <Select value={selectedClientId} onValueChange={setSelectedClientId}>
+                  <SelectTrigger className="w-[300px]">
+                    <SelectValue placeholder="Select a client" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">All Clients</SelectItem>
+                    {allClients.map((client) => (
+                      <SelectItem key={client.id} value={client.id.toString()}>
+                        {client.name} ({client.email})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
           <Link href="/job-intake">
             <Button className="bg-blue-600 hover:bg-blue-700">
