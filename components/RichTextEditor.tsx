@@ -80,15 +80,15 @@ export default function RichTextEditor({
           const imageUrl = data.url;
 
           if (imageUrl) {
-          editor.chain().focus().insertContent({
-            type: "resizableImage",
-            attrs: {
-              src: imageUrl,
-              width: 300,
-              height: 200,
-            },
-          }).run();
-        } }
+            editor.chain().focus().insertContent({
+              type: "resizableImage",
+              attrs: {
+                src: imageUrl,
+                width: 300,
+                height: 200,
+              },
+            }).run();
+          }
         } else {
           const errorData = await response.json().catch(() => ({}));
           console.error("Upload failed:", errorData);
