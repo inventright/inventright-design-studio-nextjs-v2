@@ -11,7 +11,6 @@ import type {
 
 import { $applyNodeReplacement, DecoratorNode } from "lexical";
 import React, { Suspense, useRef, useState, useEffect } from "react";
-import { useLexicalNodeSelection } from "@lexical/react/useLexicalNodeSelection";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { $getNodeByKey } from "lexical";
 
@@ -195,7 +194,7 @@ function ImageComponent({
   nodeKey: NodeKey;
 }): React.JSX.Element {
   const imageRef = useRef<HTMLImageElement>(null);
-  const [isSelected, setSelected] = useLexicalNodeSelection(nodeKey);
+  const [isSelected, setIsSelected] = useState(false);
   const [editor] = useLexicalComposerContext();
   const [dimensions, setDimensions] = useState({
     width: typeof width === "number" ? width : 0,
@@ -279,7 +278,7 @@ function ImageComponent({
         width: dimensions.width || "auto",
         height: dimensions.height || "auto",
       }}
-      onClick={() => setSelected(!isSelected)}
+      onClick={() => setIsSelected(!isSelected)}
     >
       <img
         ref={imageRef}
