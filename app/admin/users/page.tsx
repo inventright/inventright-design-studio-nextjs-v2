@@ -69,8 +69,8 @@ export default function Users() {
   });
 
   const handleShowJobs = (user: User) => {
-    // Navigate to jobs page with user filter
-    router.push(`/admin/jobs?userId=${user.id}`);
+    // Navigate to admin dashboard with user filter
+    router.push(`/dashboard/admin?userId=${user.id}&userName=${encodeURIComponent(user.name || user.email)}`);
   };
 
   const handleResetPassword = async (user: User) => {
