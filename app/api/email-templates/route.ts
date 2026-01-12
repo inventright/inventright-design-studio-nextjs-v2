@@ -2,14 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { emailTemplates } from "@/lib/db/schema";
 import { requireAdmin } from "@/lib/auth-utils";
-import { eq } from "drizzle-orm";
+import { eq, asc } from "drizzle-orm";
 
 // GET /api/email-templates - Get all email templates
 export async function GET() {
   try {
     await requireAdmin();
 
-    const templates = await db.select().from(emailTemplates);
+    const templates = await db.select().from(emailTemplates).orderBy(asc(emailTemplates.name));
 
     return NextResponse.json(templates);
   } catch (error: any) {

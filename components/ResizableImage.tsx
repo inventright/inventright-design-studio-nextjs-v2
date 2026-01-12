@@ -189,7 +189,14 @@ export const ResizableImage = Node.create({
   },
 
   renderHTML({ HTMLAttributes }) {
-    return ["img", mergeAttributes(HTMLAttributes)];
+    const attrs: any = { ...HTMLAttributes };
+    if (attrs.width) {
+      attrs.style = `width: ${attrs.width}px; ${attrs.style || ''}`;
+    }
+    if (attrs.height) {
+      attrs.style = `height: ${attrs.height}px; ${attrs.style || ''}`;
+    }
+    return ["img", mergeAttributes(attrs)];
   },
 
   addNodeView() {
