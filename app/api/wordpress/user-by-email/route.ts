@@ -75,11 +75,30 @@ export async function POST(request: NextRequest) {
 
     const users = await searchResponse.json();
     console.log('[Backend API] Search returned', users.length, 'users');
-    if (users.length > 0) {
-      console.log('[Backend API] User emails found:', users.map((u: any) => u.email));
-    }
     
-    const matchingUser = users.find((u: any) => u.email === email);
+    if (users.length === 0) {
+      console.log('[Backend API] No users found in search');
+      return NextResponse.json(
+        { found: false },
+        { status: 200 }
+      );
+    }
+
+    // Fetch full details for each user to get email addresses
+    // (search endpoint doesn't return emails for privacy)
+    console.log('[Backend API] Fetching full details for', users.length, 'users');
+    const userDetailsPromises = users.map((user: any) =>
+      fetch(`${WORDPRESS_API_URL}/wp/v2/users/${user.id}?context=edit`, {
+        headers: {
+          'Authorization': `Bearer ${adminToken}`
+        }
+      }).then(res => res.json())
+    );
+
+    const usersWithDetails = await Promise.all(userDetailsPromises);
+    console.log('[Backend API] User emails found:', usersWithDetails.map((u: any) => u.email));
+    
+    const matchingUser = usersWithDetails.find((u: any) => u.email === email);
 
     if (!matchingUser) {
       console.log('[Backend API] No exact email match found for:', email);
@@ -90,26 +109,7 @@ export async function POST(request: NextRequest) {
     }
     
     console.log('[Backend API] Found matching user:', matchingUser.id, matchingUser.email);
-
-    // Get full user details with roles using context=edit
-    const userResponse = await fetch(
-      `${WORDPRESS_API_URL}/wp/v2/users/${matchingUser.id}?context=edit`,
-      {
-        headers: {
-          'Authorization': `Bearer ${adminToken}`
-        }
-      }
-    );
-
-    if (!userResponse.ok) {
-      console.error('Failed to get user details');
-      return NextResponse.json(
-        { error: 'Failed to get user details' },
-        { status: 500 }
-      );
-    }
-
-    const fullUserData = await userResponse.json();
+    const fullUserData = matchingUser;
 
     return NextResponse.json({
       found: true,
