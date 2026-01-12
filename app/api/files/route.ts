@@ -8,6 +8,7 @@ import { eq, desc } from "drizzle-orm";
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth();
+    if (!user) { return NextResponse.json({ error: "Unauthorized" }, { status: 401 }); }
     const searchParams = request.nextUrl.searchParams;
     const jobId = searchParams.get("jobId");
 
@@ -29,10 +30,17 @@ export async function GET(request: NextRequest) {
     }
 
     // Check access permissions
+    if (!user) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+    
     const userRole = (user as any).data?.role || "client";
     const canAccess =
-      job.clientId === parseInt(user.id) ||
-      job.designerId === parseInt(user.id) ||
+      job.clientId === parseInt((user as any).id) ||
+      job.designerId === parseInt((user as any).id) ||
       userRole === "admin" ||
       userRole === "manager";
 

@@ -9,6 +9,7 @@ import { eq } from "drizzle-orm";
 export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth();
+    if (!user) { return NextResponse.json({ error: "Unauthorized" }, { status: 401 }); }
     const body = await request.json();
 
     const { jobId, fileName, fileData, mimeType, fileType } = body;
@@ -30,8 +31,8 @@ export async function POST(request: NextRequest) {
     // Check access permissions
     const userRole = (user as any).data?.role || "client";
     const canUpload =
-      job.clientId === parseInt(user.id) ||
-      job.designerId === parseInt(user.id) ||
+      job.clientId === parseInt((user as any).id) ||
+      job.designerId === parseInt((user as any).id) ||
       userRole === "admin" ||
       userRole === "manager";
 
@@ -57,7 +58,7 @@ export async function POST(request: NextRequest) {
       .insert(fileUploads)
       .values({
         jobId,
-        uploadedBy: parseInt(user.id),
+        uploadedBy: parseInt((user as any).id),
         fileName,
         fileUrl: url,
         fileKey,

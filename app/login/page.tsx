@@ -7,8 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Loader2, LogIn } from 'lucide-react';
 import GlassCard from '@/components/ui/GlassCard';
 import { toast } from 'sonner';
-import { isAuthenticated } from '@/utils/wordpressAuth';
-import { mapWordPressRole, type DesignStudioRole } from '@/utils/roleMapping';
+import { isAuthenticated } from '@/lib/wordpressAuth';
+import { mapWordPressRole, type DesignStudioRole } from '@/lib/roleMapping';
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 
 const WORDPRESS_API_URL = process.env.NEXT_PUBLIC_WORDPRESS_API_URL || 'https://inventtraining.com/wp-json';

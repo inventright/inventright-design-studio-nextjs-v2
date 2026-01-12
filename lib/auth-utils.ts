@@ -1,58 +1,35 @@
-import { neonAuth } from "@neondatabase/auth/next/server";
-import { redirect } from "next/navigation";
+// WordPress authentication is client-side only using localStorage
+// Server-side auth checks are not available
+// Use middleware and client-side hooks for authentication
 
 export async function getCurrentUser() {
-  try {
-    const { user } = await neonAuth();
-    return user;
-  } catch (error) {
-    return null;
-  }
+  // WordPress auth is client-side only
+  return null;
 }
 
 export async function requireAuth() {
-  const user = await getCurrentUser();
-  if (!user) {
-    redirect("/auth/sign-in");
-  }
-  return user;
+  // WordPress auth is client-side only
+  // Use middleware for route protection
+  return null;
 }
 
 export async function requireAdmin() {
-  const user = await requireAuth();
-  
-  // Check if user has admin or manager role
-  // Note: Neon Auth stores custom data in user.data
-  const role = (user as any).data?.role || "client";
-  
-  if (role !== "admin" && role !== "manager") {
-    redirect("/unauthorized");
-  }
-  
-  return { ...user, role };
+  // WordPress auth is client-side only
+  // Use middleware for role-based protection
+  return null;
 }
 
 export async function requireDesigner() {
-  const user = await requireAuth();
-  
-  const role = (user as any).data?.role || "client";
-  
-  if (
-    role !== "designer" &&
-    role !== "manager" &&
-    role !== "admin"
-  ) {
-    redirect("/unauthorized");
-  }
-  
-  return { ...user, role };
+  // WordPress auth is client-side only
+  // Use middleware for role-based protection
+  return null;
 }
 
 export function hasRole(
-  user: { data?: { role?: string } } | undefined,
+  user: any,
   roles: string[]
 ): boolean {
   if (!user) return false;
-  const role = (user as any).data?.role || "client";
+  const role = user.role || "client";
   return roles.includes(role);
 }

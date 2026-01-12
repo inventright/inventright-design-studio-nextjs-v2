@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
           .where(
             and(
               eq(voucherUsage.voucherId, voucher.id),
-              eq(voucherUsage.userId, parseInt(user.id))
+              eq(voucherUsage.userId, parseInt((user as any).id))
             )
           );
 

@@ -2,12 +2,18 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { isAuthenticated, getWordPressUser, logout as wpLogout } from '@/lib/wordpressAuth';
+import type { DesignStudioRole } from '@/lib/roleMapping';
 
 export interface User {
-  id: number;
+  id: number | string;
   name: string;
   email: string;
-  role: string;
+  username: string;
+  role: DesignStudioRole;
+  wordpressRoles?: string[];
+  loginMethod?: string;
+  googleLinked?: boolean;
 }
 
 export function useAuth() {
@@ -16,23 +22,17 @@ export function useAuth() {
   const router = useRouter();
 
   useEffect(() => {
-    // Check localStorage for user data (from WordPress auth)
-    const userData = localStorage.getItem('user_data');
-    if (userData) {
-      try {
-        setUser(JSON.parse(userData));
-      } catch (e) {
-        console.error('Failed to parse user data', e);
-      }
+    // Check authentication status
+    if (typeof window !== 'undefined' && isAuthenticated()) {
+      const userData = getWordPressUser();
+      setUser(userData);
     }
     setLoading(false);
   }, []);
 
   const logout = () => {
-    localStorage.removeItem('user_data');
-    localStorage.removeItem('auth_token');
+    wpLogout();
     setUser(null);
-    router.push('/login');
   };
 
   return {

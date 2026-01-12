@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { isAuthenticated, getWordPressUser, logout as wpLogout } from '../utils/wordpressAuth';
-import type { DesignStudioRole } from '../utils/roleMapping';
+import { isAuthenticated, getWordPressUser, logout as wpLogout } from '@/lib/wordpressAuth';
+import type { DesignStudioRole } from '@/lib/roleMapping';
 
 interface User {
   id: number;

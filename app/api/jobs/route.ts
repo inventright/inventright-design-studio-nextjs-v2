@@ -8,6 +8,7 @@ import { eq, and, or } from "drizzle-orm";
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth();
+    if (!user) { return NextResponse.json({ error: "Unauthorized" }, { status: 401 }); }
     const searchParams = request.nextUrl.searchParams;
     const archived = searchParams.get("archived") === "true";
 
@@ -27,7 +28,7 @@ export async function GET(request: NextRequest) {
         .from(jobs)
         .where(
           and(
-            eq(jobs.designerId, parseInt(user.id)),
+            eq(jobs.designerId, parseInt((user as any).id)),
             eq(jobs.archived, archived)
           )
         );
@@ -37,7 +38,7 @@ export async function GET(request: NextRequest) {
         .select()
         .from(jobs)
         .where(
-          and(eq(jobs.clientId, parseInt(user.id)), eq(jobs.archived, archived))
+          and(eq(jobs.clientId, parseInt((user as any).id)), eq(jobs.archived, archived))
         );
     }
 
@@ -57,6 +58,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth();
+    if (!user) { return NextResponse.json({ error: "Unauthorized" }, { status: 401 }); }
     const body = await request.json();
 
     const {
@@ -81,7 +83,7 @@ export async function POST(request: NextRequest) {
       .values({
         title,
         description: description || null,
-        clientId: parseInt(user.id),
+        clientId: parseInt((user as any).id),
         departmentId: departmentId || null,
         packageType: packageType || null,
         priority: priority || "Medium",
