@@ -12,7 +12,17 @@ function ResizableImageComponent({ node, updateAttributes }: any) {
   const imageRef = useRef<HTMLImageElement>(null);
   const startPos = useRef({ x: 0, y: 0, width: 0, height: 0 });
   
-  // Load natural dimensions when image loads
+  // Update dimensions when node attributes change
+  useEffect(() => {
+    if (node.attrs.width && node.attrs.height) {
+      setDimensions({
+        width: node.attrs.width,
+        height: node.attrs.height,
+      });
+    }
+  }, [node.attrs.width, node.attrs.height]);
+  
+  // Load natural dimensions when image loads (only if no dimensions set)
   useEffect(() => {
     if (imageRef.current && !node.attrs.width) {
       const img = imageRef.current;
