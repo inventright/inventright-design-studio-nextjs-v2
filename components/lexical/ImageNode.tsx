@@ -25,7 +25,8 @@ export interface ImagePayload {
 function convertImageElement(domNode: Node): null | DOMConversionOutput {
   if (domNode instanceof HTMLImageElement) {
     const { alt: altText, src, width, height } = domNode;
-    const node = $createImageNode({ altText, height, src, width });
+    console.log('convertImageElement:', { src, width, height, widthAttr: domNode.getAttribute('width'), heightAttr: domNode.getAttribute('height') });
+    const node = $createImageNode({ altText, height: height || undefined, src, width: width || undefined });
     return { node };
   }
   return null;
@@ -82,6 +83,7 @@ export class ImageNode extends DecoratorNode<React.JSX.Element> {
     if (this.__height !== "inherit") {
       element.setAttribute("height", this.__height.toString());
     }
+    console.log('ImageNode exportDOM:', { width: this.__width, height: this.__height });
     return { element };
   }
 
@@ -257,10 +259,14 @@ function ImageComponent({
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
 
+      console.log('ImageComponent: Saving dimensions to node:', dimensions);
       editor.update(() => {
         const node = $getNodeByKey(nodeKey);
         if ($isImageNode(node)) {
           node.setWidthAndHeight(dimensions.width, dimensions.height);
+          console.log('ImageComponent: Node updated with dimensions:', dimensions);
+        } else {
+          console.log('ImageComponent: Node not found or not ImageNode');
         }
       });
     };
