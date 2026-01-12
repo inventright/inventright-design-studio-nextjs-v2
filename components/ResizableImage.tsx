@@ -138,7 +138,9 @@ function ResizableImageComponent({ node, updateAttributes }: any) {
 export const ResizableImage = Node.create({
   name: "resizableImage",
 
-  group: "block",
+  group: "inline",
+
+  inline: true,
 
   atom: true,
 

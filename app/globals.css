@@ -179,7 +179,15 @@ body {
 }
 
 .ProseMirror p {
-  margin: 0.5rem 0;
+  margin: 0.25rem 0;
+}
+
+.ProseMirror p:first-child {
+  margin-top: 0;
+}
+
+.ProseMirror p:last-child {
+  margin-bottom: 0;
 }
 
 .ProseMirror img {
@@ -209,7 +217,8 @@ body {
 /* Resizable image wrapper */
 .resizable-image-wrapper {
   display: inline-block;
-  margin: 0.5rem 0;
+  margin: 0;
+  vertical-align: middle;
 }
 
 .resizable-image-container {
