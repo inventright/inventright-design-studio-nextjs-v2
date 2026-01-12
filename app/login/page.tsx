@@ -144,7 +144,8 @@ export default function WordPressLogin() {
       }).join(''));
       
       const googleUser = JSON.parse(jsonPayload);
-      console.log('Google User:', googleUser);
+      console.log('[Google Login] Google User:', googleUser);
+      console.log('[Google Login] Email to check:', googleUser.email);
       
       // Check if email matches a WordPress account
       const email = googleUser.email;
@@ -161,10 +162,12 @@ export default function WordPressLogin() {
         
         if (wpCheckResponse.ok) {
           const wpData = await wpCheckResponse.json();
+          console.log('[Google Login] Backend API response:', wpData);
           
           if (wpData.found && wpData.user) {
             // Account exists in WordPress - merge accounts
-            console.log('Found matching WordPress account:', wpData.user);
+            console.log('[Google Login] Found matching WordPress account:', wpData.user);
+            console.log('[Google Login] WordPress roles:', wpData.user.roles);
             
             const wordpressRoles = wpData.user.roles || [];
             const mappedRole = mapWordPressRole(wordpressRoles);
@@ -189,8 +192,10 @@ export default function WordPressLogin() {
           }
         }
       } catch (error) {
-        console.log('Could not check WordPress accounts:', error);
+        console.error('[Google Login] Error checking WordPress accounts:', error);
       }
+      
+      console.log('[Google Login] No WordPress account found, creating new client account');
       
       // No matching WordPress account - create new client account
       const userInfo = {
