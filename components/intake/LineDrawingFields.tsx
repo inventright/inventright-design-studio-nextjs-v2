@@ -4,7 +4,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-export default function LineDrawingFields({ formData, setFormData }) {
+export default function LineDrawingFields({ formData, setFormData }: { formData: any; setFormData: any }) {
   const [virtualPrototype, setVirtualPrototype] = useState(formData.virtualPrototype || '');
   const [drawingType, setDrawingType] = useState(formData.drawingType || '');
   const [numberOfDrawings, setNumberOfDrawings] = useState(formData.numberOfDrawings || '3');
@@ -30,15 +30,15 @@ export default function LineDrawingFields({ formData, setFormData }) {
     });
   };
 
-  const handleVirtualPrototypeChange = (value) => {
+  const handleVirtualPrototypeChange = (value: any) => {
     setVirtualPrototype(value);
   };
 
-  const handleDrawingTypeChange = (value) => {
+  const handleDrawingTypeChange = (value: any) => {
     setDrawingType(value);
   };
 
-  const handleNumberOfDrawingsChange = (value) => {
+  const handleNumberOfDrawingsChange = (value: any) => {
     setNumberOfDrawings(value);
     const num = parseInt(value);
     const newDrawings = [];
@@ -48,11 +48,11 @@ export default function LineDrawingFields({ formData, setFormData }) {
     setDrawings(newDrawings);
   };
 
-  const handleStoryboardDescriptionChange = (value) => {
+  const handleStoryboardDescriptionChange = (value: any) => {
     setStoryboardDescription(value);
   };
 
-  const handleDrawingChange = (index, field, value) => {
+  const handleDrawingChange = (index: any, field: any, value: any) => {
     const newDrawings = [...drawings];
     newDrawings[index][field] = value;
     setDrawings(newDrawings);
@@ -173,7 +173,7 @@ export default function LineDrawingFields({ formData, setFormData }) {
 
           {/* Dynamic Drawing Fields */}
           <div className="space-y-6">
-            {drawings.map((drawing, index) => (
+            {drawings.map((drawing: any, index: any) => (
               <div key={index} className="p-4 bg-white border-2 border-[#4791FF]/30 rounded-lg space-y-4">
                 <h3 className="text-lg font-semibold text-black">
                   Line Drawing/Figure #{index + 1}

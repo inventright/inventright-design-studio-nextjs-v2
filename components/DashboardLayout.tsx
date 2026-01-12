@@ -1,4 +1,6 @@
-import { useAuth } from "@/_core/hooks/useAuth";
+'use client';
+
+import { useAuth } from "@/hooks/useAuth";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -19,11 +21,11 @@ import {
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { getLoginUrl } from "@/const";
+
 import { useIsMobile } from "@/hooks/useMobile";
 import { LayoutDashboard, LogOut, PanelLeft, Users } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
-import { useLocation } from "wouter";
+import { useRouter, usePathname } from "next/navigation";
 import { DashboardLayoutSkeleton } from '@/components/DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
 
@@ -47,6 +49,7 @@ export default function DashboardLayout({
     return saved ? parseInt(saved, 10) : DEFAULT_WIDTH;
   });
   const { loading, user } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
     localStorage.setItem(SIDEBAR_WIDTH_KEY, sidebarWidth.toString());
@@ -70,7 +73,7 @@ export default function DashboardLayout({
           </div>
           <Button
             onClick={() => {
-              window.location.href = getLoginUrl();
+              router.push('/login');
             }}
             size="lg"
             className="w-full shadow-lg hover:shadow-xl transition-all"
@@ -107,12 +110,13 @@ function DashboardLayoutContent({
   setSidebarWidth,
 }: DashboardLayoutContentProps) {
   const { user, logout } = useAuth();
-  const [location, setLocation] = useLocation();
+  const router = useRouter();
+  const pathname = usePathname();
   const { state, toggleSidebar } = useSidebar();
   const isCollapsed = state === "collapsed";
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
-  const activeMenuItem = menuItems.find(item => item.path === location);
+  const activeMenuItem = menuItems.find(item => item.path === pathname);
   const isMobile = useIsMobile();
 
   useEffect(() => {
@@ -181,12 +185,12 @@ function DashboardLayoutContent({
           <SidebarContent className="gap-0">
             <SidebarMenu className="px-2 py-1">
               {menuItems.map(item => {
-                const isActive = location === item.path;
+                const isActive = pathname === item.path;
                 return (
                   <SidebarMenuItem key={item.path}>
                     <SidebarMenuButton
                       isActive={isActive}
-                      onClick={() => setLocation(item.path)}
+                      onClick={() => router.push(item.path)}
                       tooltip={item.label}
                       className={`h-10 transition-all font-normal`}
                     >

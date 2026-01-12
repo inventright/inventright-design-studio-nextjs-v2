@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { Suspense, useState, useEffect, useRef } from 'react';
 import { usePathname, useSearchParams, useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 
@@ -18,7 +18,7 @@ import LineDrawingFields from '@/components/intake/LineDrawingFields';
 import VirtualPrototypeFields from '@/components/intake/VirtualPrototypeFields';
 import UserContactInfo from '@/components/intake/UserContactInfo';
 
-export default function JobIntake() {
+function JobIntakeContent() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -409,7 +409,7 @@ export default function JobIntake() {
             reader.readAsDataURL(file);
           });
 
-          await fetch('/api/trpc/jobs.uploadFile', {
+          await fetch('/api/files/upload', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -871,5 +871,13 @@ export default function JobIntake() {
         </div>
       </footer>
     </div>
+  );
+}
+
+export default function JobIntake() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+      <JobIntakeContent />
+    </Suspense>
   );
 }

@@ -115,7 +115,7 @@ export default function Users() {
   };
 
   // Check if currently impersonating
-  const isImpersonating = localStorage.getItem('impersonating') === 'true';
+  const isImpersonating = typeof window !== 'undefined' && localStorage.getItem('impersonating') === 'true';
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">

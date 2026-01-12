@@ -80,12 +80,6 @@ import { useEffect, useRef } from "react";
 import { usePersistFn } from "@/hooks/usePersistFn";
 import { cn } from "@/lib/utils";
 
-declare global {
-  interface Window {
-    google?: typeof google;
-  }
-}
-
 const API_KEY = process.env.NEXT_PUBLIC_FRONTEND_FORGE_API_KEY;
 const FORGE_BASE_URL =
   process.env.NEXT_PUBLIC_FRONTEND_FORGE_API_URL ||

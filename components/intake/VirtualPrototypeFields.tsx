@@ -5,7 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-export default function VirtualPrototypeFields({ formData, setFormData }) {
+export default function VirtualPrototypeFields({ formData, setFormData }: { formData: any; setFormData: any }) {
   const [category, setCategory] = useState(formData.category || '');
   const [productDescription, setProductDescription] = useState(formData.productDescription || '');
   const [sketchNotes1, setSketchNotes1] = useState(formData.sketchNotes1 || '');
@@ -165,7 +165,7 @@ export default function VirtualPrototypeFields({ formData, setFormData }) {
               <SelectValue placeholder="Select animation option" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={null}>None</SelectItem>
+              <SelectItem value="none">None</SelectItem>
               <SelectItem value="rotation">1 – 3D Rotation Only – $300</SelectItem>
               <SelectItem value="exploded">2 – 3D Exploded View Only – $350</SelectItem>
               <SelectItem value="both">3 – 3D Exploded View and Rotation – $400</SelectItem>

@@ -16,7 +16,7 @@ interface LayoutSelectorProps {
 export default function LayoutSelector({ options, selected, onSelect }: LayoutSelectorProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      {options.map((option) => {
+      {options.map((option: any) => {
         const isSelected = selected === option.id;
         
         return (

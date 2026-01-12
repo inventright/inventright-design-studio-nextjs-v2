@@ -23,7 +23,7 @@ export type AIChatBoxProps = {
 
   /**
    * Callback when user sends a message.
-   * Typically you'll call a tRPC mutation here to invoke the LLM.
+   * Typically you'll call an API route here to invoke the LLM.
    */
   onSendMessage: (content: string) => void;
 
