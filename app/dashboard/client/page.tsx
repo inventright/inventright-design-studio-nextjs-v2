@@ -157,7 +157,7 @@ export default function ClientDashboard() {
                   <SelectTrigger className="w-[300px]">
                     <SelectValue placeholder="Select a client" />
                   </SelectTrigger>
-                  <SelectContent position="popper" sideOffset={5}>
+                  <SelectContent position="popper" sideOffset={5} className="w-[300px]">
                     <SelectItem value="all">All Clients</SelectItem>
                     {allClients.map((client) => (
                       <SelectItem key={client.id} value={client.id.toString()}>

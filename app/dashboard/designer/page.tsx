@@ -95,7 +95,7 @@ export default function DesignerDashboard() {
                 <SelectTrigger className="w-[300px]">
                   <SelectValue placeholder="Select a designer" />
                 </SelectTrigger>
-                  <SelectContent position="popper" sideOffset={5}>
+                  <SelectContent position="popper" sideOffset={5} className="w-[300px]">
                     <SelectItem value="all">All Designers</SelectItem>
                   {allDesigners.map((designer) => (
                     <SelectItem key={designer.id} value={designer.id.toString()}>

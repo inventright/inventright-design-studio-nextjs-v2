@@ -95,7 +95,7 @@ export default function ManagerDashboard() {
                 <SelectTrigger className="w-[300px]">
                   <SelectValue placeholder="Select a manager" />
                 </SelectTrigger>
-                  <SelectContent position="popper" sideOffset={5}>
+                  <SelectContent position="popper" sideOffset={5} className="w-[300px]">
                     <SelectItem value="all">All Managers</SelectItem>
                   {allManagers.map((manager) => (
                     <SelectItem key={manager.id} value={manager.id.toString()}>
