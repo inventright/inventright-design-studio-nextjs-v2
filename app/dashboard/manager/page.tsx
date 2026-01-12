@@ -22,7 +22,7 @@ export default function ManagerDashboard() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loadingJobs, setLoadingJobs] = useState(true);
   const [allManagers, setAllManagers] = useState<any[]>([]);
-  const [selectedManagerId, setSelectedManagerId] = useState<string>('');
+  const [selectedManagerId, setSelectedManagerId] = useState<string>('all');
   const [isAdmin, setIsAdmin] = useState(false);
 
   // Check if user is admin
@@ -57,7 +57,7 @@ export default function ManagerDashboard() {
   // Fetch jobs for the manager
   useEffect(() => {
     const fetchJobs = async () => {
-      const targetUserId = isAdmin && selectedManagerId ? selectedManagerId : user?.id;
+      const targetUserId = isAdmin && selectedManagerId && selectedManagerId !== 'all' ? selectedManagerId : user?.id;
       if (!targetUserId) {
         setLoadingJobs(false);
         return;
@@ -95,8 +95,8 @@ export default function ManagerDashboard() {
                 <SelectTrigger className="w-[300px]">
                   <SelectValue placeholder="Select a manager" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">All Managers</SelectItem>
+                  <SelectContent>
+                    <SelectItem value="all">All Managers</SelectItem>
                   {allManagers.map((manager) => (
                     <SelectItem key={manager.id} value={manager.id.toString()}>
                       {manager.name} ({manager.email})

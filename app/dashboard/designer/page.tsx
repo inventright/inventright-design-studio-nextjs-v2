@@ -22,7 +22,7 @@ export default function DesignerDashboard() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loadingJobs, setLoadingJobs] = useState(true);
   const [allDesigners, setAllDesigners] = useState<any[]>([]);
-  const [selectedDesignerId, setSelectedDesignerId] = useState<string>('');
+  const [selectedDesignerId, setSelectedDesignerId] = useState<string>('all');
   const [isAdmin, setIsAdmin] = useState(false);
 
   // Check if user is admin
@@ -57,7 +57,7 @@ export default function DesignerDashboard() {
   // Fetch jobs for the designer
   useEffect(() => {
     const fetchJobs = async () => {
-      const targetUserId = isAdmin && selectedDesignerId ? selectedDesignerId : user?.id;
+      const targetUserId = isAdmin && selectedDesignerId && selectedDesignerId !== 'all' ? selectedDesignerId : user?.id;
       if (!targetUserId) {
         setLoadingJobs(false);
         return;
@@ -95,8 +95,8 @@ export default function DesignerDashboard() {
                 <SelectTrigger className="w-[300px]">
                   <SelectValue placeholder="Select a designer" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">All Designers</SelectItem>
+                  <SelectContent>
+                    <SelectItem value="all">All Designers</SelectItem>
                   {allDesigners.map((designer) => (
                     <SelectItem key={designer.id} value={designer.id.toString()}>
                       {designer.name} ({designer.email})

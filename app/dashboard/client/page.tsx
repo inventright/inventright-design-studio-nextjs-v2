@@ -38,7 +38,7 @@ export default function ClientDashboard() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loadingJobs, setLoadingJobs] = useState(true);
   const [allClients, setAllClients] = useState<any[]>([]);
-  const [selectedClientId, setSelectedClientId] = useState<string>('');
+  const [selectedClientId, setSelectedClientId] = useState<string>('all');
   const [isAdmin, setIsAdmin] = useState(false);
 
   // Check if user is admin
@@ -73,7 +73,7 @@ export default function ClientDashboard() {
   // Fetch design packages for the user
   useEffect(() => {
     const fetchDesignPackages = async () => {
-      const targetUserId = isAdmin && selectedClientId ? selectedClientId : user?.id;
+      const targetUserId = isAdmin && selectedClientId && selectedClientId !== 'all' ? selectedClientId : user?.id;
       if (!targetUserId) {
         setLoadingPackages(false);
         return;
@@ -100,7 +100,7 @@ export default function ClientDashboard() {
   // Fetch jobs for the user
   useEffect(() => {
     const fetchJobs = async () => {
-      const targetUserId = isAdmin && selectedClientId ? selectedClientId : user?.id;
+      const targetUserId = isAdmin && selectedClientId && selectedClientId !== 'all' ? selectedClientId : user?.id;
       if (!targetUserId) {
         setLoadingJobs(false);
         return;
@@ -167,7 +167,7 @@ export default function ClientDashboard() {
                     <SelectValue placeholder="Select a client" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Clients</SelectItem>
+                    <SelectItem value="all">All Clients</SelectItem>
                     {allClients.map((client) => (
                       <SelectItem key={client.id} value={client.id.toString()}>
                         {client.name} ({client.email})
