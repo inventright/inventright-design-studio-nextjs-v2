@@ -135,6 +135,21 @@ export type EmailTemplate = typeof emailTemplates.$inferSelect;
 export type InsertEmailTemplate = typeof emailTemplates.$inferInsert;
 
 /**
+ * Email template images stored as base64 for inline attachments
+ */
+export const emailTemplateImages = pgTable("emailTemplateImages", {
+  id: serial("id").primaryKey(),
+  filename: varchar("filename", { length: 255 }).notNull(),
+  contentType: varchar("contentType", { length: 100 }).notNull(),
+  base64Data: text("base64Data").notNull(),
+  size: integer("size").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type EmailTemplateImage = typeof emailTemplateImages.$inferSelect;
+export type InsertEmailTemplateImage = typeof emailTemplateImages.$inferInsert;
+
+/**
  * Voucher codes for discounts
  */
 export const voucherCodes = pgTable("voucherCodes", {

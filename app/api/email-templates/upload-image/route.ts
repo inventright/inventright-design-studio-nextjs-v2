@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth-utils";
-import { uploadBase64File, generateFileKey } from "@/lib/storage";
+import { db } from "@/lib/db";
+import { emailTemplateImages } from "@/lib/db/schema";
 
 // POST /api/email-templates/upload-image - Upload an image for email templates
 export async function POST(request: NextRequest) {
@@ -22,18 +23,21 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(bytes);
     const base64Data = buffer.toString("base64");
 
-    // Generate unique file key
-    const fileKey = generateFileKey("email-templates", file.name);
+    // Store in database
+    const [image] = await db
+      .insert(emailTemplateImages)
+      .values({
+        filename: file.name,
+        contentType: file.type,
+        base64Data,
+        size: buffer.length,
+      })
+      .returning();
 
-    // Upload to Wasabi S3
-    await uploadBase64File(fileKey, base64Data, file.type);
+    // Return URL to access the image
+    const imageUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://ds.inventright.com"}/api/email-templates/images/${image.id}`;
 
-    // Return proxy URL instead of direct S3 URL
-    // Extract just the filename from the key (remove email-templates/ prefix)
-    const filename = fileKey.replace("email-templates/", "");
-    const proxyUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://ds.inventright.com"}/api/email-templates/images/${filename}`;
-
-    return NextResponse.json({ url: proxyUrl }, { status: 200 });
+    return NextResponse.json({ url: imageUrl }, { status: 200 });
   } catch (error: any) {
     console.error("Image upload error:", error);
     console.error("Error stack:", error.stack);
