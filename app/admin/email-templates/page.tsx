@@ -24,6 +24,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Table,
   TableBody,
   TableCell,
@@ -281,7 +288,7 @@ export default function EmailTemplatesPage() {
           </Card>
 
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogContent className="w-[80vw] max-w-[80vw] h-[80vh] max-h-[80vh] flex flex-col p-0">
+            <DialogContent className="w-[80vw] max-w-none h-[80vh] max-h-[80vh] flex flex-col p-0">
               <DialogHeader className="px-6 pt-6 pb-4 border-b flex-shrink-0">
                 <DialogTitle className="text-2xl">
                   {editingTemplate ? "Edit Template" : "Create New Template"}
@@ -312,17 +319,31 @@ export default function EmailTemplatesPage() {
                       <Label htmlFor="triggerEvent">
                         Trigger Event (Optional)
                       </Label>
-                      <Input
-                        id="triggerEvent"
+                      <Select
                         value={formData.triggerEvent}
-                        onChange={(e) =>
+                        onValueChange={(value) =>
                           setFormData({
                             ...formData,
-                            triggerEvent: e.target.value,
+                            triggerEvent: value,
                           })
                         }
-                        placeholder="e.g., user_signup, job_completed"
-                      />
+                      >
+                        <SelectTrigger id="triggerEvent">
+                          <SelectValue placeholder="Select a trigger event" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">None (Manual)</SelectItem>
+                          <SelectItem value="package_purchased">Package Purchased</SelectItem>
+                          <SelectItem value="job_assigned">Job Assigned</SelectItem>
+                          <SelectItem value="job_started">Job Started</SelectItem>
+                          <SelectItem value="proof_sent">Proof Sent</SelectItem>
+                          <SelectItem value="revisions_requested">Revisions Requested</SelectItem>
+                          <SelectItem value="job_completed">Job Completed</SelectItem>
+                          <SelectItem value="job_stale_reminder">Stale Job Reminder</SelectItem>
+                          <SelectItem value="user_signup">User Signup</SelectItem>
+                          <SelectItem value="payment_received">Payment Received</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
 
