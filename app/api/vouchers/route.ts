@@ -59,10 +59,10 @@ export async function GET(request: NextRequest) {
             )
           );
 
-        // If voucher has maxUses, check if user has already used it
-        if (voucher.maxUses && usageCount.count > 0) {
+        // Check if user has exceeded usesPerUser limit
+        if (voucher.usesPerUser && usageCount.count >= voucher.usesPerUser) {
           return NextResponse.json(
-            { valid: false, message: "You have already used this voucher" },
+            { valid: false, message: `You have reached the usage limit for this voucher (${voucher.usesPerUser} uses per user)` },
             { status: 400 }
           );
         }
@@ -106,6 +106,7 @@ export async function POST(request: NextRequest) {
       discountType,
       discountValue,
       maxUses,
+      usesPerUser,
       validFrom,
       validUntil,
       isActive,
@@ -125,6 +126,7 @@ export async function POST(request: NextRequest) {
         discountType,
         discountValue,
         maxUses: maxUses || null,
+        usesPerUser: usesPerUser || null,
         validFrom: validFrom ? new Date(validFrom) : null,
         validUntil: validUntil ? new Date(validUntil) : null,
         isActive: isActive !== undefined ? isActive : true,

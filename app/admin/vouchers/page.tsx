@@ -62,6 +62,7 @@ export default function VouchersPage() {
     discountType: "percentage",
     discountValue: "",
     maxUses: "",
+    usesPerUser: "",
     validFrom: "",
     validUntil: "",
     isActive: true,
@@ -97,6 +98,7 @@ export default function VouchersPage() {
         discountType: formData.discountType,
         discountValue: formData.discountValue,
         maxUses: formData.maxUses ? parseInt(formData.maxUses) : null,
+        usesPerUser: formData.usesPerUser ? parseInt(formData.usesPerUser) : null,
         validFrom: formData.validFrom || null,
         validUntil: formData.doesNotExpire ? null : formData.validUntil || null,
         isActive: formData.isActive,
@@ -157,6 +159,7 @@ export default function VouchersPage() {
       discountType: voucher.discountType,
       discountValue: voucher.discountValue,
       maxUses: voucher.maxUses?.toString() || "",
+      usesPerUser: (voucher as any).usesPerUser?.toString() || "",
       validFrom: voucher.validFrom
         ? new Date(voucher.validFrom).toISOString().split("T")[0]
         : "",
@@ -176,6 +179,7 @@ export default function VouchersPage() {
       discountType: "percentage",
       discountValue: "",
       maxUses: "",
+      usesPerUser: "",
       validFrom: "",
       validUntil: "",
       isActive: true,
@@ -374,13 +378,13 @@ export default function VouchersPage() {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="maxUses">Usage Per User (Optional)</Label>
+                <Label htmlFor="usesPerUser">Uses Per User (Optional)</Label>
                 <Input
-                  id="maxUses"
+                  id="usesPerUser"
                   type="number"
-                  value={formData.maxUses}
+                  value={formData.usesPerUser}
                   onChange={(e) =>
-                    setFormData({ ...formData, maxUses: e.target.value })
+                    setFormData({ ...formData, usesPerUser: e.target.value })
                   }
                   placeholder="Leave empty for unlimited"
                 />

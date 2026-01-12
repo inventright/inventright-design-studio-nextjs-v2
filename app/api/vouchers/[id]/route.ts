@@ -51,6 +51,7 @@ export async function PUT(
     if (body.discountValue !== undefined)
       updateData.discountValue = body.discountValue;
     if (body.maxUses !== undefined) updateData.maxUses = body.maxUses;
+    if (body.usesPerUser !== undefined) updateData.usesPerUser = body.usesPerUser;
     if (body.validFrom !== undefined)
       updateData.validFrom = body.validFrom ? new Date(body.validFrom) : null;
     if (body.validUntil !== undefined)

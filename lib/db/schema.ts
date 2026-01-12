@@ -143,6 +143,7 @@ export const voucherCodes = pgTable("voucherCodes", {
   discountType: varchar("discountType", { length: 20 }).notNull(),
   discountValue: decimal("discountValue", { precision: 10, scale: 2 }).notNull(),
   maxUses: integer("maxUses"),
+  usesPerUser: integer("usesPerUser"),
   usedCount: integer("usedCount").default(0).notNull(),
   validFrom: timestamp("validFrom"),
   validUntil: timestamp("validUntil"),

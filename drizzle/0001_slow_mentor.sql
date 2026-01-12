@@ -1,0 +1,1 @@
+ALTER TABLE "voucherCodes" ADD COLUMN "usesPerUser" integer;
