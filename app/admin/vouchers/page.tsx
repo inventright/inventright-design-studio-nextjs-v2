@@ -319,7 +319,7 @@ export default function VouchersPage() {
       </Card>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>
               {editingVoucher ? "Edit Voucher" : "Create New Voucher"}
@@ -330,8 +330,8 @@ export default function VouchersPage() {
                 : "Fill in the details to create a new discount voucher."}
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleSubmit}>
-            <div className="space-y-4 py-4">
+          <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+            <div className="space-y-4 py-4 overflow-y-auto flex-1">
               <div className="space-y-2">
                 <Label htmlFor="code">Voucher Code</Label>
                 <Input
@@ -455,7 +455,7 @@ export default function VouchersPage() {
                 <Label htmlFor="isActive">Active</Label>
               </div>
             </div>
-            <DialogFooter>
+            <DialogFooter className="flex-shrink-0 mt-4">
               <Button
                 type="button"
                 variant="outline"
