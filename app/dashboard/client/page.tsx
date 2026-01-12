@@ -22,7 +22,7 @@ export default function ClientDashboard() {
           <Link href="/job-intake">
             <Button className="bg-blue-600 hover:bg-blue-700">
               <Plus className="w-4 h-4 mr-2" />
-              New Request
+              New Job
             </Button>
           </Link>
         </div>
@@ -74,7 +74,7 @@ export default function ClientDashboard() {
               <Link href="/job-intake">
                 <Button className="bg-blue-600 hover:bg-blue-700">
                   <Plus className="w-4 h-4 mr-2" />
-                  Create New Request
+                  Create New Job
                 </Button>
               </Link>
             </div>
