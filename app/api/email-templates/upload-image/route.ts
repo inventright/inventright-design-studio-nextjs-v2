@@ -31,11 +31,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ url }, { status: 200 });
   } catch (error: any) {
     console.error("Image upload error:", error);
+    console.error("Error stack:", error.stack);
+    console.error("Error message:", error.message);
     if (error.message === "NEXT_REDIRECT") {
       throw error;
     }
     return NextResponse.json(
-      { error: "Failed to upload image" },
+      { error: "Failed to upload image", details: error.message },
       { status: 500 }
     );
   }

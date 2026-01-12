@@ -83,7 +83,9 @@ export default function RichTextEditor({
             editor.chain().focus().setImage({ src: imageUrl }).run();
           }
         } else {
-          alert("Failed to upload image");
+          const errorData = await response.json().catch(() => ({}));
+          console.error("Upload failed:", errorData);
+          alert(`Failed to upload image: ${errorData.details || response.statusText}`);
         }
       } catch (error) {
         console.error("Error uploading image:", error);
