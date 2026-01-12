@@ -296,7 +296,7 @@ export default function WordPressLogin() {
 
           <div className="mt-6 pt-6 border-t border-gray-200">
             <a
-              href="https://inventright.com/design-studio/"
+              href="https://design.inventright.com"
               target="_blank"
               rel="noopener noreferrer"
             >
