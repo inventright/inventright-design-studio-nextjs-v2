@@ -319,7 +319,7 @@ export default function VouchersPage() {
       </Card>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {editingVoucher ? "Edit Voucher" : "Create New Voucher"}
@@ -377,20 +377,37 @@ export default function VouchersPage() {
                   />
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="usesPerUser">Uses Per User (Optional)</Label>
-                <Input
-                  id="usesPerUser"
-                  type="number"
-                  value={formData.usesPerUser}
-                  onChange={(e) =>
-                    setFormData({ ...formData, usesPerUser: e.target.value })
-                  }
-                  placeholder="Leave empty for unlimited"
-                />
-                <p className="text-sm text-gray-500">
-                  Limit how many times each user can use this voucher
-                </p>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="maxUses">Total Number of Uses (Optional)</Label>
+                  <Input
+                    id="maxUses"
+                    type="number"
+                    value={formData.maxUses}
+                    onChange={(e) =>
+                      setFormData({ ...formData, maxUses: e.target.value })
+                    }
+                    placeholder="Leave empty for unlimited"
+                  />
+                  <p className="text-sm text-gray-500">
+                    Total uses across all users
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="usesPerUser">Uses Per User (Optional)</Label>
+                  <Input
+                    id="usesPerUser"
+                    type="number"
+                    value={formData.usesPerUser}
+                    onChange={(e) =>
+                      setFormData({ ...formData, usesPerUser: e.target.value })
+                    }
+                    placeholder="Leave empty for unlimited"
+                  />
+                  <p className="text-sm text-gray-500">
+                    Limit per individual user
+                  </p>
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
