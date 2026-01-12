@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Header from '@/components/Header';
 import { Button } from '@/components/ui/button';
@@ -25,7 +25,7 @@ interface Job {
   archived: boolean;
 }
 
-export default function AdminJobs() {
+function AdminJobsContent() {
   const searchParams = useSearchParams();
   const userIdFilter = searchParams.get('userId');
   const userNameFilter = searchParams.get('userName');
@@ -230,5 +230,22 @@ export default function AdminJobs() {
         </GlassCard>
       </div>
     </div>
+  );
+}
+
+export default function AdminJobs() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+        <Header />
+        <div className="container mx-auto px-4 py-8 pt-24">
+          <div className="text-center py-12">
+            <p className="text-gray-500">Loading...</p>
+          </div>
+        </div>
+      </div>
+    }>
+      <AdminJobsContent />
+    </Suspense>
   );
 }
