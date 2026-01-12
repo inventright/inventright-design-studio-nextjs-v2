@@ -4,15 +4,11 @@ import { useState, useRef, useEffect } from "react";
 
 // React component for the resizable image
 function ResizableImageComponent({ node, updateAttributes }: any) {
-  console.log('ResizableImageComponent initialized with node.attrs:', node.attrs);
-  
   const [isResizing, setIsResizing] = useState(false);
   const [dimensions, setDimensions] = useState({
     width: node.attrs.width || null,
     height: node.attrs.height || null,
   });
-  
-  console.log('Initial dimensions state:', { width: node.attrs.width, height: node.attrs.height });
   const imageRef = useRef<HTMLImageElement>(null);
   const startPos = useRef({ x: 0, y: 0, width: 0, height: 0 });
   
@@ -48,16 +44,18 @@ function ResizableImageComponent({ node, updateAttributes }: any) {
     e.stopPropagation();
     setIsResizing(true);
     
+    const currentDimensions = { width: dimensions.width || 0, height: dimensions.height || 0 };
+    
     startPos.current = {
       x: e.clientX,
       y: e.clientY,
-      width: dimensions.width,
-      height: dimensions.height,
+      width: currentDimensions.width,
+      height: currentDimensions.height,
     };
 
-    const handleMouseMove = (moveEvent: MouseEvent) => {
-      const deltaX = moveEvent.clientX - startPos.current.x;
-      const deltaY = moveEvent.clientY - startPos.current.y;
+    const handleMouseMove = (e: MouseEvent) => {
+      const deltaX = e.clientX - startPos.current.x;
+      const deltaY = e.clientY - startPos.current.y;
       
       let newWidth = startPos.current.width;
       let newHeight = startPos.current.height;
@@ -69,14 +67,16 @@ function ResizableImageComponent({ node, updateAttributes }: any) {
         newHeight = Math.max(50, startPos.current.height + deltaY);
       }
 
+      currentDimensions.width = newWidth;
+      currentDimensions.height = newHeight;
       setDimensions({ width: newWidth, height: newHeight });
     };
 
     const handleMouseUp = () => {
       setIsResizing(false);
       updateAttributes({
-        width: dimensions.width,
-        height: dimensions.height,
+        width: currentDimensions.width,
+        height: currentDimensions.height,
       });
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
@@ -206,13 +206,6 @@ export const ResizableImage = Node.create({
           let width = element.getAttribute('width');
           let height = element.getAttribute('height');
           
-          console.log('ResizableImage parseHTML:', {
-            src: element.getAttribute('src'),
-            widthAttr: width,
-            heightAttr: height,
-            style: style
-          });
-          
           // Try to parse from inline style if not in attributes
           if (!width && style.includes('width:')) {
             const widthMatch = style.match(/width:\s*(\d+)px/);
@@ -223,15 +216,12 @@ export const ResizableImage = Node.create({
             if (heightMatch) height = heightMatch[1];
           }
           
-          const attrs = {
+          return {
             src: element.getAttribute('src'),
             alt: element.getAttribute('alt'),
             width: width ? parseInt(width) : null,
             height: height ? parseInt(height) : null,
           };
-          
-          console.log('ResizableImage parsed attrs:', attrs);
-          return attrs;
         },
       },
     ];
