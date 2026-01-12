@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Header from "@/components/Header";
 import { Plus, Edit, Trash2, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -163,6 +164,9 @@ export default function EmailTemplatesPage() {
   }
 
   return (
+    <>
+      <Header />
+      <div className="pt-20">
     <div className="p-8 max-w-7xl mx-auto">
       <div className="mb-8 flex items-center justify-between">
         <div>
@@ -362,5 +366,7 @@ export default function EmailTemplatesPage() {
         </DialogContent>
       </Dialog>
     </div>
+      </div>
+    </>
   );
 }

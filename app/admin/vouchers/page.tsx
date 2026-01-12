@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Header from "@/components/Header";
 import { Plus, Edit, Trash2, Ticket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -194,15 +195,23 @@ export default function VouchersPage() {
 
   if (loading) {
     return (
+      <>
+        <Header />
+        <div className="pt-20">
       <div className="p-8 max-w-7xl mx-auto">
         <div className="flex items-center justify-center h-64">
           <p className="text-gray-600">Loading vouchers...</p>
         </div>
       </div>
+        </div>
+      </>
     );
   }
 
   return (
+    <>
+      <Header />
+      <div className="pt-20">
     <div className="p-8 max-w-7xl mx-auto min-h-screen">
       <div className="mb-10 flex items-center justify-between">
         <div>
@@ -474,5 +483,7 @@ export default function VouchersPage() {
         </DialogContent>
       </Dialog>
     </div>
+      </div>
+    </>
   );
 }
