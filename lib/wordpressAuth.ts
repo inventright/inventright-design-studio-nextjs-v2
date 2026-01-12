@@ -12,7 +12,7 @@ export const getWordPressUser = () => {
 };
 
 export const getWordPressToken = () => {
-  return localStorage.getItem('wordpress_token');
+  return localStorage.getItem('auth_token');
 };
 
 export const isAuthenticated = () => {
@@ -53,7 +53,7 @@ export const isAuthenticated = () => {
 };
 
 export const logout = () => {
-  localStorage.removeItem('wordpress_token');
+  localStorage.removeItem('auth_token');
   localStorage.removeItem('user_data');
   window.location.href = '/';
 };
