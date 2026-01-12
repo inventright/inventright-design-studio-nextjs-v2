@@ -23,6 +23,7 @@ const s3Client = new S3Client({
     accessKeyId: process.env.WASABI_ACCESS_KEY_ID || "",
     secretAccessKey: process.env.WASABI_SECRET_ACCESS_KEY || "",
   },
+  forcePathStyle: true, // Required for Wasabi to avoid redirect issues
 });
 
 const BUCKET_NAME = process.env.WASABI_BUCKET || "";
