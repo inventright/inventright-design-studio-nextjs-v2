@@ -2,7 +2,6 @@
 
 import { useState, useMemo, useEffect } from "react";
 import dynamic from "next/dynamic";
-import "react-quill/dist/quill.snow.css";
 import { Button } from "./ui/button";
 import { ImagePlus } from "lucide-react";
 

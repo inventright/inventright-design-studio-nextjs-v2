@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Header from "@/components/Header";
 import RichTextEditor from "@/components/RichTextEditor";
+import "react-quill/dist/quill.snow.css";
 import { Plus, Edit, Trash2, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
