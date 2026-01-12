@@ -137,26 +137,31 @@ export default function WordPressLogin() {
       // Check if email matches a WordPress account
       const email = googleUser.email;
       
-      // Try to find matching WordPress account by email
+      // Try to find matching WordPress account by email using backend API
       try {
-        const wpCheckResponse = await fetch(`${WORDPRESS_API_URL}/wp/v2/users?search=${encodeURIComponent(email)}`);
+        const wpCheckResponse = await fetch('/api/wordpress/user-by-email', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email })
+        });
         
         if (wpCheckResponse.ok) {
-          const wpUsers = await wpCheckResponse.json();
-          const matchingUser = wpUsers.find((u: any) => u.email === email);
+          const wpData = await wpCheckResponse.json();
           
-          if (matchingUser) {
+          if (wpData.found && wpData.user) {
             // Account exists in WordPress - merge accounts
-            console.log('Found matching WordPress account:', matchingUser);
+            console.log('Found matching WordPress account:', wpData.user);
             
-            const wordpressRoles = matchingUser.roles || [];
+            const wordpressRoles = wpData.user.roles || [];
             const mappedRole = mapWordPressRole(wordpressRoles);
             
             const userInfo = {
-              id: matchingUser.id,
-              email: matchingUser.email,
+              id: wpData.user.id,
+              email: wpData.user.email,
               name: googleUser.name,
-              username: matchingUser.slug,
+              username: wpData.user.username,
               role: mappedRole,
               wordpressRoles: wordpressRoles,
               loginMethod: 'google',
