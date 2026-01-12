@@ -40,7 +40,7 @@ export default function Header() {
                   <span>🏠</span> Dashboard
                 </a>
                 <a href="/job-intake" className="text-gray-700 hover:text-blue-600 transition-colors font-medium cursor-pointer flex items-center gap-2">
-                  <span>📋</span> New Request
+                  <span>📋</span> New Job
                 </a>
                 
                 {/* User Profile & Logout */}
@@ -175,7 +175,7 @@ export default function Header() {
                     className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md transition-colors flex items-center gap-2"
                     onClick={() => setMobileMenuOpen(false)}
                   >
-                    <span>📋</span> New Request
+                    <span>📋</span> New Job
                   </a>
                   
                   <button
