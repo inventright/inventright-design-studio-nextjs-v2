@@ -7,6 +7,7 @@ const WORDPRESS_ADMIN_PASSWORD = process.env.WORDPRESS_ADMIN_PASSWORD;
 export async function POST(request: NextRequest) {
   try {
     const { email } = await request.json();
+    console.log('[Backend API] Received request for email:', email);
 
     if (!email) {
       return NextResponse.json(
@@ -19,6 +20,7 @@ export async function POST(request: NextRequest) {
     let adminToken: string;
     
     if (WORDPRESS_ADMIN_USERNAME && WORDPRESS_ADMIN_PASSWORD) {
+      console.log('[Backend API] Using admin credentials, username:', WORDPRESS_ADMIN_USERNAME);
       // Use admin credentials to get a token
       const tokenResponse = await fetch(`${WORDPRESS_API_URL}/jwt-auth/v1/token`, {
         method: 'POST',
@@ -32,7 +34,8 @@ export async function POST(request: NextRequest) {
       });
 
       if (!tokenResponse.ok) {
-        console.error('Failed to get admin token');
+        const errorText = await tokenResponse.text();
+        console.error('[Backend API] Failed to get admin token:', tokenResponse.status, errorText);
         return NextResponse.json(
           { error: 'WordPress authentication failed' },
           { status: 500 }
@@ -41,8 +44,9 @@ export async function POST(request: NextRequest) {
 
       const tokenData = await tokenResponse.json();
       adminToken = tokenData.token;
+      console.log('[Backend API] Successfully got admin token');
     } else {
-      console.error('WordPress admin credentials not configured');
+      console.error('[Backend API] WordPress admin credentials not configured');
       return NextResponse.json(
         { error: 'WordPress credentials not configured' },
         { status: 500 }
@@ -50,6 +54,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Search for user by email using admin token
+    console.log('[Backend API] Searching for user with email:', email);
     const searchResponse = await fetch(
       `${WORDPRESS_API_URL}/wp/v2/users?search=${encodeURIComponent(email)}`,
       {
@@ -60,7 +65,8 @@ export async function POST(request: NextRequest) {
     );
 
     if (!searchResponse.ok) {
-      console.error('Failed to search WordPress users');
+      const errorText = await searchResponse.text();
+      console.error('[Backend API] Failed to search WordPress users:', searchResponse.status, errorText);
       return NextResponse.json(
         { error: 'Failed to search WordPress users' },
         { status: 500 }
@@ -68,14 +74,22 @@ export async function POST(request: NextRequest) {
     }
 
     const users = await searchResponse.json();
+    console.log('[Backend API] Search returned', users.length, 'users');
+    if (users.length > 0) {
+      console.log('[Backend API] User emails found:', users.map((u: any) => u.email));
+    }
+    
     const matchingUser = users.find((u: any) => u.email === email);
 
     if (!matchingUser) {
+      console.log('[Backend API] No exact email match found for:', email);
       return NextResponse.json(
         { found: false },
         { status: 200 }
       );
     }
+    
+    console.log('[Backend API] Found matching user:', matchingUser.id, matchingUser.email);
 
     // Get full user details with roles using context=edit
     const userResponse = await fetch(
