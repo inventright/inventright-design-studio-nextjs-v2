@@ -149,6 +149,15 @@ export default function ClientDashboard() {
             <h1 className="text-4xl font-bold text-gray-900">Welcome back, {user?.name || user?.email || "Client"}</h1>
             <p className="text-gray-600 mt-2">Manage your design projects and requests</p>
             
+            {/* Debug Info - Remove after testing */}
+            <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded text-sm">
+              <p><strong>Debug Info:</strong></p>
+              <p>User: {JSON.stringify(user)}</p>
+              <p>Is Admin: {String(isAdmin)}</p>
+              <p>All Clients Count: {allClients.length}</p>
+              <p>Selected Client ID: {selectedClientId || 'none'}</p>
+            </div>
+            
             {/* Admin Client Selector */}
             {isAdmin && allClients.length > 0 && (
               <div className="mt-4 flex items-center gap-3">
