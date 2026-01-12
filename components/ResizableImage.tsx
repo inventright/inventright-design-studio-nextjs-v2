@@ -184,6 +184,31 @@ export const ResizableImage = Node.create({
     return [
       {
         tag: "img[src]",
+        getAttrs: (dom) => {
+          const element = dom as HTMLElement;
+          const style = element.getAttribute('style') || '';
+          
+          // Extract width and height from style attribute
+          let width = element.getAttribute('width');
+          let height = element.getAttribute('height');
+          
+          // Try to parse from inline style if not in attributes
+          if (!width && style.includes('width:')) {
+            const widthMatch = style.match(/width:\s*(\d+)px/);
+            if (widthMatch) width = widthMatch[1];
+          }
+          if (!height && style.includes('height:')) {
+            const heightMatch = style.match(/height:\s*(\d+)px/);
+            if (heightMatch) height = heightMatch[1];
+          }
+          
+          return {
+            src: element.getAttribute('src'),
+            alt: element.getAttribute('alt'),
+            width: width ? parseInt(width) : null,
+            height: height ? parseInt(height) : null,
+          };
+        },
       },
     ];
   },
