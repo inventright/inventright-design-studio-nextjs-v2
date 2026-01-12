@@ -4,11 +4,15 @@ import { useState, useRef, useEffect } from "react";
 
 // React component for the resizable image
 function ResizableImageComponent({ node, updateAttributes }: any) {
+  console.log('ResizableImageComponent initialized with node.attrs:', node.attrs);
+  
   const [isResizing, setIsResizing] = useState(false);
   const [dimensions, setDimensions] = useState({
     width: node.attrs.width || null,
     height: node.attrs.height || null,
   });
+  
+  console.log('Initial dimensions state:', { width: node.attrs.width, height: node.attrs.height });
   const imageRef = useRef<HTMLImageElement>(null);
   const startPos = useRef({ x: 0, y: 0, width: 0, height: 0 });
   
@@ -202,6 +206,13 @@ export const ResizableImage = Node.create({
           let width = element.getAttribute('width');
           let height = element.getAttribute('height');
           
+          console.log('ResizableImage parseHTML:', {
+            src: element.getAttribute('src'),
+            widthAttr: width,
+            heightAttr: height,
+            style: style
+          });
+          
           // Try to parse from inline style if not in attributes
           if (!width && style.includes('width:')) {
             const widthMatch = style.match(/width:\s*(\d+)px/);
@@ -212,12 +223,15 @@ export const ResizableImage = Node.create({
             if (heightMatch) height = heightMatch[1];
           }
           
-          return {
+          const attrs = {
             src: element.getAttribute('src'),
             alt: element.getAttribute('alt'),
             width: width ? parseInt(width) : null,
             height: height ? parseInt(height) : null,
           };
+          
+          console.log('ResizableImage parsed attrs:', attrs);
+          return attrs;
         },
       },
     ];
