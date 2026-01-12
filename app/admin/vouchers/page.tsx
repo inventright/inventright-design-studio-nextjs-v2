@@ -203,11 +203,11 @@ export default function VouchersPage() {
   }
 
   return (
-    <div className="p-8 max-w-7xl mx-auto">
-      <div className="mb-8 flex items-center justify-between">
+    <div className="p-8 max-w-7xl mx-auto min-h-screen">
+      <div className="mb-10 flex items-center justify-between">
         <div>
-          <h1 className="text-4xl font-bold text-gray-900">Vouchers</h1>
-          <p className="text-gray-600 mt-2">
+          <h1 className="text-5xl font-bold text-foreground tracking-tight">Vouchers</h1>
+          <p className="text-muted-foreground mt-3 text-base">
             Create and manage discount vouchers with usage tracking
           </p>
         </div>

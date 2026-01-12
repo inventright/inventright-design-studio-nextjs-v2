@@ -194,24 +194,24 @@ export default function WordPressLogin() {
 
   return (
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
-        <GlassCard className="w-full max-w-md p-8">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-blue-950 dark:to-purple-950 flex items-center justify-center p-4">
+        <GlassCard className="w-full max-w-md p-10 shadow-ios-2xl">
           <div className="flex flex-col items-center mb-6">
             <img 
               src="/ds-logo.png" 
               alt="inventRight Design Studio" 
               className="h-16 mb-4"
             />
-            <h1 className="text-2xl font-bold text-gray-900">Sign In</h1>
+            <h1 className="text-3xl font-bold text-foreground">Sign In</h1>
           </div>
 
-          <div className="mb-6 p-4 bg-blue-50 rounded-md border border-blue-200">
-            <p className="text-sm text-blue-800 text-center">
+          <div className="mb-6 p-4 bg-primary/10 rounded-xl border-2 border-primary/20">
+            <p className="text-sm text-primary font-medium text-center">
               Use Your inventtraining.com Login To Access Design Studio.
             </p>
           </div>
 
-          <form onSubmit={handleWordPressLogin} className="space-y-4">
+          <form onSubmit={handleWordPressLogin} className="space-y-5">
             <div>
               <Label htmlFor="username">Username or Email</Label>
               <Input
