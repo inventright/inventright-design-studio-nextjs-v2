@@ -20,11 +20,22 @@ interface DesignPackage {
   packageStatus: string;
 }
 
+interface Job {
+  id: number;
+  title: string;
+  status: string;
+  priority: string;
+  createdAt: string;
+  packageType: string | null;
+}
+
 export default function ClientDashboard() {
   const { user } = useWordPressAuth();
   const router = useRouter();
   const [designPackages, setDesignPackages] = useState<DesignPackage[]>([]);
   const [loadingPackages, setLoadingPackages] = useState(true);
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [loadingJobs, setLoadingJobs] = useState(true);
 
   // Fetch design packages for the user
   useEffect(() => {
@@ -50,6 +61,30 @@ export default function ClientDashboard() {
     };
 
     fetchDesignPackages();
+  }, [user]);
+
+  // Fetch jobs for the user
+  useEffect(() => {
+    const fetchJobs = async () => {
+      if (!user?.id) {
+        setLoadingJobs(false);
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/jobs');
+        if (response.ok) {
+          const data = await response.json();
+          setJobs(data);
+        }
+      } catch (error) {
+        console.error('Error fetching jobs:', error);
+      } finally {
+        setLoadingJobs(false);
+      }
+    };
+
+    fetchJobs();
   }, [user]);
 
   const getStatusBadge = (status: string) => {
@@ -240,19 +275,60 @@ export default function ClientDashboard() {
             <CardDescription>View and manage your design requests</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <FileText className="w-16 h-16 text-gray-300 mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">No projects yet</h3>
-              <p className="text-gray-600 mb-6 max-w-md">
-                Start by creating a new design request. Your submitted projects will appear here.
-              </p>
-              <Link href="/job-intake">
-                <Button className="bg-blue-600 hover:bg-blue-700">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create New Job
-                </Button>
-              </Link>
-            </div>
+            {loadingJobs ? (
+              <div className="flex items-center justify-center py-12">
+                <p className="text-gray-600">Loading projects...</p>
+              </div>
+            ) : jobs.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <FileText className="w-16 h-16 text-gray-300 mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">No projects yet</h3>
+                <p className="text-gray-600 mb-6 max-w-md">
+                  Start by creating a new design request. Your submitted projects will appear here.
+                </p>
+                <Link href="/job-intake">
+                  <Button className="bg-blue-600 hover:bg-blue-700">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Create New Job
+                  </Button>
+                </Link>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {jobs.map((job) => {
+                  const statusColors: Record<string, string> = {
+                    Draft: 'bg-gray-100 text-gray-800',
+                    Pending: 'bg-yellow-100 text-yellow-800',
+                    'In Progress': 'bg-blue-100 text-blue-800',
+                    Review: 'bg-purple-100 text-purple-800',
+                    Completed: 'bg-green-100 text-green-800',
+                  };
+                  
+                  return (
+                    <Link key={job.id} href={`/jobs/${job.id}`}>
+                      <div className="p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-sm transition-all cursor-pointer">
+                        <div className="flex items-center justify-between mb-2">
+                          <h3 className="font-semibold text-gray-900">{job.title}</h3>
+                          <span className={`px-2 py-1 text-xs font-semibold rounded-full ${statusColors[job.status] || 'bg-gray-100 text-gray-800'}`}>
+                            {job.status}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-4 text-sm text-gray-600">
+                          {job.packageType && (
+                            <span className="flex items-center gap-1">
+                              <Package className="w-4 h-4" />
+                              {job.packageType}
+                            </span>
+                          )}
+                          <span>Priority: {job.priority}</span>
+                          <span>Created {new Date(job.createdAt).toLocaleDateString()}</span>
+                        </div>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

@@ -1,14 +1,63 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useWordPressAuth } from "@/hooks/useWordPressAuth";
 import Header from "@/components/Header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Settings } from "lucide-react";
+import { Settings, Database, Users, Briefcase, CheckCircle } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
 export default function AdminDashboard() {
   const { user } = useWordPressAuth();
+  const [systemStats, setSystemStats] = useState({
+    totalUsers: 0,
+    totalJobs: 0,
+    activeJobs: 0,
+    completedJobs: 0,
+    loading: true
+  });
+
+  useEffect(() => {
+    const fetchSystemStats = async () => {
+      try {
+        // Fetch users count
+        const usersRes = await fetch('/api/users');
+        let totalUsers = 0;
+        if (usersRes.ok) {
+          const usersData = await usersRes.json();
+          totalUsers = usersData.success ? usersData.users.length : 0;
+        }
+
+        // Fetch jobs stats
+        const jobsRes = await fetch('/api/jobs');
+        let totalJobs = 0;
+        let activeJobs = 0;
+        let completedJobs = 0;
+        if (jobsRes.ok) {
+          const jobsData = await jobsRes.json();
+          totalJobs = jobsData.length;
+          activeJobs = jobsData.filter((j: any) => 
+            j.status === 'Pending' || j.status === 'In Progress' || j.status === 'Review'
+          ).length;
+          completedJobs = jobsData.filter((j: any) => j.status === 'Completed').length;
+        }
+
+        setSystemStats({
+          totalUsers,
+          totalJobs,
+          activeJobs,
+          completedJobs,
+          loading: false
+        });
+      } catch (error) {
+        console.error('Error fetching system stats:', error);
+        setSystemStats(prev => ({ ...prev, loading: false }));
+      }
+    };
+
+    fetchSystemStats();
+  }, []);
 
   return (
     <>
@@ -97,10 +146,51 @@ export default function AdminDashboard() {
             <CardDescription>Current system information</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center gap-3 text-gray-600">
-              <Settings className="w-5 h-5" />
-              <p>Database connection required for full admin functionality</p>
-            </div>
+            {systemStats.loading ? (
+              <div className="flex items-center gap-3 text-gray-600">
+                <Settings className="w-5 h-5 animate-spin" />
+                <p>Loading system status...</p>
+              </div>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-green-100 rounded-lg">
+                    <Database className="w-5 h-5 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Database</p>
+                    <p className="text-lg font-semibold text-gray-900">Connected</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-blue-100 rounded-lg">
+                    <Users className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Total Users</p>
+                    <p className="text-lg font-semibold text-gray-900">{systemStats.totalUsers}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-purple-100 rounded-lg">
+                    <Briefcase className="w-5 h-5 text-purple-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Active Jobs</p>
+                    <p className="text-lg font-semibold text-gray-900">{systemStats.activeJobs} / {systemStats.totalJobs}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-green-100 rounded-lg">
+                    <CheckCircle className="w-5 h-5 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Completed</p>
+                    <p className="text-lg font-semibold text-gray-900">{systemStats.completedJobs}</p>
+                  </div>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
