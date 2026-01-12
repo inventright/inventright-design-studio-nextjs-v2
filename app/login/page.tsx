@@ -54,7 +54,7 @@ export default function WordPressLogin() {
       console.log('WordPress JWT Response:', data);
       
       if (data.token) {
-        // Try to get roles from JWT response first, or use fallback
+        // Try to get roles from JWT response first, or use backend API
         let wordpressRoles: string[] = [];
         let mappedRole: DesignStudioRole = 'client'; // Default to client
         
@@ -66,25 +66,28 @@ export default function WordPressLogin() {
           console.log('Mapped Design Studio Role:', mappedRole);
           console.log('=== WORDPRESS LOGIN END ===');
         } else {
-          // Try to fetch from REST API, but don't fail if CORS blocks it
+          // Fetch roles using backend API with admin credentials
           try {
-            console.log('Attempting to fetch user roles from WordPress REST API...');
-            const userResponse = await fetch(`${WORDPRESS_API_URL}/wp/v2/users/${data.user_id}?context=edit`, {
+            console.log('Fetching user roles via backend API...');
+            const roleResponse = await fetch('/api/wordpress/user-by-email', {
+              method: 'POST',
               headers: {
-                'Authorization': `Bearer ${data.token}`
-              }
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ email: data.user_email })
             });
             
-            if (userResponse.ok) {
-              const fullUserData = await userResponse.json();
-              console.log('Full User Data from REST API:', fullUserData);
-              wordpressRoles = fullUserData.roles || [];
-              mappedRole = mapWordPressRole(wordpressRoles);
-              console.log('WordPress Roles from REST API:', wordpressRoles);
-              console.log('Mapped Design Studio Role:', mappedRole);
+            if (roleResponse.ok) {
+              const roleData = await roleResponse.json();
+              if (roleData.found && roleData.user && roleData.user.roles) {
+                wordpressRoles = roleData.user.roles;
+                mappedRole = mapWordPressRole(wordpressRoles);
+                console.log('WordPress Roles from backend API:', wordpressRoles);
+                console.log('Mapped Design Studio Role:', mappedRole);
+              }
             }
-          } catch (corsError) {
-            console.warn('Could not fetch roles from REST API (likely CORS), using default client role:', corsError);
+          } catch (apiError) {
+            console.warn('Could not fetch roles from backend API, using default client role:', apiError);
             // Continue with default client role
           }
         }
