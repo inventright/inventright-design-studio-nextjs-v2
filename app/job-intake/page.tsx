@@ -25,6 +25,7 @@ function JobIntakeContent() {
   const draftId = searchParams.get('draftId');
   const packageId = searchParams.get('packageId');
   const packageType = searchParams.get('type');
+  const jobType = searchParams.get('jobType'); // Pre-select job type from URL
 
   // User and package state
   const [user, setUser] = useState<any>(null);
@@ -75,6 +76,34 @@ function JobIntakeContent() {
   // Load user from WordPress auth
   const [loadingDepts, setLoadingDepts] = useState(false);
   const departments: any[] = [];
+
+  // Handle URL parameters for pre-selection and design package
+  useEffect(() => {
+    // Pre-select department based on jobType URL parameter
+    if (jobType && !selectedDepartment) {
+      const jobTypeMap: Record<string, string> = {
+        'virtual_prototype': '2', // Virtual Prototypes ID
+        'sell_sheet': '1', // Sell Sheets ID
+        'line_drawing': '3', // Line Drawings ID
+      };
+      const deptId = jobTypeMap[jobType];
+      if (deptId) {
+        setSelectedDepartment(deptId);
+        console.log(`[Job Intake] Pre-selected department: ${deptId} for job type: ${jobType}`);
+      }
+    }
+
+    // Auto-apply Design Studio Package voucher if packageId is present
+    if (packageId && !appliedVoucher) {
+      setAppliedVoucher({
+        code: 'DESIGN_STUDIO_PACKAGE',
+        discount: 100,
+        type: 'percentage',
+        description: 'Design Studio Package - 100% OFF'
+      });
+      console.log(`[Job Intake] Auto-applied Design Studio Package voucher for package: ${packageId}`);
+    }
+  }, [jobType, packageId]);
 
   // Load user from WordPress auth and localStorage draft
   useEffect(() => {
@@ -419,6 +448,34 @@ function JobIntakeContent() {
               mimeType: file.type
             })
           });
+        }
+      }
+
+      // Update design package status if this is part of a design package
+      if (packageId && jobType) {
+        try {
+          const updateData: any = {};
+          
+          if (jobType === 'virtual_prototype') {
+            updateData.virtualPrototypeStatus = 'in_progress';
+            updateData.virtualPrototypeJobId = newJob.id;
+            console.log(`[Job Intake] Updated design package ${packageId}: Virtual Prototype started`);
+          } else if (jobType === 'sell_sheet') {
+            updateData.sellSheetStatus = 'in_progress';
+            updateData.sellSheetJobId = newJob.id;
+            console.log(`[Job Intake] Updated design package ${packageId}: Sell Sheet started`);
+          }
+          
+          if (Object.keys(updateData).length > 0) {
+            await fetch(`/api/design-packages/${packageId}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(updateData)
+            });
+          }
+        } catch (error) {
+          console.error('Error updating design package:', error);
+          // Don't block job submission if package update fails
         }
       }
 

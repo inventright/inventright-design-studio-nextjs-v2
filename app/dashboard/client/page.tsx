@@ -1,14 +1,74 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useWordPressAuth } from "@/hooks/useWordPressAuth";
+import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import Header from "@/components/Header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, FileText } from "lucide-react";
+import { Plus, FileText, Package } from "lucide-react";
 import Link from "next/link";
+
+interface DesignPackage {
+  id: number;
+  orderId: string;
+  purchaseDate: string;
+  virtualPrototypeStatus: string;
+  virtualPrototypeJobId: number | null;
+  sellSheetStatus: string;
+  sellSheetJobId: number | null;
+  packageStatus: string;
+}
 
 export default function ClientDashboard() {
   const { user } = useWordPressAuth();
+  const router = useRouter();
+  const [designPackages, setDesignPackages] = useState<DesignPackage[]>([]);
+  const [loadingPackages, setLoadingPackages] = useState(true);
+
+  // Fetch design packages for the user
+  useEffect(() => {
+    const fetchDesignPackages = async () => {
+      if (!user?.id) {
+        setLoadingPackages(false);
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/design-packages?clientId=${user.id}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            setDesignPackages(data.packages);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching design packages:', error);
+      } finally {
+        setLoadingPackages(false);
+      }
+    };
+
+    fetchDesignPackages();
+  }, [user]);
+
+  const getStatusBadge = (status: string) => {
+    const badges: Record<string, { text: string; className: string }> = {
+      not_started: { text: 'Not Started', className: 'bg-gray-100 text-gray-800' },
+      in_progress: { text: 'In Progress', className: 'bg-blue-100 text-blue-800' },
+      completed: { text: 'Completed', className: 'bg-green-100 text-green-800' },
+      locked: { text: 'Locked', className: 'bg-yellow-100 text-yellow-800' },
+    };
+    return badges[status] || badges.not_started;
+  };
+
+  const handleStartVirtualPrototype = (orderId: string) => {
+    router.push(`/job-intake?jobType=virtual_prototype&packageId=${orderId}`);
+  };
+
+  const handleStartSellSheet = (orderId: string) => {
+    router.push(`/job-intake?jobType=sell_sheet&packageId=${orderId}`);
+  };
 
   return (
     <>
@@ -26,6 +86,121 @@ export default function ClientDashboard() {
             </Button>
           </Link>
         </div>
+
+        {/* Design Package Cards */}
+        {!loadingPackages && designPackages.length > 0 && (
+          <div className="mb-8 space-y-4">
+            {designPackages.map((pkg) => {
+              const vpBadge = getStatusBadge(pkg.virtualPrototypeStatus);
+              const ssBadge = getStatusBadge(pkg.sellSheetStatus);
+              const isCompleted = pkg.packageStatus === 'completed';
+
+              return (
+                <Card key={pkg.id} className="border-2 border-blue-200 bg-blue-50">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <Package className="w-6 h-6 text-blue-600" />
+                        <div>
+                          <CardTitle className="text-xl">Design Studio Package</CardTitle>
+                          <CardDescription>
+                            Purchased {new Date(pkg.purchaseDate).toLocaleDateString()}
+                          </CardDescription>
+                        </div>
+                      </div>
+                      {isCompleted && (
+                        <span className="px-3 py-1 text-sm font-semibold rounded-full bg-green-100 text-green-800">
+                          ✓ Package Complete
+                        </span>
+                      )}
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      {/* Virtual Prototype */}
+                      <div className="p-4 bg-white rounded-lg border border-gray-200">
+                        <div className="flex items-center justify-between mb-3">
+                          <h3 className="font-semibold text-gray-900">Virtual Prototype</h3>
+                          <span className={`px-2 py-1 text-xs font-semibold rounded-full ${vpBadge.className}`}>
+                            {vpBadge.text}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-600 mb-3">
+                          Professional 3D rendering of your product ($375 value)
+                        </p>
+                        {pkg.virtualPrototypeStatus === 'not_started' && (
+                          <Button
+                            onClick={() => handleStartVirtualPrototype(pkg.orderId)}
+                            className="w-full bg-blue-600 hover:bg-blue-700"
+                            size="sm"
+                          >
+                            🚀 Get started with your virtual prototype
+                          </Button>
+                        )}
+                        {pkg.virtualPrototypeStatus === 'in_progress' && pkg.virtualPrototypeJobId && (
+                          <Link href={`/jobs/${pkg.virtualPrototypeJobId}`}>
+                            <Button variant="outline" className="w-full" size="sm">
+                              View Job
+                            </Button>
+                          </Link>
+                        )}
+                        {pkg.virtualPrototypeStatus === 'completed' && (
+                          <div className="text-green-600 font-medium text-sm">✓ Completed!</div>
+                        )}
+                      </div>
+
+                      {/* Sell Sheet */}
+                      <div className="p-4 bg-white rounded-lg border border-gray-200">
+                        <div className="flex items-center justify-between mb-3">
+                          <h3 className="font-semibold text-gray-900">Sell Sheet</h3>
+                          <span className={`px-2 py-1 text-xs font-semibold rounded-full ${ssBadge.className}`}>
+                            {ssBadge.text}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-600 mb-3">
+                          Professional one-page marketing document ($375 value)
+                        </p>
+                        {pkg.sellSheetStatus === 'locked' && (
+                          <div className="text-sm text-gray-500 italic">
+                            🔒 Complete Virtual Prototype first
+                          </div>
+                        )}
+                        {pkg.sellSheetStatus === 'not_started' && pkg.virtualPrototypeStatus === 'completed' && (
+                          <Button
+                            onClick={() => handleStartSellSheet(pkg.orderId)}
+                            className="w-full bg-green-600 hover:bg-green-700"
+                            size="sm"
+                          >
+                            📄 Start your sell sheet
+                          </Button>
+                        )}
+                        {pkg.sellSheetStatus === 'in_progress' && pkg.sellSheetJobId && (
+                          <Link href={`/jobs/${pkg.sellSheetJobId}`}>
+                            <Button variant="outline" className="w-full" size="sm">
+                              View Job
+                            </Button>
+                          </Link>
+                        )}
+                        {pkg.sellSheetStatus === 'completed' && (
+                          <div className="text-green-600 font-medium text-sm">✓ Completed!</div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* View Package Details Link */}
+                    <div className="mt-4 text-center">
+                      <Link href={`/design-package/${pkg.orderId}`}>
+                        <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700">
+                          View Package Details →
+                        </Button>
+                      </Link>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )}
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
           <Card>

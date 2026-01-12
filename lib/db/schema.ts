@@ -273,3 +273,32 @@ export const designerAssignments = pgTable("designerAssignments", {
 
 export type DesignerAssignment = typeof designerAssignments.$inferSelect;
 export type InsertDesignerAssignment = typeof designerAssignments.$inferInsert;
+
+/**
+ * Design Package Orders - Tracks purchased design packages with virtual prototype and sell sheet
+ */
+export const designPackageOrders = pgTable("designPackageOrders", {
+  id: serial("id").primaryKey(),
+  orderId: varchar("orderId", { length: 100 }).notNull().unique(), // External order ID from payment system
+  clientId: integer("clientId").references(() => users.id).notNull(),
+  purchaseDate: timestamp("purchaseDate").defaultNow().notNull(),
+  
+  // Virtual Prototype tracking
+  virtualPrototypeStatus: varchar("virtualPrototypeStatus", { length: 50 }).default("not_started").notNull(), // not_started, in_progress, completed
+  virtualPrototypeJobId: integer("virtualPrototypeJobId").references(() => jobs.id),
+  virtualPrototypeCompletedAt: timestamp("virtualPrototypeCompletedAt"),
+  
+  // Sell Sheet tracking
+  sellSheetStatus: varchar("sellSheetStatus", { length: 50 }).default("locked").notNull(), // locked, not_started, in_progress, completed
+  sellSheetJobId: integer("sellSheetJobId").references(() => jobs.id),
+  sellSheetCompletedAt: timestamp("sellSheetCompletedAt"),
+  
+  // Package status
+  packageStatus: varchar("packageStatus", { length: 50 }).default("active").notNull(), // active, completed, cancelled
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+});
+
+export type DesignPackageOrder = typeof designPackageOrders.$inferSelect;
+export type InsertDesignPackageOrder = typeof designPackageOrders.$inferInsert;
