@@ -34,7 +34,13 @@ export default function RichTextEditor({
   const editor = useEditor({
     extensions: [
       StarterKit,
-      Image,
+      Image.configure({
+        inline: true,
+        allowBase64: true,
+        HTMLAttributes: {
+          class: 'email-template-image',
+        },
+      }),
       Link.configure({
         openOnClick: false,
       }),
@@ -198,6 +204,36 @@ export default function RichTextEditor({
           <ImagePlus className="w-4 h-4" />
           Upload Image
         </Button>
+        
+        {editor.isActive("image") && (
+          <>
+            <div className="flex items-center gap-1 ml-2 pl-2 border-l">
+              <input
+                type="number"
+                placeholder="Width"
+                className="w-16 px-2 py-1 text-xs border rounded"
+                onChange={(e) => {
+                  const width = e.target.value;
+                  if (width) {
+                    editor.chain().focus().updateAttributes("image", { width: `${width}px` }).run();
+                  }
+                }}
+              />
+              <span className="text-xs">×</span>
+              <input
+                type="number"
+                placeholder="Height"
+                className="w-16 px-2 py-1 text-xs border rounded"
+                onChange={(e) => {
+                  const height = e.target.value;
+                  if (height) {
+                    editor.chain().focus().updateAttributes("image", { height: `${height}px` }).run();
+                  }
+                }}
+              />
+            </div>
+          </>
+        )}
       </div>
 
       {/* Editor */}

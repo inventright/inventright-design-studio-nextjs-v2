@@ -186,6 +186,24 @@ body {
   max-width: 100%;
   height: auto;
   border-radius: 0.5rem;
+  cursor: pointer;
+}
+
+.ProseMirror img.ProseMirror-selectednode {
+  outline: 3px solid #007aff;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+}
+
+/* Image resize handles */
+.ProseMirror .email-template-image {
+  display: inline-block;
+  position: relative;
+}
+
+/* Add resize cursor when image is selected */
+.ProseMirror img.ProseMirror-selectednode {
+  cursor: nwse-resize;
 }
 
 .ProseMirror a {
