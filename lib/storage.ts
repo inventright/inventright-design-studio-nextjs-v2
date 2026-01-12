@@ -45,8 +45,8 @@ export async function uploadFile(
 
   await s3Client.send(command);
 
-  // Generate presigned URL (valid for 7 days for email templates)
-  const url = await getFileUrl(key, 604800); // 7 days in seconds
+  // Construct public URL (note: may not work if bucket is private)
+  const url = `${process.env.WASABI_ENDPOINT}/${BUCKET_NAME}/${key}`;
 
   return { key, url };
 }

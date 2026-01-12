@@ -26,9 +26,14 @@ export async function POST(request: NextRequest) {
     const fileKey = generateFileKey("email-templates", file.name);
 
     // Upload to Wasabi S3
-    const { url } = await uploadBase64File(fileKey, base64Data, file.type);
+    await uploadBase64File(fileKey, base64Data, file.type);
 
-    return NextResponse.json({ url }, { status: 200 });
+    // Return proxy URL instead of direct S3 URL
+    // Extract just the filename from the key (remove email-templates/ prefix)
+    const filename = fileKey.replace("email-templates/", "");
+    const proxyUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://ds.inventright.com"}/api/email-templates/images/${filename}`;
+
+    return NextResponse.json({ url: proxyUrl }, { status: 200 });
   } catch (error: any) {
     console.error("Image upload error:", error);
     console.error("Error stack:", error.stack);
