@@ -1,12 +1,24 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
-import dynamic from "next/dynamic";
+import { useEditor, EditorContent } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import { Image } from "@tiptap/extension-image";
+import { Link } from "@tiptap/extension-link";
+import { TextAlign } from "@tiptap/extension-text-align";
+import { TextStyle } from "@tiptap/extension-text-style";
+import { Color } from "@tiptap/extension-color";
 import { Button } from "./ui/button";
-import { ImagePlus } from "lucide-react";
-
-// Dynamically import ReactQuill to avoid SSR issues
-const ReactQuillComponent = dynamic(() => import("react-quill"), { ssr: false });
+import {
+  Bold,
+  Italic,
+  List,
+  ListOrdered,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  ImagePlus,
+  Link as LinkIcon,
+} from "lucide-react";
 
 interface RichTextEditorProps {
   value: string;
@@ -19,9 +31,31 @@ export default function RichTextEditor({
   onChange,
   placeholder = "Enter email content here...",
 }: RichTextEditorProps) {
-  const [quillInstance, setQuillInstance] = useState<any>(null);
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+      Image,
+      Link.configure({
+        openOnClick: false,
+      }),
+      TextAlign.configure({
+        types: ["heading", "paragraph"],
+      }),
+      TextStyle,
+      Color,
+    ],
+    content: value,
+    onUpdate: ({ editor }) => {
+      onChange(editor.getHTML());
+    },
+    editorProps: {
+      attributes: {
+        class:
+          "prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none min-h-[400px] max-h-[500px] overflow-y-auto p-4",
+      },
+    },
+  });
 
-  // Handle image upload
   const handleImageUpload = async () => {
     const input = document.createElement("input");
     input.setAttribute("type", "file");
@@ -33,11 +67,9 @@ export default function RichTextEditor({
       if (!file) return;
 
       try {
-        // Create FormData for file upload
         const formData = new FormData();
         formData.append("file", file);
 
-        // Upload to your API
         const response = await fetch("/api/files/upload", {
           method: "POST",
           body: formData,
@@ -47,13 +79,8 @@ export default function RichTextEditor({
           const data = await response.json();
           const imageUrl = data.url;
 
-          // Insert image into editor
-          if (quillInstance) {
-            const range = quillInstance.getSelection(true);
-            if (range) {
-              quillInstance.insertEmbed(range.index, "image", imageUrl);
-              quillInstance.setSelection(range.index + 1, 0);
-            }
+          if (editor) {
+            editor.chain().focus().setImage({ src: imageUrl }).run();
           }
         } else {
           alert("Failed to upload image");
@@ -65,43 +92,100 @@ export default function RichTextEditor({
     };
   };
 
-  // Quill modules configuration
-  const modules = useMemo(
-    () => ({
-      toolbar: {
-        container: [
-          [{ header: [1, 2, 3, false] }],
-          ["bold", "italic", "underline", "strike"],
-          [{ color: [] }, { background: [] }],
-          [{ list: "ordered" }, { list: "bullet" }],
-          [{ align: [] }],
-          ["link"],
-          ["clean"],
-        ],
-      },
-    }),
-    []
-  );
+  const handleAddLink = () => {
+    const url = prompt("Enter URL:");
+    if (url && editor) {
+      editor.chain().focus().setLink({ href: url }).run();
+    }
+  };
 
-  const formats = [
-    "header",
-    "bold",
-    "italic",
-    "underline",
-    "strike",
-    "color",
-    "background",
-    "list",
-    "bullet",
-    "align",
-    "link",
-    "image",
-  ];
+  if (!editor) {
+    return null;
+  }
 
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between mb-2">
         <label className="text-sm font-medium">Email Body</label>
+      </div>
+
+      {/* Toolbar */}
+      <div className="border rounded-t-xl bg-gray-50 p-2 flex flex-wrap gap-1">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => editor.chain().focus().toggleBold().run()}
+          className={editor.isActive("bold") ? "bg-gray-200" : ""}
+        >
+          <Bold className="w-4 h-4" />
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => editor.chain().focus().toggleItalic().run()}
+          className={editor.isActive("italic") ? "bg-gray-200" : ""}
+        >
+          <Italic className="w-4 h-4" />
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => editor.chain().focus().toggleBulletList().run()}
+          className={editor.isActive("bulletList") ? "bg-gray-200" : ""}
+        >
+          <List className="w-4 h-4" />
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => editor.chain().focus().toggleOrderedList().run()}
+          className={editor.isActive("orderedList") ? "bg-gray-200" : ""}
+        >
+          <ListOrdered className="w-4 h-4" />
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => editor.chain().focus().setTextAlign("left").run()}
+          className={editor.isActive({ textAlign: "left" }) ? "bg-gray-200" : ""}
+        >
+          <AlignLeft className="w-4 h-4" />
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => editor.chain().focus().setTextAlign("center").run()}
+          className={
+            editor.isActive({ textAlign: "center" }) ? "bg-gray-200" : ""
+          }
+        >
+          <AlignCenter className="w-4 h-4" />
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => editor.chain().focus().setTextAlign("right").run()}
+          className={
+            editor.isActive({ textAlign: "right" }) ? "bg-gray-200" : ""
+          }
+        >
+          <AlignRight className="w-4 h-4" />
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={handleAddLink}
+        >
+          <LinkIcon className="w-4 h-4" />
+        </Button>
         <Button
           type="button"
           variant="outline"
@@ -113,20 +197,12 @@ export default function RichTextEditor({
           Upload Image
         </Button>
       </div>
-      <div className="border rounded-xl overflow-hidden bg-white">
-        <ReactQuillComponent
-          theme="snow"
-          value={value}
-          onChange={onChange}
-          modules={modules}
-          formats={formats}
-          placeholder={placeholder}
-          className="rich-text-editor"
-          onChangeSelection={(selection, source, editor) => {
-            setQuillInstance(editor);
-          }}
-        />
+
+      {/* Editor */}
+      <div className="border border-t-0 rounded-b-xl bg-white">
+        <EditorContent editor={editor} />
       </div>
+
       <p className="text-sm text-gray-500">
         You can use variables like {"{"}client_name{"}"}, {"{"}job_name{"}"},{" "}
         {"{"}job_number{"}"}, {"{"}designer_name{"}"}, etc.

@@ -167,69 +167,34 @@ body {
   }
 }
 
-/* Rich Text Editor (Quill) Styles */
-.rich-text-editor {
-  min-height: 400px;
-}
-
-.rich-text-editor .ql-container {
-  min-height: 400px;
-  font-size: 14px;
-  font-family: inherit;
-}
-
-.rich-text-editor .ql-editor {
+/* TipTap Editor Styles */
+.ProseMirror {
   min-height: 400px;
   max-height: 500px;
   overflow-y: auto;
 }
 
-.rich-text-editor .ql-toolbar {
-  border-top-left-radius: 0.75rem;
-  border-top-right-radius: 0.75rem;
-  border-bottom: 1px solid #e5e7eb;
-  background: #f9fafb;
+.ProseMirror:focus {
+  outline: none;
 }
 
-.rich-text-editor .ql-container {
-  border-bottom-left-radius: 0.75rem;
-  border-bottom-right-radius: 0.75rem;
-  border: 1px solid #e5e7eb;
+.ProseMirror p {
+  margin: 0.5rem 0;
 }
 
-.rich-text-editor .ql-editor.ql-blank::before {
-  color: #9ca3af;
-  font-style: normal;
+.ProseMirror img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+}
+
+.ProseMirror a {
+  color: var(--color-primary);
+  text-decoration: underline;
 }
 
 @media (prefers-color-scheme: dark) {
-  .rich-text-editor .ql-toolbar {
-    background: #2c2c2e;
-    border-bottom: 1px solid #38383a;
-  }
-  
-  .rich-text-editor .ql-container {
-    border: 1px solid #38383a;
-    background: #1c1c1e;
-  }
-  
-  .rich-text-editor .ql-editor {
-    color: #f5f5f7;
-  }
-  
-  .rich-text-editor .ql-editor.ql-blank::before {
-    color: #98989d;
-  }
-  
-  .rich-text-editor .ql-stroke {
-    stroke: #f5f5f7;
-  }
-  
-  .rich-text-editor .ql-fill {
-    fill: #f5f5f7;
-  }
-  
-  .rich-text-editor .ql-picker-label {
+  .ProseMirror {
     color: #f5f5f7;
   }
 }
