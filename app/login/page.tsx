@@ -50,6 +50,7 @@ export default function WordPressLogin() {
 
       const data = await response.json();
       
+      console.log('=== WORDPRESS LOGIN START ===');
       console.log('WordPress JWT Response:', data);
       
       if (data.token) {
@@ -63,6 +64,7 @@ export default function WordPressLogin() {
           mappedRole = mapWordPressRole(wordpressRoles);
           console.log('WordPress Roles from JWT:', wordpressRoles);
           console.log('Mapped Design Studio Role:', mappedRole);
+          console.log('=== WORDPRESS LOGIN END ===');
         } else {
           // Try to fetch from REST API, but don't fail if CORS blocks it
           try {
@@ -102,6 +104,7 @@ export default function WordPressLogin() {
         };
         
         console.log('Saving user info:', userInfo);
+        console.log('=== WORDPRESS LOGIN END ===');
         localStorage.setItem('user_data', JSON.stringify(userInfo));
         
         toast.success('Login successful!');
