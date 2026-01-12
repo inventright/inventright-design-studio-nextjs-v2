@@ -58,11 +58,17 @@ export default function WordPressLogin() {
         let wordpressRoles: string[] = [];
         let mappedRole: DesignStudioRole = 'client'; // Default to client
         
-        // Check if roles are included in the JWT response
-        if (data.roles && Array.isArray(data.roles)) {
+        // Check if roles are included in the JWT response (user_roles or roles)
+        if (data.user_roles && Array.isArray(data.user_roles)) {
+          wordpressRoles = data.user_roles;
+          mappedRole = mapWordPressRole(wordpressRoles);
+          console.log('WordPress Roles from JWT (user_roles):', wordpressRoles);
+          console.log('Mapped Design Studio Role:', mappedRole);
+          console.log('=== WORDPRESS LOGIN END ===');
+        } else if (data.roles && Array.isArray(data.roles)) {
           wordpressRoles = data.roles;
           mappedRole = mapWordPressRole(wordpressRoles);
-          console.log('WordPress Roles from JWT:', wordpressRoles);
+          console.log('WordPress Roles from JWT (roles):', wordpressRoles);
           console.log('Mapped Design Studio Role:', mappedRole);
           console.log('=== WORDPRESS LOGIN END ===');
         } else {
