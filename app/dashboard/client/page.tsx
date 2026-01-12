@@ -159,7 +159,7 @@ export default function ClientDashboard() {
             </div>
             
             {/* Admin Client Selector */}
-            {isAdmin && allClients.length > 0 && (
+            {isAdmin && (
               <div className="mt-4 flex items-center gap-3">
                 <label className="text-sm font-medium text-gray-700">View Client:</label>
                 <Select value={selectedClientId} onValueChange={setSelectedClientId}>

@@ -88,7 +88,7 @@ export default function ManagerDashboard() {
           <p className="text-gray-600 mt-2">Welcome, {user?.name || user?.email || "Manager"}</p>
           
           {/* Admin Manager Selector */}
-          {isAdmin && allManagers.length > 0 && (
+          {isAdmin && (
             <div className="mt-4 flex items-center gap-3">
               <label className="text-sm font-medium text-gray-700">View Manager:</label>
               <Select value={selectedManagerId} onValueChange={setSelectedManagerId}>
