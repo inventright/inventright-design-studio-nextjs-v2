@@ -1,17 +1,5 @@
 {
   "framework": "nextjs",
   "buildCommand": "pnpm build",
-  "installCommand": "pnpm install",
-  "env": {
-    "DATABASE_URL": "@database_url",
-    "NEXTAUTH_SECRET": "@nextauth_secret",
-    "NEXTAUTH_URL": "@nextauth_url",
-    "GOOGLE_CLIENT_ID": "@google_client_id",
-    "GOOGLE_CLIENT_SECRET": "@google_client_secret",
-    "WASABI_ACCESS_KEY_ID": "@wasabi_access_key_id",
-    "WASABI_SECRET_ACCESS_KEY": "@wasabi_secret_access_key",
-    "WASABI_BUCKET": "@wasabi_bucket",
-    "WASABI_REGION": "@wasabi_region",
-    "WASABI_ENDPOINT": "@wasabi_endpoint"
-  }
+  "installCommand": "pnpm install"
 }
