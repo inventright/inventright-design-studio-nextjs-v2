@@ -43,12 +43,17 @@ function AdminJobsContent() {
         if (response.ok) {
           const data = await response.json();
           setJobs(data);
+        } else if (response.status === 401) {
+          // Unauthorized - user not logged in
+          console.warn('User not authenticated');
+          setJobs([]);
         } else {
-          toast.error('Failed to load jobs');
+          console.error('Failed to load jobs:', response.status);
+          setJobs([]);
         }
       } catch (error) {
         console.error('Error fetching jobs:', error);
-        toast.error('Failed to load jobs');
+        setJobs([]);
       } finally {
         setLoading(false);
       }
@@ -154,21 +159,43 @@ function AdminJobsContent() {
             </div>
           </div>
 
-          <div className="text-sm text-gray-600 mb-4">
-            Showing {filteredJobs.length} of {jobs.length} jobs
-          </div>
+          {jobs.length > 0 && (
+            <div className="text-sm text-gray-600 mb-4">
+              Showing {filteredJobs.length} of {jobs.length} jobs
+            </div>
+          )}
 
           {loading ? (
             <div className="text-center py-12">
               <p className="text-gray-500">Loading jobs...</p>
             </div>
-          ) : filteredJobs.length === 0 ? (
+          ) : jobs.length === 0 ? (
             <div className="text-center py-12">
+              <div className="text-6xl mb-4">📋</div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">No Jobs Yet</h3>
               <p className="text-gray-500">
                 {userNameFilter 
-                  ? `No jobs found for ${userNameFilter}` 
-                  : 'No jobs found matching your criteria'}
+                  ? `${userNameFilter} hasn't created any jobs yet.` 
+                  : 'No jobs have been created yet.'}
               </p>
+            </div>
+          ) : filteredJobs.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="text-6xl mb-4">🔍</div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">No Matching Jobs</h3>
+              <p className="text-gray-500">
+                {userNameFilter 
+                  ? `No jobs found for ${userNameFilter} matching your search criteria.` 
+                  : 'No jobs found matching your search criteria.'}
+              </p>
+              <Button 
+                onClick={() => { setSearchTerm(''); setStatusFilter('all'); }}
+                variant="outline" 
+                size="sm" 
+                className="mt-4"
+              >
+                Clear Filters
+              </Button>
             </div>
           ) : (
             <div className="overflow-x-auto">
