@@ -1,73 +1,77 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import GlassCard from '@/components/ui/GlassCard';
 import { toast } from 'sonner';
-import { getRoleDisplayName } from '@/utils/roleMapping';
-import type { DesignStudioRole } from '@/utils/roleMapping';
+import { getRoleDisplayName } from '@/lib/roleMapping';
+import type { DesignStudioRole } from '@/lib/roleMapping';
 
 interface User {
   id: number;
+  openId: string;
   email: string;
   name: string;
-  username: string;
   role: DesignStudioRole;
-  wordpressRoles?: string[];
-  lastLogin?: string;
+  wordpressId?: number;
+  lastSignedIn: string;
+  loginMethod: string;
 }
 
 export default function Users() {
+  const router = useRouter();
   const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRole, setSelectedRole] = useState<string>('all');
+  const [currentUserRole, setCurrentUserRole] = useState<DesignStudioRole>('client');
 
-  // Load mock users (in a real app, this would fetch from WordPress API)
+  // Load current user role
   useEffect(() => {
-    // Mock data for demonstration
-    const mockUsers: User[] = [
-      {
-        id: 1,
-        email: 'james@inventright.com',
-        name: 'James Shehan',
-        username: 'typvsns',
-        role: 'admin',
-        wordpressRoles: ['administrator'],
-        lastLogin: '2026-01-10'
-      },
-      {
-        id: 2,
-        email: 'designer@inventright.com',
-        name: 'Sarah Designer',
-        username: 'sdesigner',
-        role: 'designer',
-        wordpressRoles: ['author'],
-        lastLogin: '2026-01-09'
-      },
-      {
-        id: 3,
-        email: 'client@example.com',
-        name: 'John Client',
-        username: 'jclient',
-        role: 'client',
-        wordpressRoles: ['subscriber'],
-        lastLogin: '2026-01-08'
+    const userData = localStorage.getItem('user_data');
+    if (userData) {
+      const user = JSON.parse(userData);
+      setCurrentUserRole(user.role);
+    }
+  }, []);
+
+  // Fetch users from database
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await fetch('/api/users');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            setUsers(data.users);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching users:', error);
+        toast.error('Failed to load users');
+      } finally {
+        setLoading(false);
       }
-    ];
-    
-    setUsers(mockUsers);
+    };
+
+    fetchUsers();
   }, []);
 
   // Filter users based on search and role
   const filteredUsers = users.filter(user => {
-    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.username.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         user.email?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesRole = selectedRole === 'all' || user.role === selectedRole;
     return matchesSearch && matchesRole;
   });
+
+  const handleShowJobs = (user: User) => {
+    // Navigate to jobs page with user filter
+    router.push(`/admin/jobs?userId=${user.id}`);
+  };
 
   const handleResetPassword = async (user: User) => {
     // In a real app, this would call WordPress API to send password reset email
@@ -88,14 +92,21 @@ export default function Users() {
       localStorage.setItem('impersonation_original_user', currentUser);
     }
     // Set impersonated user data
-    localStorage.setItem('user_data', JSON.stringify(user));
+    const impersonatedUserData = {
+      id: user.wordpressId || user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      loginMethod: user.loginMethod
+    };
+    localStorage.setItem('user_data', JSON.stringify(impersonatedUserData));
     localStorage.setItem('impersonating', 'true');
     // Redirect to their dashboard
     window.location.href = '/dashboard';
   };
 
   const handleRoleChange = async (user: User, newRole: DesignStudioRole) => {
-    // In a real app, this would update the user's role in WordPress
+    // In a real app, this would update the user's role in the database
     const updatedUsers = users.map(u => 
       u.id === user.id ? { ...u, role: newRole } : u
     );
@@ -110,12 +121,30 @@ export default function Users() {
       localStorage.removeItem('impersonation_original_user');
       localStorage.removeItem('impersonating');
       toast.success('Stopped impersonation');
-      window.location.href = '/dashboard/admin';
+      window.location.href = '/admin/users';
     }
   };
 
   // Check if currently impersonating
   const isImpersonating = typeof window !== 'undefined' && localStorage.getItem('impersonating') === 'true';
+  
+  // Check if user is admin (full permissions) or designer (view-only)
+  const isAdmin = currentUserRole === 'admin';
+  const isDesigner = currentUserRole === 'designer';
+  const hasAccess = isAdmin || isDesigner;
+
+  if (!hasAccess) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+        <Header />
+        <div className="container mx-auto px-4 py-8 pt-24">
+          <GlassCard className="p-6">
+            <p className="text-center text-gray-600">You don't have permission to access this page.</p>
+          </GlassCard>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
@@ -136,7 +165,9 @@ export default function Users() {
 
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">User Management</h1>
-          <p className="text-gray-600">Manage users, reset passwords, and impersonate accounts</p>
+          <p className="text-gray-600">
+            {isDesigner ? 'View users and their jobs' : 'Manage users, reset passwords, and impersonate accounts'}
+          </p>
         </div>
 
         <GlassCard className="p-6 mb-6">
@@ -144,7 +175,7 @@ export default function Users() {
             <div className="flex-1">
               <Input
                 type="text"
-                placeholder="Search by name, email, or username..."
+                placeholder="Search by name or email..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full"
@@ -169,99 +200,130 @@ export default function Users() {
             Showing {filteredUsers.length} of {users.length} users
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left py-3 px-4 font-semibold text-gray-700">User</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-700">Role</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-700">Last Login</th>
-                  <th className="text-right py-3 px-4 font-semibold text-gray-700">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredUsers.map((user) => (
-                  <tr key={user.id} className="border-b border-gray-100 hover:bg-gray-50">
-                    <td className="py-4 px-4">
-                      <div>
-                        <div className="font-medium text-gray-900">{user.name}</div>
-                        <div className="text-sm text-gray-500">{user.email}</div>
-                        <div className="text-xs text-gray-400">@{user.username}</div>
-                      </div>
-                    </td>
-                    <td className="py-4 px-4">
-                      <select
-                        value={user.role}
-                        onChange={(e) => handleRoleChange(user, e.target.value as DesignStudioRole)}
-                        className={`px-3 py-1 text-xs font-semibold rounded-full border-0 focus:ring-2 focus:ring-blue-500 cursor-pointer ${
-                          user.role === 'admin' ? 'bg-purple-100 text-purple-800' :
-                          user.role === 'manager' ? 'bg-blue-100 text-blue-800' :
-                          user.role === 'designer' ? 'bg-green-100 text-green-800' :
-                          'bg-gray-100 text-gray-800'
-                        }`}
-                      >
-                        <option value="admin">Administrator</option>
-                        <option value="manager">Manager</option>
-                        <option value="designer">Designer</option>
-                        <option value="client">Client</option>
-                      </select>
-                    </td>
-                    <td className="py-4 px-4 text-sm text-gray-600">
-                      {user.lastLogin || 'Never'}
-                    </td>
-                    <td className="py-4 px-4">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          onClick={() => handleResetPassword(user)}
-                          variant="outline"
-                          size="sm"
-                          className="text-xs"
-                        >
-                          🔑 Reset Password
-                        </Button>
-                        <Button
-                          onClick={() => handleLogoutUser(user)}
-                          variant="outline"
-                          size="sm"
-                          className="text-xs"
-                        >
-                          🚪 Logout
-                        </Button>
-                        <Button
-                          onClick={() => handleImpersonate(user)}
-                          variant="outline"
-                          size="sm"
-                          className="text-xs"
-                        >
-                          👤 Impersonate
-                        </Button>
-                      </div>
-                    </td>
+          {loading ? (
+            <div className="text-center py-12">
+              <p className="text-gray-500">Loading users...</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-200">
+                    <th className="text-left py-3 px-4 font-semibold text-gray-700">User</th>
+                    <th className="text-left py-3 px-4 font-semibold text-gray-700">Role</th>
+                    <th className="text-left py-3 px-4 font-semibold text-gray-700">Last Login</th>
+                    <th className="text-right py-3 px-4 font-semibold text-gray-700">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {filteredUsers.map((user) => (
+                    <tr key={user.id} className="border-b border-gray-100 hover:bg-gray-50">
+                      <td className="py-4 px-4">
+                        <div>
+                          <div className="font-medium text-gray-900">{user.name || 'No name'}</div>
+                          <div className="text-sm text-gray-500">{user.email}</div>
+                          <div className="text-xs text-gray-400">
+                            {user.loginMethod === 'google' ? '🔐 Google' : '🔐 WordPress'}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-4 px-4">
+                        {isAdmin ? (
+                          <select
+                            value={user.role}
+                            onChange={(e) => handleRoleChange(user, e.target.value as DesignStudioRole)}
+                            className={`px-3 py-1 text-xs font-semibold rounded-full border-0 focus:ring-2 focus:ring-blue-500 cursor-pointer ${
+                              user.role === 'admin' ? 'bg-purple-100 text-purple-800' :
+                              user.role === 'manager' ? 'bg-blue-100 text-blue-800' :
+                              user.role === 'designer' ? 'bg-green-100 text-green-800' :
+                              'bg-gray-100 text-gray-800'
+                            }`}
+                          >
+                            <option value="admin">Administrator</option>
+                            <option value="manager">Manager</option>
+                            <option value="designer">Designer</option>
+                            <option value="client">Client</option>
+                          </select>
+                        ) : (
+                          <span className={`px-3 py-1 text-xs font-semibold rounded-full ${
+                            user.role === 'admin' ? 'bg-purple-100 text-purple-800' :
+                            user.role === 'manager' ? 'bg-blue-100 text-blue-800' :
+                            user.role === 'designer' ? 'bg-green-100 text-green-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {getRoleDisplayName(user.role)}
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-4 px-4 text-sm text-gray-600">
+                        {user.lastSignedIn ? new Date(user.lastSignedIn).toLocaleDateString() : 'Never'}
+                      </td>
+                      <td className="py-4 px-4">
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            onClick={() => handleShowJobs(user)}
+                            variant="outline"
+                            size="sm"
+                            className="text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
+                          >
+                            📋 Show Jobs
+                          </Button>
+                          {isAdmin && (
+                            <>
+                              <Button
+                                onClick={() => handleResetPassword(user)}
+                                variant="outline"
+                                size="sm"
+                                className="text-xs"
+                              >
+                                🔑 Reset Password
+                              </Button>
+                              <Button
+                                onClick={() => handleLogoutUser(user)}
+                                variant="outline"
+                                size="sm"
+                                className="text-xs"
+                              >
+                                🚪 Logout
+                              </Button>
+                              <Button
+                                onClick={() => handleImpersonate(user)}
+                                variant="outline"
+                                size="sm"
+                                className="text-xs"
+                              >
+                                👤 Impersonate
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
 
-          {filteredUsers.length === 0 && (
+          {!loading && filteredUsers.length === 0 && (
             <div className="text-center py-12">
               <p className="text-gray-500">No users found matching your search criteria</p>
             </div>
           )}
         </GlassCard>
 
-        <GlassCard className="p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">About User Management</h2>
-          <div className="space-y-2 text-sm text-gray-600">
-            <p><strong>Change Role:</strong> Click the role dropdown to change a user's access level (Admin, Manager, Designer, or Client)</p>
-            <p><strong>Reset Password:</strong> Sends a password reset email to the user's registered email address</p>
-            <p><strong>Logout:</strong> Immediately logs the user out and invalidates their current session</p>
-            <p><strong>Impersonate:</strong> Allows you to view the site as that user would see it (useful for debugging)</p>
-            <p className="text-yellow-700 bg-yellow-50 p-3 rounded-md mt-4">
-              ⚠️ <strong>Note:</strong> Currently showing mock data. Connect to WordPress API to manage real users.
-            </p>
-          </div>
-        </GlassCard>
+        {isAdmin && (
+          <GlassCard className="p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">About User Management</h2>
+            <div className="space-y-2 text-sm text-gray-600">
+              <p><strong>Show Jobs:</strong> View all jobs associated with this user</p>
+              <p><strong>Change Role:</strong> Click the role dropdown to change a user's access level (Admin, Manager, Designer, or Client)</p>
+              <p><strong>Reset Password:</strong> Sends a password reset email to the user's registered email address</p>
+              <p><strong>Logout:</strong> Immediately logs the user out and invalidates their current session</p>
+              <p><strong>Impersonate:</strong> Allows you to view the site as that user would see it (useful for debugging)</p>
+            </div>
+          </GlassCard>
+        )}
       </div>
     </div>
   );

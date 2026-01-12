@@ -113,9 +113,29 @@ export default function WordPressLogin() {
         };
         
         console.log('Saving user info:', userInfo);
-        console.log('=== WORDPRESS LOGIN END ===');
         localStorage.setItem('user_data', JSON.stringify(userInfo));
         
+        // Sync user to database
+        try {
+          await fetch('/api/users', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              openId: `wp_${data.user_id}`,
+              name: data.user_display_name,
+              email: data.user_email,
+              loginMethod: 'wordpress',
+              role: mappedRole,
+              wordpressId: data.user_id,
+            })
+          });
+        } catch (dbError) {
+          console.warn('Could not sync user to database:', dbError);
+        }
+        
+        console.log('=== WORDPRESS LOGIN END ===');
         toast.success('Login successful!');
         
         console.log('Redirecting to /job-intake');
@@ -186,6 +206,26 @@ export default function WordPressLogin() {
             localStorage.setItem('auth_token', credential);
             localStorage.setItem('user_data', JSON.stringify(userInfo));
             
+            // Sync user to database
+            try {
+              await fetch('/api/users', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  openId: `google_${googleUser.sub}`,
+                  name: googleUser.name,
+                  email: wpData.user.email,
+                  loginMethod: 'google',
+                  role: mappedRole,
+                  wordpressId: wpData.user.id,
+                })
+              });
+            } catch (dbError) {
+              console.warn('[Google Login] Could not sync user to database:', dbError);
+            }
+            
             toast.success('Logged in with Google! Account linked to WordPress.');
             window.location.href = '/job-intake';
             return;
@@ -211,6 +251,26 @@ export default function WordPressLogin() {
       
       localStorage.setItem('auth_token', credential);
       localStorage.setItem('user_data', JSON.stringify(userInfo));
+      
+      // Sync new client to database
+      try {
+        await fetch('/api/users', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            openId: `google_${googleUser.sub}`,
+            name: googleUser.name,
+            email: googleUser.email,
+            loginMethod: 'google',
+            role: 'client',
+            wordpressId: null,
+          })
+        });
+      } catch (dbError) {
+        console.warn('[Google Login] Could not sync new client to database:', dbError);
+      }
       
       toast.success('Logged in with Google!');
       window.location.href = '/job-intake';
