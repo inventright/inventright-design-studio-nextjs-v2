@@ -53,48 +53,61 @@ export default function WordPressLogin() {
       console.log('WordPress JWT Response:', data);
       
       if (data.token) {
-        // Fetch full user data including roles from WordPress REST API
-        console.log('Fetching user roles from WordPress REST API...');
-        const userResponse = await fetch(`${WORDPRESS_API_URL}/wp/v2/users/${data.user_id}?context=edit`, {
-          headers: {
-            'Authorization': `Bearer ${data.token}`
-          }
-        });
+        // Try to get roles from JWT response first, or use fallback
+        let wordpressRoles: string[] = [];
+        let mappedRole: DesignStudioRole = 'client'; // Default to client
         
-        if (userResponse.ok) {
-          const fullUserData = await userResponse.json();
-          console.log('Full User Data from REST API:', fullUserData);
-          
-          const wordpressRoles = fullUserData.roles || [];
-          console.log('WordPress Roles:', wordpressRoles);
-          
-          const mappedRole = mapWordPressRole(wordpressRoles);
+        // Check if roles are included in the JWT response
+        if (data.roles && Array.isArray(data.roles)) {
+          wordpressRoles = data.roles;
+          mappedRole = mapWordPressRole(wordpressRoles);
+          console.log('WordPress Roles from JWT:', wordpressRoles);
           console.log('Mapped Design Studio Role:', mappedRole);
-          
-          // Save token
-          localStorage.setItem('auth_token', data.token);
-          
-          // Save user info with role
-          const userInfo = {
-            id: data.user_id,
-            email: data.user_email,
-            name: data.user_display_name,
-            username: data.user_nicename,
-            role: mappedRole,
-            wordpressRoles: wordpressRoles,
-            loginMethod: 'wordpress'
-          };
-          
-          console.log('Saving user info:', userInfo);
-          localStorage.setItem('user_data', JSON.stringify(userInfo));
-          
-          toast.success('Login successful!');
-          
-          console.log('Redirecting to /job-intake');
-          window.location.href = '/job-intake';
         } else {
-          throw new Error('Failed to fetch user roles');
+          // Try to fetch from REST API, but don't fail if CORS blocks it
+          try {
+            console.log('Attempting to fetch user roles from WordPress REST API...');
+            const userResponse = await fetch(`${WORDPRESS_API_URL}/wp/v2/users/${data.user_id}?context=edit`, {
+              headers: {
+                'Authorization': `Bearer ${data.token}`
+              }
+            });
+            
+            if (userResponse.ok) {
+              const fullUserData = await userResponse.json();
+              console.log('Full User Data from REST API:', fullUserData);
+              wordpressRoles = fullUserData.roles || [];
+              mappedRole = mapWordPressRole(wordpressRoles);
+              console.log('WordPress Roles from REST API:', wordpressRoles);
+              console.log('Mapped Design Studio Role:', mappedRole);
+            }
+          } catch (corsError) {
+            console.warn('Could not fetch roles from REST API (likely CORS), using default client role:', corsError);
+            // Continue with default client role
+          }
         }
+        
+        // Save token
+        localStorage.setItem('auth_token', data.token);
+        
+        // Save user info with role
+        const userInfo = {
+          id: data.user_id,
+          email: data.user_email,
+          name: data.user_display_name,
+          username: data.user_nicename,
+          role: mappedRole,
+          wordpressRoles: wordpressRoles,
+          loginMethod: 'wordpress'
+        };
+        
+        console.log('Saving user info:', userInfo);
+        localStorage.setItem('user_data', JSON.stringify(userInfo));
+        
+        toast.success('Login successful!');
+        
+        console.log('Redirecting to /job-intake');
+        window.location.href = '/job-intake';
       } else {
         throw new Error('No token received');
       }
