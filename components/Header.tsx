@@ -43,8 +43,8 @@ export default function Header() {
                   
                   {/* Admin Dashboard Switcher Dropdown - Under Dashboard Button */}
                   {user?.role === 'admin' && (
-                    <div className="absolute left-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                      <div className="py-1">
+                    <div className="absolute left-0 top-full pt-2 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                      <div className="bg-white rounded-md shadow-lg border border-gray-200 py-1">
                         <a href="/dashboard/admin" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                           👨‍💼 Admin Dashboard
                         </a>
