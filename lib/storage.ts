@@ -41,13 +41,12 @@ export async function uploadFile(
     Key: key,
     Body: buffer,
     ContentType: contentType,
-    ACL: "public-read", // Make uploaded files publicly accessible
   });
 
   await s3Client.send(command);
 
-  // Construct public URL
-  const url = `${process.env.WASABI_ENDPOINT}/${BUCKET_NAME}/${key}`;
+  // Generate presigned URL (valid for 7 days for email templates)
+  const url = await getFileUrl(key, 604800); // 7 days in seconds
 
   return { key, url };
 }
