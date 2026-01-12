@@ -1,23 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAuth } from "@/lib/auth-utils";
+import { requireAdmin } from "@/lib/auth-utils";
 import { uploadBase64File, generateFileKey } from "@/lib/storage";
 
 // POST /api/email-templates/upload-image - Upload an image for email templates
 export async function POST(request: NextRequest) {
   try {
-    const user = await requireAuth();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Check if user is admin
-    const userRole = (user as any).data?.role || "client";
-    if (userRole !== "admin" && userRole !== "manager") {
-      return NextResponse.json(
-        { error: "Only admins can upload email template images" },
-        { status: 403 }
-      );
-    }
+    await requireAdmin();
 
     const formData = await request.formData();
     const file = formData.get("file") as File;
