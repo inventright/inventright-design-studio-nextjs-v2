@@ -206,6 +206,31 @@ body {
   cursor: nwse-resize;
 }
 
+/* Resizable image wrapper */
+.resizable-image-wrapper {
+  display: inline-block;
+  margin: 0.5rem 0;
+}
+
+.resizable-image-container {
+  position: relative;
+  display: inline-block;
+}
+
+.resizable-image-container:hover .resize-handle,
+.resizable-image-container.resizing .resize-handle {
+  opacity: 1;
+}
+
+.resize-handle {
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.resize-handle:hover {
+  transform: scale(1.2);
+}
+
 .ProseMirror a {
   color: var(--color-primary);
   text-decoration: underline;

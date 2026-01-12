@@ -2,11 +2,11 @@
 
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import { Image } from "@tiptap/extension-image";
-import { Link } from "@tiptap/extension-link";
-import { TextAlign } from "@tiptap/extension-text-align";
-import { TextStyle } from "@tiptap/extension-text-style";
+import Link from "@tiptap/extension-link";
+import TextAlign from "@tiptap/extension-text-align";
+import TextStyle from "@tiptap/extension-text-style";
 import { Color } from "@tiptap/extension-color";
+import { ResizableImage } from "./ResizableImage";
 import { Button } from "./ui/button";
 import {
   Bold,
@@ -34,13 +34,7 @@ export default function RichTextEditor({
   const editor = useEditor({
     extensions: [
       StarterKit,
-      Image.configure({
-        inline: true,
-        allowBase64: true,
-        HTMLAttributes: {
-          class: 'email-template-image',
-        },
-      }),
+      ResizableImage,
       Link.configure({
         openOnClick: false,
       }),
@@ -85,9 +79,16 @@ export default function RichTextEditor({
           const data = await response.json();
           const imageUrl = data.url;
 
-          if (editor) {
-            editor.chain().focus().setImage({ src: imageUrl }).run();
-          }
+          if (imageUrl) {
+          editor.chain().focus().insertContent({
+            type: "resizableImage",
+            attrs: {
+              src: imageUrl,
+              width: 300,
+              height: 200,
+            },
+          }).run();
+        } }
         } else {
           const errorData = await response.json().catch(() => ({}));
           console.error("Upload failed:", errorData);
@@ -204,36 +205,6 @@ export default function RichTextEditor({
           <ImagePlus className="w-4 h-4" />
           Upload Image
         </Button>
-        
-        {editor.isActive("image") && (
-          <>
-            <div className="flex items-center gap-1 ml-2 pl-2 border-l">
-              <input
-                type="number"
-                placeholder="Width"
-                className="w-16 px-2 py-1 text-xs border rounded"
-                onChange={(e) => {
-                  const width = e.target.value;
-                  if (width) {
-                    editor.chain().focus().updateAttributes("image", { width: `${width}px` }).run();
-                  }
-                }}
-              />
-              <span className="text-xs">×</span>
-              <input
-                type="number"
-                placeholder="Height"
-                className="w-16 px-2 py-1 text-xs border rounded"
-                onChange={(e) => {
-                  const height = e.target.value;
-                  if (height) {
-                    editor.chain().focus().updateAttributes("image", { height: `${height}px` }).run();
-                  }
-                }}
-              />
-            </div>
-          </>
-        )}
       </div>
 
       {/* Editor */}
