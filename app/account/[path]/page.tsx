@@ -1,3 +1,5 @@
+'use client';
+
 import { AccountView } from '@neondatabase/auth/react';
 
 export const dynamicParams = false;
