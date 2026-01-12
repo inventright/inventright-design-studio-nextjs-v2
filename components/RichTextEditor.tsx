@@ -6,6 +6,8 @@ import Link from "@tiptap/extension-link";
 import TextAlign from "@tiptap/extension-text-align";
 import { TextStyle } from "@tiptap/extension-text-style";
 import { Color } from "@tiptap/extension-color";
+import Heading from "@tiptap/extension-heading";
+import Paragraph from "@tiptap/extension-paragraph";
 import { ResizableImage } from "./ResizableImage";
 import { Button } from "./ui/button";
 import {
@@ -18,7 +20,16 @@ import {
   AlignRight,
   ImagePlus,
   Link as LinkIcon,
+  IndentIncrease,
+  IndentDecrease,
 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
 
 interface RichTextEditorProps {
   value: string;
@@ -33,7 +44,14 @@ export default function RichTextEditor({
 }: RichTextEditorProps) {
   const editor = useEditor({
     extensions: [
-      StarterKit,
+      StarterKit.configure({
+        heading: false, // Disable default heading to use custom
+        paragraph: false, // Disable default paragraph to use custom
+      }),
+      Heading.configure({
+        levels: [1, 2, 3],
+      }),
+      Paragraph,
       ResizableImage,
       Link.configure({
         openOnClick: false,
@@ -118,6 +136,61 @@ export default function RichTextEditor({
 
       {/* Toolbar */}
       <div className="border rounded-t-xl bg-gray-50 p-2 flex flex-wrap gap-1">
+        {/* Text Style Dropdown */}
+        <Select
+          value={
+            editor.isActive("heading", { level: 1 })
+              ? "h1"
+              : editor.isActive("heading", { level: 2 })
+              ? "h2"
+              : editor.isActive("heading", { level: 3 })
+              ? "h3"
+              : "p"
+          }
+          onValueChange={(value) => {
+            if (value === "p") {
+              editor.chain().focus().setParagraph().run();
+            } else if (value === "h1") {
+              editor.chain().focus().toggleHeading({ level: 1 }).run();
+            } else if (value === "h2") {
+              editor.chain().focus().toggleHeading({ level: 2 }).run();
+            } else if (value === "h3") {
+              editor.chain().focus().toggleHeading({ level: 3 }).run();
+            }
+          }}
+        >
+          <SelectTrigger className="w-[120px] h-8">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="p">Paragraph</SelectItem>
+            <SelectItem value="h1">Heading 1</SelectItem>
+            <SelectItem value="h2">Heading 2</SelectItem>
+            <SelectItem value="h3">Heading 3</SelectItem>
+          </SelectContent>
+        </Select>
+
+        {/* Font Size Selector */}
+        <Select
+          value={"16"}
+          onValueChange={(value) => {
+            editor.chain().focus().setMark("textStyle", { fontSize: `${value}px` }).run();
+          }}
+        >
+          <SelectTrigger className="w-[80px] h-8">
+            <SelectValue placeholder="Size" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="10">10px</SelectItem>
+            <SelectItem value="12">12px</SelectItem>
+            <SelectItem value="14">14px</SelectItem>
+            <SelectItem value="16">16px</SelectItem>
+            <SelectItem value="18">18px</SelectItem>
+            <SelectItem value="24">24px</SelectItem>
+            <SelectItem value="36">36px</SelectItem>
+          </SelectContent>
+        </Select>
+
         <Button
           type="button"
           variant="outline"
@@ -185,6 +258,48 @@ export default function RichTextEditor({
         >
           <AlignRight className="w-4 h-4" />
         </Button>
+        
+        {/* Indent Buttons */}
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            const { state } = editor;
+            const { from } = state.selection;
+            const node = state.doc.nodeAt(from);
+            if (node) {
+              const currentMargin = parseInt(node.attrs.style?.match(/margin-left:\s*(\d+)px/)?.[1] || "0");
+              editor.chain().focus().updateAttributes(node.type.name, {
+                style: `margin-left: ${currentMargin + 40}px`
+              }).run();
+            }
+          }}
+          title="Increase indent"
+        >
+          <IndentIncrease className="w-4 h-4" />
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            const { state } = editor;
+            const { from } = state.selection;
+            const node = state.doc.nodeAt(from);
+            if (node) {
+              const currentMargin = parseInt(node.attrs.style?.match(/margin-left:\s*(\d+)px/)?.[1] || "0");
+              const newMargin = Math.max(0, currentMargin - 40);
+              editor.chain().focus().updateAttributes(node.type.name, {
+                style: newMargin > 0 ? `margin-left: ${newMargin}px` : ""
+              }).run();
+            }
+          }}
+          title="Decrease indent"
+        >
+          <IndentDecrease className="w-4 h-4" />
+        </Button>
+        
         <Button
           type="button"
           variant="outline"
