@@ -149,15 +149,6 @@ export default function ClientDashboard() {
             <h1 className="text-4xl font-bold text-gray-900">Welcome back, {user?.name || user?.email || "Client"}</h1>
             <p className="text-gray-600 mt-2">Manage your design projects and requests</p>
             
-            {/* Debug Info - Remove after testing */}
-            <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded text-sm">
-              <p><strong>Debug Info:</strong></p>
-              <p>User: {JSON.stringify(user)}</p>
-              <p>Is Admin: {String(isAdmin)}</p>
-              <p>All Clients Count: {allClients.length}</p>
-              <p>Selected Client ID: {selectedClientId || 'none'}</p>
-            </div>
-            
             {/* Admin Client Selector */}
             {isAdmin && (
               <div className="mt-4 flex items-center gap-3">
@@ -166,7 +157,7 @@ export default function ClientDashboard() {
                   <SelectTrigger className="w-[300px]">
                     <SelectValue placeholder="Select a client" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent position="popper" sideOffset={5}>
                     <SelectItem value="all">All Clients</SelectItem>
                     {allClients.map((client) => (
                       <SelectItem key={client.id} value={client.id.toString()}>
