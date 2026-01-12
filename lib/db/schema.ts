@@ -257,3 +257,19 @@ export const settings = pgTable("settings", {
 
 export type Setting = typeof settings.$inferSelect;
 export type InsertSetting = typeof settings.$inferInsert;
+
+/**
+ * Designer assignments for automatic job routing by job type
+ */
+export const designerAssignments = pgTable("designerAssignments", {
+  id: serial("id").primaryKey(),
+  jobType: varchar("jobType", { length: 100 }).notNull(), // 'sell_sheets', 'virtual_prototypes', 'line_drawings'
+  designerId: integer("designerId").references(() => users.id).notNull(),
+  isActive: boolean("isActive").default(true).notNull(),
+  priority: integer("priority").default(0).notNull(), // Higher priority designers get assigned first
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+});
+
+export type DesignerAssignment = typeof designerAssignments.$inferSelect;
+export type InsertDesignerAssignment = typeof designerAssignments.$inferInsert;
