@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { jobs } from "@/lib/db/schema";
 import { requireAuth } from "@/lib/auth-utils";
 import { eq, and, or } from "drizzle-orm";
+import { getAssignedDesignerForJobType, mapPackageTypeToJobType } from "@/lib/designer-assignment-helper";
 
 // GET /api/jobs - Get jobs based on user role
 export async function GET(request: NextRequest) {
@@ -78,6 +79,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Automatically assign designer based on job type if not manually specified
+    let assignedDesignerId = designerId || null;
+    
+    if (!assignedDesignerId && packageType) {
+      const jobType = mapPackageTypeToJobType(packageType);
+      if (jobType) {
+        const autoAssignedDesigner = await getAssignedDesignerForJobType(jobType);
+        if (autoAssignedDesigner) {
+          assignedDesignerId = autoAssignedDesigner;
+          console.log(`[Job Creation] Auto-assigned designer ${autoAssignedDesigner} for job type ${jobType}`);
+        }
+      }
+    }
+
     const [job] = await db
       .insert(jobs)
       .values({
@@ -88,8 +103,8 @@ export async function POST(request: NextRequest) {
         packageType: packageType || null,
         priority: priority || "Medium",
         isDraft: isDraft !== undefined ? isDraft : true,
-        status: "Draft",
-        designerId: designerId || null,
+        status: isDraft ? "Draft" : "Pending",
+        designerId: assignedDesignerId,
         archived: false,
       })
       .returning();
