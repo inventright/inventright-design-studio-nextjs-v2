@@ -233,6 +233,10 @@ function ImageComponent({
     const startHeight = dimensions.height;
     const aspectRatio = startWidth / startHeight;
 
+    // Track the current dimensions during drag
+    let currentWidth = startWidth;
+    let currentHeight = startHeight;
+
     const handleMouseMove = (moveEvent: MouseEvent) => {
       const deltaX = moveEvent.clientX - startX;
       const deltaY = moveEvent.clientY - startY;
@@ -251,6 +255,9 @@ function ImageComponent({
         newWidth = Math.max(50, newHeight * aspectRatio);
       }
 
+      // Update both state and tracked values
+      currentWidth = newWidth;
+      currentHeight = newHeight;
       setDimensions({ width: newWidth, height: newHeight });
     };
 
@@ -259,12 +266,13 @@ function ImageComponent({
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
 
-      console.log('ImageComponent: Saving dimensions to node:', dimensions);
+      // Use the tracked dimensions, not the state (which may be stale)
+      console.log('ImageComponent: Saving dimensions to node:', { width: currentWidth, height: currentHeight });
       editor.update(() => {
         const node = $getNodeByKey(nodeKey);
         if ($isImageNode(node)) {
-          node.setWidthAndHeight(dimensions.width, dimensions.height);
-          console.log('ImageComponent: Node updated with dimensions:', dimensions);
+          node.setWidthAndHeight(currentWidth, currentHeight);
+          console.log('ImageComponent: Node updated with dimensions:', { width: currentWidth, height: currentHeight });
         } else {
           console.log('ImageComponent: Node not found or not ImageNode');
         }
