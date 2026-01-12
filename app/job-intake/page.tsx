@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams, useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 
 import { Button } from '@/components/ui/button';
@@ -19,8 +19,9 @@ import VirtualPrototypeFields from '@/components/intake/VirtualPrototypeFields';
 import UserContactInfo from '@/components/intake/UserContactInfo';
 
 export default function JobIntake() {
-  const [pathname, setLocation] = useLocation();
-  const searchParams = new URLSearchParams(window.pathname.search);
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const draftId = searchParams.get('draftId');
   const packageId = searchParams.get('packageId');
   const packageType = searchParams.get('type');
@@ -387,13 +388,18 @@ export default function JobIntake() {
         coachName
       };
 
-      const newJob = await createJobMutation.mutateAsync({
-        title: jobName,
-        description: JSON.stringify(finalFormData),
-        departmentId: parseInt(selectedDepartment),
-        clientId: user.id,
-        packageType: packageType || undefined
+      const response = await fetch('/api/jobs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: jobName,
+          description: JSON.stringify(finalFormData),
+          departmentId: parseInt(selectedDepartment),
+          clientId: user.id,
+          packageType: packageType || undefined
+        })
       });
+      const newJob = await response.json();
 
       if (files.length > 0) {
         for (const file of files) {
@@ -418,7 +424,7 @@ export default function JobIntake() {
 
       localStorage.removeItem('job_intake_draft');
       toast.success('Job request submitted successfully!');
-      setLocation(`/jobs/${newJob.id}`);
+      router.push(`/jobs/${newJob.id}`);
     } catch (error) {
       console.error('Submission error:', error);
       toast.error('Error submitting job request');
@@ -435,7 +441,7 @@ export default function JobIntake() {
         <div className="mb-1 flex items-center justify-between">
           <Button 
             variant="ghost" 
-            onClick={() => setLocation('/dashboard')}
+            onClick={() => router.push('/dashboard')}
             className="text-gray-600 hover:text-[#4791FF] h-6 px-1 text-xs"
           >
             <ArrowLeft className="w-3 h-3 mr-1" />

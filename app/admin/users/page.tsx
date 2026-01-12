@@ -91,7 +91,7 @@ export default function Users() {
     localStorage.setItem('user_data', JSON.stringify(user));
     localStorage.setItem('impersonating', 'true');
     // Redirect to their dashboard
-    window.pathname.href = '/dashboard';
+    window.location.href = '/dashboard';
   };
 
   const handleRoleChange = async (user: User, newRole: DesignStudioRole) => {
@@ -110,7 +110,7 @@ export default function Users() {
       localStorage.removeItem('impersonation_original_user');
       localStorage.removeItem('impersonating');
       toast.success('Stopped impersonation');
-      window.pathname.href = '/dashboard/admin';
+      window.location.href = '/dashboard/admin';
     }
   };
 

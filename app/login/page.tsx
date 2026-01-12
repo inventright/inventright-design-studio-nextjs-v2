@@ -24,7 +24,7 @@ export default function WordPressLogin() {
   useEffect(() => {
     // Redirect to dashboard if already logged in
     if (isAuthenticated()) {
-      window.pathname.href = '/job-intake';
+      window.location.href = '/job-intake';
     }
   }, []);
 
@@ -91,7 +91,7 @@ export default function WordPressLogin() {
           toast.success('Login successful!');
           
           console.log('Redirecting to /job-intake');
-          window.pathname.href = '/job-intake';
+          window.location.href = '/job-intake';
         } else {
           throw new Error('Failed to fetch user roles');
         }
@@ -154,7 +154,7 @@ export default function WordPressLogin() {
             localStorage.setItem('user_data', JSON.stringify(userInfo));
             
             toast.success('Logged in with Google! Account linked to WordPress.');
-            window.pathname.href = '/job-intake';
+            window.location.href = '/job-intake';
             return;
           }
         }
@@ -178,7 +178,7 @@ export default function WordPressLogin() {
       localStorage.setItem('user_data', JSON.stringify(userInfo));
       
       toast.success('Logged in with Google!');
-      window.pathname.href = '/job-intake';
+      window.location.href = '/job-intake';
       
     } catch (error) {
       console.error('Google login error:', error);
