@@ -84,8 +84,6 @@ export default function RichTextEditor({
               type: "resizableImage",
               attrs: {
                 src: imageUrl,
-                width: 300,
-                height: 200,
               },
             }).run();
           }

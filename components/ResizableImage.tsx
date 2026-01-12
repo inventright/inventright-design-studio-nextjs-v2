@@ -6,11 +6,28 @@ import { useState, useRef, useEffect } from "react";
 function ResizableImageComponent({ node, updateAttributes }: any) {
   const [isResizing, setIsResizing] = useState(false);
   const [dimensions, setDimensions] = useState({
-    width: node.attrs.width || 300,
-    height: node.attrs.height || 200,
+    width: node.attrs.width || null,
+    height: node.attrs.height || null,
   });
   const imageRef = useRef<HTMLImageElement>(null);
   const startPos = useRef({ x: 0, y: 0, width: 0, height: 0 });
+  
+  // Load natural dimensions when image loads
+  useEffect(() => {
+    if (imageRef.current && !node.attrs.width) {
+      const img = imageRef.current;
+      img.onload = () => {
+        setDimensions({
+          width: img.naturalWidth,
+          height: img.naturalHeight,
+        });
+        updateAttributes({
+          width: img.naturalWidth,
+          height: img.naturalHeight,
+        });
+      };
+    }
+  }, []);
 
   const handleMouseDown = (e: React.MouseEvent, corner: string) => {
     e.preventDefault();
@@ -60,8 +77,8 @@ function ResizableImageComponent({ node, updateAttributes }: any) {
       <div
         className="resizable-image-container"
         style={{
-          width: `${dimensions.width}px`,
-          height: `${dimensions.height}px`,
+          width: dimensions.width ? `${dimensions.width}px` : 'auto',
+          height: dimensions.height ? `${dimensions.height}px` : 'auto',
           position: "relative",
           display: "inline-block",
         }}
@@ -155,10 +172,10 @@ export const ResizableImage = Node.create({
         default: null,
       },
       width: {
-        default: 300,
+        default: null,
       },
       height: {
-        default: 200,
+        default: null,
       },
     };
   },
