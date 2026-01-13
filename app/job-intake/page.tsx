@@ -198,6 +198,7 @@ function JobIntakeContent() {
   }, []);
 
   const handleUserInfoUpdate = async (updatedInfo: any) => {
+    if (!user) return;
     const updatedUser = { ...user, ...updatedInfo };
     setUser(updatedUser);
     
