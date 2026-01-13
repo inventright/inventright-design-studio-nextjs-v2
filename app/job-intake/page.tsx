@@ -432,7 +432,8 @@ function JobIntakeContent() {
       
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create job');
+        console.error('[Job Intake] API error:', errorData);
+        throw new Error(errorData.details || errorData.error || 'Failed to create job');
       }
       
       const newJob = await response.json();
@@ -495,9 +496,9 @@ function JobIntakeContent() {
       localStorage.removeItem('job_intake_draft');
       toast.success('Job request submitted successfully!');
       router.push(`/jobs/${newJob.id}`);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Submission error:', error);
-      toast.error('Error submitting job request');
+      toast.error(`Error submitting job request: ${error.message || 'Unknown error'}');
     } finally {
       setUploading(false);
     }

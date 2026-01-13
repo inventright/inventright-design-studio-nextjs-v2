@@ -114,8 +114,11 @@ export async function POST(request: NextRequest) {
     if (error.message === "NEXT_REDIRECT") {
       throw error;
     }
+    console.error('[Jobs API] Error creating job:', error);
+    console.error('[Jobs API] Error stack:', error.stack);
+    console.error('[Jobs API] Error message:', error.message);
     return NextResponse.json(
-      { error: "Failed to create job" },
+      { error: "Failed to create job", details: error.message },
       { status: 500 }
     );
   }
