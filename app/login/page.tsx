@@ -8,6 +8,7 @@ import { Loader2, LogIn } from 'lucide-react';
 import GlassCard from '@/components/ui/GlassCard';
 import { toast } from 'sonner';
 import { isAuthenticated } from '@/lib/wordpressAuth';
+import { setAuthCookies, clearAuthCookies } from '@/lib/auth-cookies';
 import { mapWordPressRole, type DesignStudioRole } from '@/lib/roleMapping';
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 
@@ -98,9 +99,6 @@ export default function WordPressLogin() {
           }
         }
         
-        // Save token
-        localStorage.setItem('auth_token', data.token);
-        
         // Save user info with role
         const userInfo = {
           id: data.user_id,
@@ -113,7 +111,9 @@ export default function WordPressLogin() {
         };
         
         console.log('Saving user info:', userInfo);
-        localStorage.setItem('user_data', JSON.stringify(userInfo));
+        
+        // Save token and user data to both localStorage and cookies
+        setAuthCookies(data.token, userInfo);
         
         // Sync user to database
         try {
@@ -203,8 +203,7 @@ export default function WordPressLogin() {
               googleLinked: true
             };
             
-            localStorage.setItem('auth_token', credential);
-            localStorage.setItem('user_data', JSON.stringify(userInfo));
+            setAuthCookies(credential, userInfo);
             
             // Sync user to database
             try {
@@ -249,8 +248,7 @@ export default function WordPressLogin() {
         googleLinked: false
       };
       
-      localStorage.setItem('auth_token', credential);
-      localStorage.setItem('user_data', JSON.stringify(userInfo));
+      setAuthCookies(credential, userInfo);
       
       // Sync new client to database
       try {

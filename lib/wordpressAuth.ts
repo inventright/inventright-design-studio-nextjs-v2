@@ -53,7 +53,12 @@ export const isAuthenticated = () => {
 };
 
 export const logout = () => {
-  localStorage.removeItem('auth_token');
-  localStorage.removeItem('user_data');
-  window.location.href = '/';
+  // Clear both localStorage and cookies
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('user_data');
+    document.cookie = 'auth_token=; path=/; max-age=0';
+    document.cookie = 'user_data=; path=/; max-age=0';
+    window.location.href = '/';
+  }
 };
