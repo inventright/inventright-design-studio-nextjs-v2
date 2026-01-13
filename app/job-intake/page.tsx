@@ -150,6 +150,18 @@ function JobIntakeContent() {
     if (savedDraft) {
       try {
         const { data } = JSON.parse(savedDraft);
+        
+        // Restore files from base64
+        if (data.files && Array.isArray(data.files)) {
+          const restoredFiles = await Promise.all(
+            data.files.map(async (fileData: any) => {
+              const response = await fetch(fileData.data);
+              const blob = await response.blob();
+              return new File([blob], fileData.name, { type: fileData.type });
+            })
+          );
+          setFiles(restoredFiles);
+        }
         setJobName(data.jobName || '');
         setSelectedDepartment(data.selectedDepartment || '');
         setCoachName(data.coachName || '');
@@ -192,8 +204,26 @@ function JobIntakeContent() {
       clearTimeout(autoSaveTimeout.current);
     }
 
-    autoSaveTimeout.current = setTimeout(() => {
+    autoSaveTimeout.current = setTimeout(async () => {
+      // Convert files to base64 for storage
+      const filesData = await Promise.all(
+        files.map(async (file) => {
+          const base64 = await new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.readAsDataURL(file);
+          });
+          return {
+            name: file.name,
+            type: file.type,
+            size: file.size,
+            data: base64
+          };
+        })
+      );
+
       const draftData = {
+        files: filesData,
         jobName,
         selectedDepartment,
         coachName,
@@ -231,7 +261,7 @@ function JobIntakeContent() {
     if (user && (jobName || selectedDepartment)) {
       autoSave();
     }
-  }, [jobName, selectedDepartment, coachName, howHeard, memberStatus, category, productDescription,
+  }, [files, jobName, selectedDepartment, coachName, howHeard, memberStatus, category, productDescription,
       sellSheetLayout, photoDescription, problemPhotoFile, solutionPhotoFile, problemSolutionDescription,
       storyboard1File, storyboard2File, storyboard3File, storyboardDescription, benefitStatement,
       bulletPoints, videoLink, additionalInfo, legalInfo, formData]);
