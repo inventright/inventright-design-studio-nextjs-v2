@@ -65,6 +65,8 @@ export default function EmailTemplatesPage() {
     triggerEvent: "",
     isActive: true,
   });
+  const [testEmail, setTestEmail] = useState("");
+  const [sendingTest, setSendingTest] = useState(false);
 
   useEffect(() => {
     fetchTemplates();
@@ -158,6 +160,38 @@ export default function EmailTemplatesPage() {
       triggerEvent: "",
       isActive: true,
     });
+    setTestEmail("");
+  };
+
+  const handleSendTest = async () => {
+    if (!testEmail || !testEmail.includes('@')) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
+
+    setSendingTest(true);
+    try {
+      const response = await fetch('/api/email-templates/send-test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: testEmail,
+          subject: formData.subject,
+          body: formData.body,
+        }),
+      });
+
+      if (response.ok) {
+        toast.success(`Test email sent to ${testEmail}`);
+      } else {
+        const data = await response.json();
+        toast.error(data.error || 'Failed to send test email');
+      }
+    } catch (error) {
+      toast.error('Error sending test email');
+    } finally {
+      setSendingTest(false);
+    }
   };
 
   if (loading) {
@@ -383,6 +417,24 @@ export default function EmailTemplatesPage() {
                 </div>
 
                 <DialogFooter className="px-6 py-4 border-t flex-shrink-0">
+                  <div className="flex items-center gap-2 mr-auto">
+                    <Input
+                      type="email"
+                      placeholder="your@email.com"
+                      value={testEmail}
+                      onChange={(e) => setTestEmail(e.target.value)}
+                      className="w-64"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleSendTest}
+                      disabled={sendingTest || !testEmail}
+                    >
+                      <Mail className="w-4 h-4 mr-2" />
+                      {sendingTest ? 'Sending...' : 'Send Test'}
+                    </Button>
+                  </div>
                   <Button
                     type="button"
                     variant="outline"
