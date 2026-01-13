@@ -52,33 +52,47 @@ function SelectContent({
   className,
   children,
   position = "popper",
-  align = "center",
+  sideOffset = 4,
   ...props
-}: React.ComponentProps<typeof SelectPrimitive.Content>) {
+}: React.ComponentProps<typeof SelectPrimitive.Content> & {
+  sideOffset?: number;
+}) {
   return (
-    <SelectPrimitive.Content
-      data-slot="select-content"
-      className={cn(
-        "bg-popover text-popover-foreground relative z-50 max-h-[300px] min-w-[8rem] overflow-x-hidden overflow-y-auto rounded-md border shadow-md",
-        position === "popper" && "mt-1",
-        className
-      )}
-      position={position}
-      align={align}
-      {...props}
-    >
-      <SelectScrollUpButton />
-      <SelectPrimitive.Viewport
+    <SelectPrimitive.Portal>
+      <SelectPrimitive.Content
+        data-slot="select-content"
+        position={position}
+        sideOffset={sideOffset}
         className={cn(
-          "p-1",
+          "bg-popover text-popover-foreground relative z-50 max-h-[300px] min-w-[8rem] overflow-hidden rounded-md border shadow-md",
+          // Remove ALL animation classes - use opacity only
+          "opacity-0 data-[state=open]:opacity-100",
+          // Instant transition, no transform
+          "transition-opacity duration-100",
           position === "popper" &&
-            "h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)] scroll-my-1"
+            "w-[var(--radix-select-trigger-width)]",
+          className
         )}
+        // Force no animations via style prop (overrides everything)
+        style={{
+          animationDuration: '0s',
+          animationName: 'none',
+        }}
+        {...props}
       >
-        {children}
-      </SelectPrimitive.Viewport>
-      <SelectScrollDownButton />
-    </SelectPrimitive.Content>
+        <SelectScrollUpButton />
+        <SelectPrimitive.Viewport
+          className={cn(
+            "p-1",
+            position === "popper" &&
+              "max-h-[300px] w-full"
+          )}
+        >
+          {children}
+        </SelectPrimitive.Viewport>
+        <SelectScrollDownButton />
+      </SelectPrimitive.Content>
+    </SelectPrimitive.Portal>
   );
 }
 
