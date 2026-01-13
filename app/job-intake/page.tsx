@@ -203,7 +203,7 @@ function JobIntakeContent() {
     setUser(updatedUser);
     
     // Save to localStorage
-    localStorage.setItem('wordpress_user', JSON.stringify(updatedUser));
+    localStorage.setItem('user_data', JSON.stringify(updatedUser));
     
     // Update in database
     try {
