@@ -266,3 +266,4 @@ export async function sendPasswordResetEmail(
     html,
   });
 }
+// Gmail API configured - Tue Jan 13 00:18:11 EST 2026
