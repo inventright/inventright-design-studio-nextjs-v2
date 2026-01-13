@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import { google } from 'googleapis';
 
 interface EmailOptions {
   to: string;
@@ -8,30 +9,46 @@ interface EmailOptions {
 }
 
 /**
- * Create email transporter using Gmail SMTP
+ * Create email transporter using Google service account OAuth2
  */
-function createTransporter() {
+async function createTransporter() {
+  const serviceAccountEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
+  const privateKey = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY?.replace(/\\n/g, '\n');
   const emailFrom = process.env.EMAIL_FROM || 'support@inventright.com';
-  const appPassword = process.env.GMAIL_APP_PASSWORD;
 
-  if (!appPassword) {
-    console.warn('[Email] GMAIL_APP_PASSWORD not configured, emails will be logged to console only');
+  if (!serviceAccountEmail || !privateKey) {
+    throw new Error('Google service account credentials not configured');
   }
 
-  // Remove spaces from app password (Google shows them with spaces but they should be removed)
-  const cleanPassword = appPassword?.replace(/\s/g, '') || '';
+  // Create JWT client for service account with domain-wide delegation
+  const jwtClient = new google.auth.JWT({
+    email: serviceAccountEmail,
+    key: privateKey,
+    scopes: ['https://mail.google.com/'],
+    subject: emailFrom, // Impersonate this email address (requires domain-wide delegation)
+  });
 
+  // Get access token
+  const tokens = await jwtClient.authorize();
+  const accessToken = tokens.access_token;
+
+  if (!accessToken) {
+    throw new Error('Failed to obtain access token from service account');
+  }
+
+  // Create transporter with OAuth2
   const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
-    port: 587,
-    secure: false, // use STARTTLS
+    port: 465,
+    secure: true,
     auth: {
+      type: 'OAuth2',
       user: emailFrom,
-      pass: cleanPassword,
+      serviceClient: serviceAccountEmail,
+      privateKey: privateKey,
+      accessToken: accessToken,
     },
-    logger: true,
-    debug: true, // Enable debug output
-  });
+  } as any);
 
   return transporter;
 }
@@ -42,17 +59,8 @@ function createTransporter() {
 export async function sendEmail(options: EmailOptions): Promise<boolean> {
   const emailFrom = process.env.EMAIL_FROM || 'support@inventright.com';
   
-  // If no SMTP password is configured, just log the email
-  if (!process.env.GMAIL_APP_PASSWORD) {
-    console.log('[Email] GMAIL_APP_PASSWORD not configured, logging email instead:');
-    console.log('[Email] To:', options.to);
-    console.log('[Email] Subject:', options.subject);
-    console.log('[Email] HTML:', options.html.substring(0, 200) + '...');
-    return true;
-  }
-
   try {
-    const transporter = createTransporter();
+    const transporter = await createTransporter();
 
     const mailOptions = {
       from: `inventRight Design Studio <${emailFrom}>`,
@@ -63,7 +71,7 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
     };
 
     console.log('[Email] Attempting to send email to:', options.to);
-    console.log('[Email] Using SMTP user:', emailFrom);
+    console.log('[Email] Using service account:', process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL);
     
     const result = await transporter.sendMail(mailOptions);
     console.log('[Email] Email sent successfully:', result.messageId);
@@ -71,6 +79,7 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
   } catch (error: any) {
     console.error('[Email] Error sending email:', error);
     console.error('[Email] Error details:', {
+      message: error.message,
       code: error.code,
       command: error.command,
       response: error.response,
