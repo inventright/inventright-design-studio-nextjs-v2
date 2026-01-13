@@ -9,6 +9,7 @@ import GlassCard from '@/components/ui/GlassCard';
 import { toast } from 'sonner';
 import { getRoleDisplayName } from '@/lib/roleMapping';
 import type { DesignStudioRole } from '@/lib/roleMapping';
+import { Plus, X, Mail } from 'lucide-react';
 
 interface User {
   id: number;
@@ -28,6 +29,17 @@ export default function Users() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRole, setSelectedRole] = useState<string>('all');
   const [currentUserRole, setCurrentUserRole] = useState<DesignStudioRole>('client');
+  
+  // Add user dialog state
+  const [showAddUserDialog, setShowAddUserDialog] = useState(false);
+  const [newUserData, setNewUserData] = useState({
+    name: '',
+    email: '',
+    role: 'client' as DesignStudioRole,
+    password: ''
+  });
+  const [sendPasswordLink, setSendPasswordLink] = useState(false);
+  const [creatingUser, setCreatingUser] = useState(false);
 
   // Load current user role
   useEffect(() => {
@@ -125,6 +137,68 @@ export default function Users() {
     }
   };
 
+  const handleAddUser = async () => {
+    // Validate inputs
+    if (!newUserData.name.trim()) {
+      toast.error('Please enter a name');
+      return;
+    }
+    if (!newUserData.email.trim()) {
+      toast.error('Please enter an email');
+      return;
+    }
+    if (!sendPasswordLink && !newUserData.password.trim()) {
+      toast.error('Please enter a password or choose to send a password setup link');
+      return;
+    }
+
+    setCreatingUser(true);
+    try {
+      const response = await fetch('/api/users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: newUserData.name,
+          email: newUserData.email,
+          role: newUserData.role,
+          password: sendPasswordLink ? null : newUserData.password,
+          sendPasswordLink: sendPasswordLink
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        toast.success(sendPasswordLink 
+          ? `User created! Password setup link sent to ${newUserData.email}` 
+          : 'User created successfully!');
+        
+        // Refresh users list
+        const usersResponse = await fetch('/api/users');
+        if (usersResponse.ok) {
+          const usersData = await usersResponse.json();
+          if (usersData.success) {
+            setUsers(usersData.users);
+          }
+        }
+
+        // Reset form and close dialog
+        setNewUserData({ name: '', email: '', role: 'client', password: '' });
+        setSendPasswordLink(false);
+        setShowAddUserDialog(false);
+      } else {
+        toast.error(data.error || 'Failed to create user');
+      }
+    } catch (error) {
+      console.error('Error creating user:', error);
+      toast.error('Failed to create user');
+    } finally {
+      setCreatingUser(false);
+    }
+  };
+
   // Check if currently impersonating
   const isImpersonating = typeof window !== 'undefined' && localStorage.getItem('impersonating') === 'true';
   
@@ -163,11 +237,22 @@ export default function Users() {
           </div>
         )}
 
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">User Management</h1>
-          <p className="text-gray-600">
-            {isDesigner ? 'View users and their jobs' : 'Manage users, reset passwords, and impersonate accounts'}
-          </p>
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="text-4xl font-bold text-gray-900 mb-2">User Management</h1>
+            <p className="text-gray-600">
+              {isDesigner ? 'View users and their jobs' : 'Manage users, reset passwords, and impersonate accounts'}
+            </p>
+          </div>
+          {isAdmin && (
+            <Button 
+              onClick={() => setShowAddUserDialog(true)}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add New Member
+            </Button>
+          )}
         </div>
 
         <GlassCard className="p-6 mb-6">
@@ -325,6 +410,141 @@ export default function Users() {
           </GlassCard>
         )}
       </div>
+
+      {/* Add User Dialog */}
+      {showAddUserDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-gray-900">Add New Member</h2>
+              <button
+                onClick={() => {
+                  setShowAddUserDialog(false);
+                  setNewUserData({ name: '', email: '', role: 'client', password: '' });
+                  setSendPasswordLink(false);
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Name *
+                </label>
+                <Input
+                  type="text"
+                  value={newUserData.name}
+                  onChange={(e) => setNewUserData({ ...newUserData, name: e.target.value })}
+                  placeholder="Enter full name"
+                  className="w-full"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Email *
+                </label>
+                <Input
+                  type="email"
+                  value={newUserData.email}
+                  onChange={(e) => setNewUserData({ ...newUserData, email: e.target.value })}
+                  placeholder="Enter email address"
+                  className="w-full"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Role *
+                </label>
+                <select
+                  value={newUserData.role}
+                  onChange={(e) => setNewUserData({ ...newUserData, role: e.target.value as DesignStudioRole })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="client">Client</option>
+                  <option value="designer">Designer</option>
+                  <option value="manager">Manager</option>
+                  <option value="admin">Administrator</option>
+                </select>
+              </div>
+
+              <div className="border-t border-gray-200 pt-4">
+                <label className="flex items-center gap-2 mb-3">
+                  <input
+                    type="checkbox"
+                    checked={sendPasswordLink}
+                    onChange={(e) => {
+                      setSendPasswordLink(e.target.checked);
+                      if (e.target.checked) {
+                        setNewUserData({ ...newUserData, password: '' });
+                      }
+                    }}
+                    className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                  />
+                  <span className="text-sm font-medium text-gray-700">
+                    Send password setup link via email
+                  </span>
+                </label>
+
+                {!sendPasswordLink && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Password *
+                    </label>
+                    <Input
+                      type="password"
+                      value={newUserData.password}
+                      onChange={(e) => setNewUserData({ ...newUserData, password: e.target.value })}
+                      placeholder="Enter password"
+                      className="w-full"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Minimum 8 characters
+                    </p>
+                  </div>
+                )}
+
+                {sendPasswordLink && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
+                    <div className="flex items-start gap-2">
+                      <Mail className="w-4 h-4 text-blue-600 mt-0.5" />
+                      <p className="text-sm text-blue-800">
+                        The user will receive an email with a secure link to set up their own password.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <Button
+                onClick={() => {
+                  setShowAddUserDialog(false);
+                  setNewUserData({ name: '', email: '', role: 'client', password: '' });
+                  setSendPasswordLink(false);
+                }}
+                variant="outline"
+                className="flex-1"
+                disabled={creatingUser}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleAddUser}
+                className="flex-1 bg-blue-600 hover:bg-blue-700"
+                disabled={creatingUser}
+              >
+                {creatingUser ? 'Creating...' : 'Create User'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
