@@ -8,31 +8,30 @@ interface EmailOptions {
 }
 
 /**
- * Create email transporter using Gmail SMTP with service account
+ * Create email transporter using Gmail SMTP
  */
 function createTransporter() {
-  const serviceAccountEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
   const emailFrom = process.env.EMAIL_FROM || 'support@inventright.com';
+  const appPassword = process.env.GMAIL_APP_PASSWORD;
 
-  if (!serviceAccountEmail) {
-    throw new Error('Google service account email not configured');
+  if (!appPassword) {
+    console.warn('[Email] GMAIL_APP_PASSWORD not configured, emails will be logged to console only');
   }
 
-  // For now, we'll use a simple SMTP configuration
-  // In production, you may need to set up an app password or use SendGrid/AWS SES
+  // Remove spaces from app password (Google shows them with spaces but they should be removed)
+  const cleanPassword = appPassword?.replace(/\s/g, '') || '';
+
   const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
     port: 587,
-    secure: false, // use TLS
+    secure: false, // use STARTTLS
     auth: {
       user: emailFrom,
-      pass: process.env.GMAIL_APP_PASSWORD || '', // You'll need to set this
+      pass: cleanPassword,
     },
-    // Fallback: log emails to console if SMTP fails
-    streamTransport: !process.env.GMAIL_APP_PASSWORD,
-    newline: 'unix',
     logger: true,
-  } as any);
+    debug: true, // Enable debug output
+  });
 
   return transporter;
 }
@@ -41,9 +40,19 @@ function createTransporter() {
  * Send an email
  */
 export async function sendEmail(options: EmailOptions): Promise<boolean> {
+  const emailFrom = process.env.EMAIL_FROM || 'support@inventright.com';
+  
+  // If no SMTP password is configured, just log the email
+  if (!process.env.GMAIL_APP_PASSWORD) {
+    console.log('[Email] GMAIL_APP_PASSWORD not configured, logging email instead:');
+    console.log('[Email] To:', options.to);
+    console.log('[Email] Subject:', options.subject);
+    console.log('[Email] HTML:', options.html.substring(0, 200) + '...');
+    return true;
+  }
+
   try {
     const transporter = createTransporter();
-    const emailFrom = process.env.EMAIL_FROM || 'support@inventright.com';
 
     const mailOptions = {
       from: `inventRight Design Studio <${emailFrom}>`,
@@ -53,20 +62,21 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
       text: options.text || options.html.replace(/<[^>]*>/g, ''), // Strip HTML for text version
     };
 
-    // If no SMTP password is configured, just log the email
-    if (!process.env.GMAIL_APP_PASSWORD) {
-      console.log('[Email] GMAIL_APP_PASSWORD not configured, logging email instead:');
-      console.log('[Email] To:', options.to);
-      console.log('[Email] Subject:', options.subject);
-      console.log('[Email] HTML:', options.html.substring(0, 200) + '...');
-      return true;
-    }
-
+    console.log('[Email] Attempting to send email to:', options.to);
+    console.log('[Email] Using SMTP user:', emailFrom);
+    
     const result = await transporter.sendMail(mailOptions);
     console.log('[Email] Email sent successfully:', result.messageId);
     return true;
-  } catch (error) {
+  } catch (error: any) {
     console.error('[Email] Error sending email:', error);
+    console.error('[Email] Error details:', {
+      code: error.code,
+      command: error.command,
+      response: error.response,
+      responseCode: error.responseCode,
+    });
+    
     // Log the email content even if sending fails
     console.log('[Email] Failed to send to:', options.to);
     console.log('[Email] Subject:', options.subject);
