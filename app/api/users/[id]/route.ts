@@ -29,10 +29,7 @@ export async function GET(
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Don't send password hash
-    const { password, ...userWithoutPassword } = user;
-
-    return NextResponse.json(userWithoutPassword);
+    return NextResponse.json(user);
   } catch (error: any) {
     console.error('[Users API] Error fetching user:', error);
     return NextResponse.json(
@@ -90,10 +87,7 @@ export async function PATCH(
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Don't send password hash
-    const { password, ...userWithoutPassword } = updatedUser;
-
-    return NextResponse.json(userWithoutPassword);
+    return NextResponse.json(updatedUser);
   } catch (error: any) {
     console.error('[Users API] Error updating user:', error);
     return NextResponse.json(
