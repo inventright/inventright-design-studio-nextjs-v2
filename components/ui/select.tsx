@@ -54,9 +54,15 @@ function SelectContent({
   position = "popper",
   sideOffset = 4,
   ...props
-}: React.ComponentProps<typeof SelectPrimitive.Content> & {
-  sideOffset?: number;
-}) {
+}: React.ComponentProps<typeof SelectPrimitive.Content>) {
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    // Delay render by one frame to let Radix calculate position
+    const frame = requestAnimationFrame(() => setMounted(true));
+    return () => cancelAnimationFrame(frame);
+  }, []);
+
   return (
     <SelectPrimitive.Portal>
       <SelectPrimitive.Content
@@ -65,29 +71,18 @@ function SelectContent({
         sideOffset={sideOffset}
         className={cn(
           "bg-popover text-popover-foreground relative z-50 max-h-[300px] min-w-[8rem] overflow-hidden rounded-md border shadow-md",
-          // Remove ALL animation classes - use opacity only
-          "opacity-0 data-[state=open]:opacity-100",
-          // Instant transition, no transform
-          "transition-opacity duration-100",
-          position === "popper" &&
-            "w-[var(--radix-select-trigger-width)]",
+          position === "popper" && "w-[var(--radix-select-trigger-width)]",
           className
         )}
-        // Force no animations via style prop (overrides everything)
         style={{
-          animationDuration: '0s',
-          animationName: 'none',
+          opacity: mounted ? 1 : 0,
+          animation: 'none',
+          transform: 'none',
         }}
         {...props}
       >
         <SelectScrollUpButton />
-        <SelectPrimitive.Viewport
-          className={cn(
-            "p-1",
-            position === "popper" &&
-              "max-h-[300px] w-full"
-          )}
-        >
+        <SelectPrimitive.Viewport className="p-1 max-h-[300px] w-full">
           {children}
         </SelectPrimitive.Viewport>
         <SelectScrollDownButton />
