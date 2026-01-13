@@ -828,9 +828,7 @@ function JobIntakeContent() {
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
-                className={`border-2 border-dashed rounded-xl p-4 text-center transition-all ${
-                  isDragging ? 'border-[#4791FF] bg-[#4791FF]/5' : 'border-gray-300 hover:border-[#4791FF]/50'
-                }`}
+                className={'border-2 border-dashed rounded-xl p-4 text-center transition-all ' + (isDragging ? 'border-[#4791FF] bg-[#4791FF]/5' : 'border-gray-300 hover:border-[#4791FF]/50')}
               >
                 <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                 <p className="text-gray-600 mb-2 text-sm">Drag and drop files here, or click to browse</p>
@@ -909,7 +907,7 @@ function JobIntakeContent() {
                   )}
                   <div className="flex justify-between text-lg font-bold text-black pt-2 border-t border-gray-200">
                     <span>Total:</span>
-                    <span>${calculateFinalPrice()}</span>
+                    <span>{'$' + calculateFinalPrice()}</span>
                   </div>
                 </div>
               </div>
