@@ -498,7 +498,7 @@ function JobIntakeContent() {
       router.push(`/jobs/${newJob.id}`);
     } catch (error: any) {
       console.error('Submission error:', error);
-      toast.error(`Error submitting job request: ${error.message || 'Unknown error'}');
+      toast.error('Error submitting job request: ' + (error.message || 'Unknown error'));
     } finally {
       setUploading(false);
     }
@@ -897,12 +897,12 @@ function JobIntakeContent() {
                 <div className="bg-white/50 p-4 rounded-xl border border-[#4791FF]/10 min-w-[200px]">
                   <div className="flex justify-between text-sm text-gray-600 mb-1">
                     <span>Base Price:</span>
-                    <span>${getBasePrice()}</span>
+                    <span>{'$' + getBasePrice()}</span>
                   </div>
                   {appliedVoucher && (
                     <div className="flex justify-between text-sm text-green-600 mb-1">
                       <span>Discount ({appliedVoucher.code}):</span>
-                      <span>-${getBasePrice() - calculateFinalPrice()}</span>
+                      <span>{'-$' + (getBasePrice() - calculateFinalPrice())}</span>
                     </div>
                   )}
                   <div className="flex justify-between text-lg font-bold text-black pt-2 border-t border-gray-200">
