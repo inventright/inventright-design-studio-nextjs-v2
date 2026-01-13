@@ -197,9 +197,35 @@ function JobIntakeContent() {
     }
   }, []);
 
-  const handleUserInfoUpdate = (updatedInfo: any) => {
-    setUser({ ...user, ...updatedInfo });
-    toast.success('Contact information updated');
+  const handleUserInfoUpdate = async (updatedInfo: any) => {
+    const updatedUser = { ...user, ...updatedInfo };
+    setUser(updatedUser);
+    
+    // Save to localStorage
+    localStorage.setItem('wordpress_user', JSON.stringify(updatedUser));
+    
+    // Update in database
+    try {
+      const response = await fetch('/api/users/' + user.id, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firstName: updatedUser.firstName,
+          lastName: updatedUser.lastName,
+          email: updatedUser.email,
+          phone: updatedUser.phone
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to update user in database');
+      }
+      
+      toast.success('Contact information saved');
+    } catch (error) {
+      console.error('Error saving contact info:', error);
+      toast.error('Contact information updated locally but failed to save to database');
+    }
   };
 
   // Auto-save draft

@@ -1,0 +1,104 @@
+import { NextResponse } from "next/server";
+import { db } from "@/lib/db";
+import { users } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
+import { getCurrentUser } from "@/lib/auth-utils";
+
+// GET /api/users/[id] - Get user by ID
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const currentUser = await getCurrentUser(request);
+    if (!currentUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { id } = await params;
+    const userId = parseInt(id);
+
+    // Only allow users to view their own data, or admins/managers to view anyone
+    if (currentUser.id !== userId && !['Administrator', 'Manager'].includes(currentUser.role)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const [user] = await db.select().from(users).where(eq(users.id, userId));
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    // Don't send password hash
+    const { password, ...userWithoutPassword } = user;
+
+    return NextResponse.json(userWithoutPassword);
+  } catch (error: any) {
+    console.error('[Users API] Error fetching user:', error);
+    return NextResponse.json(
+      { error: "Failed to fetch user", details: error.message },
+      { status: 500 }
+    );
+  }
+}
+
+// PATCH /api/users/[id] - Update user data
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const currentUser = await getCurrentUser(request);
+    if (!currentUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { id } = await params;
+    const userId = parseInt(id);
+
+    // Only allow users to update their own data, or admins/managers to update anyone
+    if (currentUser.id !== userId && !['Administrator', 'Manager'].includes(currentUser.role)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const body = await request.json();
+    const { firstName, lastName, email, phone, role } = body;
+
+    // Build update object with only provided fields
+    const updateData: any = {};
+    if (firstName !== undefined) updateData.firstName = firstName;
+    if (lastName !== undefined) updateData.lastName = lastName;
+    if (email !== undefined) updateData.email = email;
+    if (phone !== undefined) updateData.phone = phone;
+    
+    // Only admins can change roles
+    if (role !== undefined && currentUser.role === 'Administrator') {
+      updateData.role = role;
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      return NextResponse.json({ error: "No valid fields to update" }, { status: 400 });
+    }
+
+    const [updatedUser] = await db
+      .update(users)
+      .set(updateData)
+      .where(eq(users.id, userId))
+      .returning();
+
+    if (!updatedUser) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    // Don't send password hash
+    const { password, ...userWithoutPassword } = updatedUser;
+
+    return NextResponse.json(userWithoutPassword);
+  } catch (error: any) {
+    console.error('[Users API] Error updating user:', error);
+    return NextResponse.json(
+      { error: "Failed to update user", details: error.message },
+      { status: 500 }
+    );
+  }
+}
