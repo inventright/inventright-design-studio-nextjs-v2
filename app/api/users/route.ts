@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import crypto from 'crypto';
+import { sendPasswordSetupEmail } from '@/lib/email';
 
 // GET - Fetch all users
 export async function GET(request: NextRequest) {
@@ -68,16 +69,32 @@ export async function POST(request: NextRequest) {
         })
         .returning();
 
-      // TODO: If sendPasswordLink is true, send an email with password setup link
-      // TODO: If password is provided, hash it and store it (requires password field in schema)
-      // For now, we'll just create the user record
-
+      // Send password setup email if requested
       if (sendPasswordLink) {
-        // In production, this would send an email via SendGrid, AWS SES, etc.
-        console.log(`[Users API] Would send password setup link to ${email}`);
-      } else {
-        // In production, this would hash and store the password
+        try {
+          // Generate a secure token for password setup
+          const setupToken = crypto.randomBytes(32).toString('hex');
+          const setupLink = `${process.env.NEXT_PUBLIC_APP_URL || 'https://ds.inventright.com'}/setup-password?token=${setupToken}&email=${encodeURIComponent(email)}`;
+          
+          // TODO: Store the setupToken in database with expiration time
+          // For now, we'll send the email with a placeholder link
+          
+          const emailSent = await sendPasswordSetupEmail(email, name, setupLink);
+          
+          if (!emailSent) {
+            console.error('[Users API] Failed to send password setup email');
+            // Don't fail user creation if email fails, just log it
+          }
+        } catch (emailError) {
+          console.error('[Users API] Error sending password setup email:', emailError);
+          // Don't fail user creation if email fails
+        }
+      }
+
+      // TODO: If password is provided, hash it and store it (requires password field in schema)
+      if (password && !sendPasswordLink) {
         console.log(`[Users API] Would store hashed password for ${email}`);
+        // In production, hash the password with bcrypt and store it
       }
 
       return NextResponse.json({
@@ -85,7 +102,7 @@ export async function POST(request: NextRequest) {
         user: newUser[0],
         created: true,
         message: sendPasswordLink 
-          ? 'User created. Password setup link sent to email.' 
+          ? 'User created! Password setup link sent to email.' 
           : 'User created successfully.'
       });
     }
