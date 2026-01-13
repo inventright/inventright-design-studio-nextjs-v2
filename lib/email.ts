@@ -1,4 +1,3 @@
-import nodemailer from 'nodemailer';
 import { google } from 'googleapis';
 
 interface EmailOptions {
@@ -9,86 +8,81 @@ interface EmailOptions {
 }
 
 /**
- * Create email transporter using Google service account OAuth2
+ * Send an email using Gmail API with service account
  */
-async function createTransporter() {
+export async function sendEmail(options: EmailOptions): Promise<boolean> {
   const serviceAccountEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
   const privateKey = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY?.replace(/\\n/g, '\n');
   const emailFrom = process.env.EMAIL_FROM || 'support@inventright.com';
 
   if (!serviceAccountEmail || !privateKey) {
-    throw new Error('Google service account credentials not configured');
+    console.error('[Email] Google service account credentials not configured');
+    return false;
   }
 
-  // Create JWT client for service account with domain-wide delegation
-  const jwtClient = new google.auth.JWT({
-    email: serviceAccountEmail,
-    key: privateKey,
-    scopes: ['https://mail.google.com/'],
-    subject: emailFrom, // Impersonate this email address (requires domain-wide delegation)
-  });
-
-  // Get access token
-  const tokens = await jwtClient.authorize();
-  const accessToken = tokens.access_token;
-
-  if (!accessToken) {
-    throw new Error('Failed to obtain access token from service account');
-  }
-
-  // Create transporter with OAuth2
-  const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true,
-    auth: {
-      type: 'OAuth2',
-      user: emailFrom,
-      serviceClient: serviceAccountEmail,
-      privateKey: privateKey,
-      accessToken: accessToken,
-    },
-  } as any);
-
-  return transporter;
-}
-
-/**
- * Send an email
- */
-export async function sendEmail(options: EmailOptions): Promise<boolean> {
-  const emailFrom = process.env.EMAIL_FROM || 'support@inventright.com';
-  
   try {
-    const transporter = await createTransporter();
+    // Create JWT client for service account
+    const auth = new google.auth.JWT({
+      email: serviceAccountEmail,
+      key: privateKey,
+      scopes: [
+        'https://www.googleapis.com/auth/gmail.send',
+      ],
+      subject: emailFrom, // Impersonate this email (requires domain-wide delegation)
+    });
 
-    const mailOptions = {
-      from: `inventRight Design Studio <${emailFrom}>`,
-      to: options.to,
-      subject: options.subject,
-      html: options.html,
-      text: options.text || options.html.replace(/<[^>]*>/g, ''), // Strip HTML for text version
-    };
+    // Initialize Gmail API
+    const gmail = google.gmail({ version: 'v1', auth });
 
-    console.log('[Email] Attempting to send email to:', options.to);
-    console.log('[Email] Using service account:', process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL);
+    // Create email message in RFC 2822 format
+    const messageParts = [
+      `From: inventRight Design Studio <${emailFrom}>`,
+      `To: ${options.to}`,
+      `Subject: ${options.subject}`,
+      'MIME-Version: 1.0',
+      'Content-Type: text/html; charset=utf-8',
+      '',
+      options.html,
+    ];
     
-    const result = await transporter.sendMail(mailOptions);
-    console.log('[Email] Email sent successfully:', result.messageId);
+    const message = messageParts.join('\n');
+    
+    // Encode message in base64url format
+    const encodedMessage = Buffer.from(message)
+      .toString('base64')
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '');
+
+    // Send email via Gmail API
+    console.log('[Email] Attempting to send email to:', options.to);
+    console.log('[Email] Using service account:', serviceAccountEmail);
+    console.log('[Email] Impersonating:', emailFrom);
+    
+    const result = await gmail.users.messages.send({
+      userId: 'me',
+      requestBody: {
+        raw: encodedMessage,
+      },
+    });
+
+    console.log('[Email] Email sent successfully:', result.data.id);
     return true;
   } catch (error: any) {
     console.error('[Email] Error sending email:', error);
     console.error('[Email] Error details:', {
       message: error.message,
       code: error.code,
-      command: error.command,
-      response: error.response,
-      responseCode: error.responseCode,
+      errors: error.errors,
+      response: error.response?.data,
     });
     
-    // Log the email content even if sending fails
-    console.log('[Email] Failed to send to:', options.to);
-    console.log('[Email] Subject:', options.subject);
+    // Provide helpful error messages
+    if (error.message?.includes('delegation')) {
+      console.error('[Email] Domain-wide delegation is not enabled for this service account');
+      console.error('[Email] Please enable it in Google Workspace Admin Console');
+    }
+    
     return false;
   }
 }
