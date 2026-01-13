@@ -425,7 +425,8 @@ function JobIntakeContent() {
           description: JSON.stringify(finalFormData),
           departmentId: parseInt(selectedDepartment),
           clientId: user.id,
-          packageType: packageType || undefined
+          packageType: packageType || undefined,
+          isDraft: false
         })
       });
       const newJob = await response.json();

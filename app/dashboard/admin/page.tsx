@@ -138,6 +138,20 @@ export default function AdminDashboard() {
               </Link>
             </CardContent>
           </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Designer Assignments</CardTitle>
+              <CardDescription>Configure auto-assign designers for job types</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link href="/admin/designer-assignments">
+                <Button variant="outline" className="w-full">
+                  Manage Assignments
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
         </div>
 
         <Card className="mt-8">
