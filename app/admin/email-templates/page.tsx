@@ -185,7 +185,11 @@ export default function EmailTemplatesPage() {
         toast.success(`Test email sent to ${testEmail}`);
       } else {
         const data = await response.json();
-        toast.error(data.error || 'Failed to send test email');
+        const errorMessage = data.details 
+          ? `${data.error}: ${data.details}`
+          : data.error || 'Failed to send test email';
+        toast.error(errorMessage, { duration: 10000 });
+        console.error('[Test Email] Error details:', data);
       }
     } catch (error) {
       toast.error('Error sending test email');

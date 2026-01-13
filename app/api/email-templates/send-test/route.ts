@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { sendEmail } from '@/lib/email';
+import nodemailer from 'nodemailer';
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,28 +22,99 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Send the test email
-    const success = await sendEmail({
-      to,
-      subject: `[TEST] ${subject}`,
-      html: emailBody,
-    });
+    // Check environment variables
+    const emailFrom = process.env.EMAIL_FROM || 'support@inventright.com';
+    const appPassword = process.env.GMAIL_APP_PASSWORD;
 
-    if (success) {
-      return NextResponse.json({
-        success: true,
-        message: `Test email sent to ${to}`,
-      });
-    } else {
+    if (!appPassword) {
       return NextResponse.json(
-        { error: 'Failed to send test email. Check server logs for details.' },
+        { 
+          error: 'GMAIL_APP_PASSWORD not configured in environment variables',
+          details: 'Please add GMAIL_APP_PASSWORD to your Vercel environment variables'
+        },
         { status: 500 }
       );
     }
-  } catch (error) {
-    console.error('[Send Test Email API] Error:', error);
+
+    // Remove spaces from app password
+    const cleanPassword = appPassword.replace(/\s/g, '');
+
+    console.log('[Email Test] Configuration:', {
+      from: emailFrom,
+      to: to,
+      hasPassword: !!cleanPassword,
+      passwordLength: cleanPassword.length,
+    });
+
+    // Create transporter
+    const transporter = nodemailer.createTransport({
+      host: 'smtp.gmail.com',
+      port: 587,
+      secure: false, // use STARTTLS
+      auth: {
+        user: emailFrom,
+        pass: cleanPassword,
+      },
+      logger: true,
+      debug: true,
+    });
+
+    // Verify connection
+    try {
+      await transporter.verify();
+      console.log('[Email Test] SMTP connection verified successfully');
+    } catch (verifyError: any) {
+      console.error('[Email Test] SMTP verification failed:', verifyError);
+      return NextResponse.json(
+        { 
+          error: 'SMTP connection failed',
+          details: verifyError.message,
+          code: verifyError.code,
+          command: verifyError.command,
+        },
+        { status: 500 }
+      );
+    }
+
+    // Send email
+    const mailOptions = {
+      from: `inventRight Design Studio <${emailFrom}>`,
+      to: to,
+      subject: `[TEST] ${subject}`,
+      html: emailBody,
+      text: emailBody.replace(/<[^>]*>/g, ''),
+    };
+
+    try {
+      const result = await transporter.sendMail(mailOptions);
+      console.log('[Email Test] Email sent successfully:', result.messageId);
+      
+      return NextResponse.json({
+        success: true,
+        message: `Test email sent to ${to}`,
+        messageId: result.messageId,
+      });
+    } catch (sendError: any) {
+      console.error('[Email Test] Failed to send email:', sendError);
+      return NextResponse.json(
+        { 
+          error: 'Failed to send email',
+          details: sendError.message,
+          code: sendError.code,
+          command: sendError.command,
+          response: sendError.response,
+        },
+        { status: 500 }
+      );
+    }
+
+  } catch (error: any) {
+    console.error('[Email Test] Unexpected error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { 
+        error: 'Internal server error',
+        details: error.message,
+      },
       { status: 500 }
     );
   }
