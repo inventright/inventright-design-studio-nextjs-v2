@@ -58,9 +58,32 @@ export async function GET(request: NextRequest) {
 // POST /api/jobs - Create new job
 export async function POST(request: NextRequest) {
   try {
-    const user = await requireAuth();
-    if (!user) { return NextResponse.json({ error: "Unauthorized" }, { status: 401 }); }
-    const body = await request.json();
+    console.log('[Jobs API] Starting job creation...');
+    
+    // Check authentication
+    let user;
+    try {
+      user = await requireAuth();
+      console.log('[Jobs API] User authenticated:', user?.id);
+    } catch (authError: any) {
+      console.error('[Jobs API] Auth error:', authError.message);
+      return NextResponse.json({ error: "Unauthorized", details: authError.message }, { status: 401 });
+    }
+    
+    if (!user) {
+      console.error('[Jobs API] No user returned from requireAuth');
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Parse request body
+    let body;
+    try {
+      body = await request.json();
+      console.log('[Jobs API] Request body:', JSON.stringify(body));
+    } catch (parseError: any) {
+      console.error('[Jobs API] JSON parse error:', parseError.message);
+      return NextResponse.json({ error: "Invalid JSON", details: parseError.message }, { status: 400 });
+    }
 
     const {
       title,
@@ -73,6 +96,7 @@ export async function POST(request: NextRequest) {
     } = body;
 
     if (!title) {
+      console.error('[Jobs API] Missing title');
       return NextResponse.json(
         { error: "Title is required" },
         { status: 400 }
@@ -83,38 +107,56 @@ export async function POST(request: NextRequest) {
     let assignedDesignerId = designerId || null;
     
     if (!assignedDesignerId && packageType) {
-      const jobType = mapPackageTypeToJobType(packageType);
-      if (jobType) {
-        const autoAssignedDesigner = await getAssignedDesignerForJobType(jobType);
-        if (autoAssignedDesigner) {
-          assignedDesignerId = autoAssignedDesigner;
-          console.log(`[Job Creation] Auto-assigned designer ${autoAssignedDesigner} for job type ${jobType}`);
+      try {
+        const jobType = mapPackageTypeToJobType(packageType);
+        if (jobType) {
+          const autoAssignedDesigner = await getAssignedDesignerForJobType(jobType);
+          if (autoAssignedDesigner) {
+            assignedDesignerId = autoAssignedDesigner;
+            console.log(`[Jobs API] Auto-assigned designer ${autoAssignedDesigner} for job type ${jobType}`);
+          }
         }
+      } catch (assignError: any) {
+        console.error('[Jobs API] Designer assignment error:', assignError.message);
+        // Continue without auto-assignment
       }
     }
 
-    const [job] = await db
-      .insert(jobs)
-      .values({
-        title,
-        description: description || null,
-        clientId: parseInt((user as any).id),
-        departmentId: departmentId || null,
-        packageType: packageType || null,
-        priority: priority || "Medium",
-        isDraft: isDraft !== undefined ? isDraft : true,
-        status: isDraft ? "Draft" : "Pending",
-        designerId: assignedDesignerId,
-        archived: false,
-      })
-      .returning();
+    // Create job
+    console.log('[Jobs API] Inserting job into database...');
+    try {
+      const [job] = await db
+        .insert(jobs)
+        .values({
+          title,
+          description: description || null,
+          clientId: parseInt((user as any).id),
+          departmentId: departmentId || null,
+          packageType: packageType || null,
+          priority: priority || "Medium",
+          isDraft: isDraft !== undefined ? isDraft : true,
+          status: isDraft ? "Draft" : "Pending",
+          designerId: assignedDesignerId,
+          archived: false,
+        })
+        .returning();
 
-    return NextResponse.json(job, { status: 201 });
+      console.log('[Jobs API] Job created successfully:', job.id);
+      return NextResponse.json(job, { status: 201 });
+    } catch (dbError: any) {
+      console.error('[Jobs API] Database error:', dbError);
+      console.error('[Jobs API] Database error message:', dbError.message);
+      console.error('[Jobs API] Database error stack:', dbError.stack);
+      return NextResponse.json(
+        { error: "Database error", details: dbError.message },
+        { status: 500 }
+      );
+    }
   } catch (error: any) {
     if (error.message === "NEXT_REDIRECT") {
       throw error;
     }
-    console.error('[Jobs API] Error creating job:', error);
+    console.error('[Jobs API] Unexpected error:', error);
     console.error('[Jobs API] Error stack:', error.stack);
     console.error('[Jobs API] Error message:', error.message);
     return NextResponse.json(
