@@ -19,7 +19,7 @@ export async function GET(
     const userId = parseInt(id);
 
     // Only allow users to view their own data, or admins/managers to view anyone
-    if (currentUser.id !== userId && !['Administrator', 'Manager'].includes(currentUser.role)) {
+    if (currentUser.id !== userId && !['Administrator', 'Manager'].includes(currentUser.data.role)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -57,7 +57,7 @@ export async function PATCH(
     const userId = parseInt(id);
 
     // Only allow users to update their own data, or admins/managers to update anyone
-    if (currentUser.id !== userId && !['Administrator', 'Manager'].includes(currentUser.role)) {
+    if (currentUser.id !== userId && !['Administrator', 'Manager'].includes(currentUser.data.role)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -72,7 +72,7 @@ export async function PATCH(
     if (phone !== undefined) updateData.phone = phone;
     
     // Only admins can change roles
-    if (role !== undefined && currentUser.role === 'Administrator') {
+    if (role !== undefined && currentUser.data.role === 'Administrator') {
       updateData.role = role;
     }
 
