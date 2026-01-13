@@ -429,7 +429,19 @@ function JobIntakeContent() {
           isDraft: false
         })
       });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create job');
+      }
+      
       const newJob = await response.json();
+      
+      if (!newJob || !newJob.id) {
+        throw new Error('Invalid response from server');
+      }
+      
+      console.log('[Job Intake] Job created successfully:', newJob.id);
 
       if (files.length > 0) {
         for (const file of files) {
