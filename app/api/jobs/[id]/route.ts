@@ -7,7 +7,7 @@ import { eq } from "drizzle-orm";
 // GET /api/jobs/[id] - Get a specific job by ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await requireAuth();
@@ -15,7 +15,8 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const jobId = parseInt(params.id);
+    const { id } = await params;
+    const jobId = parseInt(id);
     if (isNaN(jobId)) {
       return NextResponse.json({ error: "Invalid job ID" }, { status: 400 });
     }
@@ -59,7 +60,7 @@ export async function GET(
 // PATCH /api/jobs/[id] - Update a specific job
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await requireAuth();
@@ -67,7 +68,8 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const jobId = parseInt(params.id);
+    const { id } = await params;
+    const jobId = parseInt(id);
     if (isNaN(jobId)) {
       return NextResponse.json({ error: "Invalid job ID" }, { status: 400 });
     }
@@ -128,7 +130,7 @@ export async function PATCH(
 // DELETE /api/jobs/[id] - Delete a specific job
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await requireAuth();
@@ -141,7 +143,8 @@ export async function DELETE(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const jobId = parseInt(params.id);
+    const { id } = await params;
+    const jobId = parseInt(id);
     if (isNaN(jobId)) {
       return NextResponse.json({ error: "Invalid job ID" }, { status: 400 });
     }
