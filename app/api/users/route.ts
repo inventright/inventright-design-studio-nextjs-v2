@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
           // TODO: Store the setupToken in database with expiration time
           // For now, we'll send the email with a placeholder link
           
-          const emailSent = await sendPasswordSetupEmail(email, name, setupLink);
+          const emailSent = await sendPasswordSetupEmail(email, setupToken);
           
           if (!emailSent) {
             console.error('[Users API] Failed to send password setup email');
