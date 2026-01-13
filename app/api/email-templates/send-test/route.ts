@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { sendEmail } from '@/lib/email';
+import { sendTestEmail } from '@/lib/email';
 
 export async function POST(request: NextRequest) {
   try {
@@ -46,13 +46,9 @@ export async function POST(request: NextRequest) {
 
     // Send the test email using service account
     try {
-      const success = await sendEmail({
-        to,
-        subject: `[TEST] ${subject}`,
-        html: emailBody,
-      });
+      const result = await sendTestEmail(to, subject, emailBody);
 
-      if (success) {
+      if (result) {
         return NextResponse.json({
           success: true,
           message: `Test email sent to ${to}`,
