@@ -151,16 +151,22 @@ function JobIntakeContent() {
       try {
         const { data } = JSON.parse(savedDraft);
         
-        // Restore files from base64
+        // Restore files from base64 (async operation)
         if (data.files && Array.isArray(data.files)) {
-          const restoredFiles = await Promise.all(
-            data.files.map(async (fileData: any) => {
-              const response = await fetch(fileData.data);
-              const blob = await response.blob();
-              return new File([blob], fileData.name, { type: fileData.type });
-            })
-          );
-          setFiles(restoredFiles);
+          (async () => {
+            try {
+              const restoredFiles = await Promise.all(
+                data.files.map(async (fileData: any) => {
+                  const response = await fetch(fileData.data);
+                  const blob = await response.blob();
+                  return new File([blob], fileData.name, { type: fileData.type });
+                })
+              );
+              setFiles(restoredFiles);
+            } catch (fileError) {
+              console.error('Error restoring files:', fileError);
+            }
+          })();
         }
         setJobName(data.jobName || '');
         setSelectedDepartment(data.selectedDepartment || '');
