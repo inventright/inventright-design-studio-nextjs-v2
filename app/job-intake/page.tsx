@@ -697,8 +697,8 @@ function JobIntakeContent() {
                     <RadioGroup value={sellSheetLayout} onValueChange={setSellSheetLayout} className="flex flex-col space-y-2">
                       {['Standard Layout', 'Problem vs. Solution', 'Storyboard'].map((layout) => (
                         <div key={layout} className="flex items-center space-x-2">
-                          <RadioGroupItem value={layout} id={`layout-${layout}`} />
-                          <Label htmlFor={`layout-${layout}`} className="text-black font-normal cursor-pointer">{layout}</Label>
+                          <RadioGroupItem value={layout} id={'layout-' + layout} />
+                          <Label htmlFor={'layout-' + layout} className="text-black font-normal cursor-pointer">{layout}</Label>
                         </div>
                       ))}
                     </RadioGroup>
