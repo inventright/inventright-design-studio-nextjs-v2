@@ -129,14 +129,14 @@ export async function POST(request: NextRequest) {
         .insert(jobs)
         .values({
           title,
-          description: description || null,
+          description: typeof description === 'object' ? JSON.stringify(description) : (description || null),
           clientId: parseInt((user as any).id),
           departmentId: departmentId || null,
           packageType: packageType || null,
           priority: priority || "Medium",
-          isDraft: isDraft !== undefined ? isDraft : true,
+          isDraft: isDraft !== undefined ? isDraft : false,
           status: isDraft ? "Draft" : "Pending",
-          designerId: assignedDesignerId,
+          designerId: assignedDesignerId || null,
           archived: false,
         })
         .returning();
