@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth-utils-flexible";
-import { uploadBase64File, generateFileKey } from "@/lib/storage";
+import { uploadFile, generateFileKey } from "@/lib/storage";
 
 // POST /api/files/upload-draft - Upload a file immediately (before job creation)
 // Returns the file key for later association with a job
@@ -11,12 +11,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
-    const { fileName, fileData, mimeType } = body;
+    // Parse FormData instead of JSON
+    const formData = await request.formData();
+    const file = formData.get('file') as File;
 
-    if (!fileName || !fileData || !mimeType) {
+    if (!file) {
       return NextResponse.json(
-        { error: "Missing required fields: fileName, fileData, mimeType" },
+        { error: "Missing file in request" },
         { status: 400 }
       );
     }
@@ -24,18 +25,22 @@ export async function POST(request: NextRequest) {
     const userId = (user as any).id;
 
     // Generate unique file key in a temp location
-    const fileKey = generateFileKey(`temp/${userId}`, fileName);
+    const fileKey = generateFileKey(`temp/${userId}`, file.name);
+
+    // Convert File to Buffer for upload
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
 
     // Upload to Wasabi S3
-    const { url } = await uploadBase64File(fileKey, fileData, mimeType);
+    const { url } = await uploadFile(fileKey, buffer, file.type);
 
     // Return the file key (not the public URL) for storage in form
     // The key will be used to generate presigned URLs when needed
     return NextResponse.json(
       {
         fileKey,
-        fileName,
-        mimeType,
+        fileName: file.name,
+        mimeType: file.type,
         // Don't return URL - it will be generated on-demand with presigned URLs
       },
       { status: 201 }

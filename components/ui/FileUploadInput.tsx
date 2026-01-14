@@ -29,10 +29,10 @@ export function FileUploadInput({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Check file size
-    const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+    // Check file size (4MB limit for Vercel)
+    const MAX_SIZE = 4 * 1024 * 1024; // 4MB
     if (file.size > MAX_SIZE) {
-      toast.error(`File too large. Maximum size is 10MB.`);
+      toast.error(`File too large. Maximum size is 4MB.`);
       return;
     }
 
