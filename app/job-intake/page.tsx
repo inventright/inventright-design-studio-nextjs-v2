@@ -217,6 +217,12 @@ function JobIntakeContent() {
       // Try both auth_token (new) and wordpress_token (legacy) for compatibility
       const authToken = localStorage.getItem('auth_token') || localStorage.getItem('wordpress_token');
       const storedUserData = localStorage.getItem('user_data');
+      
+      console.log('[Contact Save] Starting database save...');
+      console.log('[Contact Save] User ID:', user.id);
+      console.log('[Contact Save] Auth token exists:', !!authToken);
+      console.log('[Contact Save] User data exists:', !!storedUserData);
+      
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
       };
@@ -227,7 +233,11 @@ function JobIntakeContent() {
         headers['X-User-Data'] = storedUserData;
       }
       
-      const response = await fetch(`/api/users/${user.id}`, {
+      const apiUrl = `/api/users/${user.id}`;
+      console.log('[Contact Save] API URL:', apiUrl);
+      console.log('[Contact Save] Headers:', Object.keys(headers));
+      
+      const response = await fetch(apiUrl, {
         method: 'PUT',
         headers,
         credentials: 'include', // Include cookies if available
@@ -245,9 +255,17 @@ function JobIntakeContent() {
         })
       });
       
+      console.log('[Contact Save] Response status:', response.status);
+      console.log('[Contact Save] Response OK:', response.ok);
+      
       if (!response.ok) {
-        throw new Error('Failed to update user in database');
+        const errorText = await response.text();
+        console.error('[Contact Save] Error response:', errorText);
+        throw new Error(`Failed to update user in database: ${response.status} - ${errorText}`);
       }
+      
+      const result = await response.json();
+      console.log('[Contact Save] Success! Result:', result);
       
       toast.success('Contact information saved');
     } catch (error) {
