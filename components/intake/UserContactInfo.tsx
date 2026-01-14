@@ -243,17 +243,17 @@ export default function UserContactInfo({ user, onUpdate }: UserContactInfoProps
       ) : (
         <div className="space-y-1 text-sm text-black">
           <p>
-            <strong>Name:</strong> {user.firstName} {user.lastName}
+            <strong>Name:</strong> {user?.firstName} {user?.lastName}
           </p>
           <p>
-            <strong>Email:</strong> {user.email}
+            <strong>Email:</strong> {user?.email}
           </p>
-          {user.phone && (
+          {user?.phone && (
             <p>
               <strong>Phone:</strong> {user.phone}
             </p>
           )}
-          {user.address1 && (
+          {user?.address1 && (
             <p>
               <strong>Address:</strong> {user.address1}
               {user.address2 && `, ${user.address2}`}
