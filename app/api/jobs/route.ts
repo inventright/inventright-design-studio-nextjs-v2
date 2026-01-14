@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { jobs } from "@/lib/db/schema";
-import { requireAuth } from "@/lib/auth-utils";
+import { requireAuth } from "@/lib/auth-utils-flexible";
 import { eq, and, or } from "drizzle-orm";
 import { getAssignedDesignerForJobType, mapPackageTypeToJobType } from "@/lib/designer-assignment-helper";
 

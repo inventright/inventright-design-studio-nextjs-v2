@@ -135,10 +135,19 @@ export default function WordPressLogin() {
           if (dbResponse.ok) {
             const dbData = await dbResponse.json();
             if (dbData.success && dbData.user) {
-              // Update userInfo with the database ID instead of WordPress ID
+              // Update userInfo with the database ID and all contact fields
               userInfo.id = dbData.user.id;
-              console.log('Updated user ID from database:', userInfo.id);
-              // Re-save with correct database ID
+              userInfo.firstName = dbData.user.firstName || '';
+              userInfo.lastName = dbData.user.lastName || '';
+              userInfo.phone = dbData.user.phone || '';
+              userInfo.address1 = dbData.user.address1 || '';
+              userInfo.address2 = dbData.user.address2 || '';
+              userInfo.city = dbData.user.city || '';
+              userInfo.state = dbData.user.state || '';
+              userInfo.zip = dbData.user.zip || '';
+              userInfo.country = dbData.user.country || '';
+              console.log('Updated user from database:', userInfo.id, 'with contact fields');
+              // Re-save with correct database ID and contact fields
               setAuthCookies(data.token, userInfo);
             }
           }
@@ -237,7 +246,16 @@ export default function WordPressLogin() {
                 const dbData = await dbResponse.json();
                 if (dbData.success && dbData.user) {
                   userInfo.id = dbData.user.id;
-                  console.log('[Google Login] Updated user ID from database:', userInfo.id);
+                  userInfo.firstName = dbData.user.firstName || '';
+                  userInfo.lastName = dbData.user.lastName || '';
+                  userInfo.phone = dbData.user.phone || '';
+                  userInfo.address1 = dbData.user.address1 || '';
+                  userInfo.address2 = dbData.user.address2 || '';
+                  userInfo.city = dbData.user.city || '';
+                  userInfo.state = dbData.user.state || '';
+                  userInfo.zip = dbData.user.zip || '';
+                  userInfo.country = dbData.user.country || '';
+                  console.log('[Google Login] Updated user from database:', userInfo.id, 'with contact fields');
                   setAuthCookies(credential, userInfo);
                 }
               }
@@ -291,7 +309,16 @@ export default function WordPressLogin() {
           const dbData = await dbResponse.json();
           if (dbData.success && dbData.user) {
             userInfo.id = dbData.user.id;
-            console.log('[Google Login] Updated user ID from database:', userInfo.id);
+            userInfo.firstName = dbData.user.firstName || '';
+            userInfo.lastName = dbData.user.lastName || '';
+            userInfo.phone = dbData.user.phone || '';
+            userInfo.address1 = dbData.user.address1 || '';
+            userInfo.address2 = dbData.user.address2 || '';
+            userInfo.city = dbData.user.city || '';
+            userInfo.state = dbData.user.state || '';
+            userInfo.zip = dbData.user.zip || '';
+            userInfo.country = dbData.user.country || '';
+            console.log('[Google Login] Updated user from database:', userInfo.id, 'with contact fields');
             setAuthCookies(credential, userInfo);
           }
         }
