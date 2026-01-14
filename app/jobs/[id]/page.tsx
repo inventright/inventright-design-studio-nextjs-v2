@@ -39,76 +39,106 @@ interface JobFile {
 }
 
 export default function JobDetail({ params }: JobDetailProps) {
+  console.log('🚀 [Job Details] Component mounted!');
+  console.log('🚀 [Job Details] Params:', params);
+  console.log('🚀 [Job Details] Job ID:', params.id);
+  
   const { user } = useWordPressAuth();
   const jobId = params.id;
   const [job, setJob] = useState<Job | null>(null);
   const [files, setFiles] = useState<JobFile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  console.log('🚀 [Job Details] User:', user);
+  console.log('🚀 [Job Details] Loading state:', loading);
+  console.log('🚀 [Job Details] Job state:', job);
+  console.log('🚀 [Job Details] Error state:', error);
 
   useEffect(() => {
+    console.log('⚡ [Job Details] useEffect triggered!');
+    console.log('⚡ [Job Details] jobId in useEffect:', jobId);
+    
     const fetchJobDetails = async () => {
       try {
-        console.log('[Job Details] Fetching job:', jobId);
+        console.log('📡 [Job Details] Starting fetch for job:', jobId);
         
         // Get auth credentials
         const authToken = localStorage.getItem('auth_token') || localStorage.getItem('wordpress_token');
         const userData = localStorage.getItem('user_data');
+        console.log('🔑 [Job Details] Auth token exists:', !!authToken);
+        console.log('🔑 [Job Details] User data exists:', !!userData);
         
         // Build headers with authentication
         const headers: Record<string, string> = {};
         if (authToken) {
           headers['Authorization'] = `Bearer ${authToken}`;
+          console.log('🔑 [Job Details] Added Authorization header');
         }
         if (userData) {
           headers['X-User-Data'] = userData;
+          console.log('🔑 [Job Details] Added X-User-Data header');
         }
+        console.log('🔑 [Job Details] Headers:', Object.keys(headers));
         
         // Fetch job details
-        console.log('[Job Details] Fetching job data...');
+        console.log('🌐 [Job Details] Fetching from /api/jobs/' + jobId);
         const jobRes = await fetch(`/api/jobs/${jobId}`, {
           headers,
           credentials: 'include',
         });
+        console.log('🌐 [Job Details] Response status:', jobRes.status);
+        console.log('🌐 [Job Details] Response ok:', jobRes.ok);
         
         if (!jobRes.ok) {
           const errorData = await jobRes.json().catch(() => ({}));
-          console.error('[Job Details] Job fetch failed:', jobRes.status, errorData);
+          console.error('❌ [Job Details] Job fetch failed:', jobRes.status, errorData);
           throw new Error(errorData.error || 'Failed to fetch job details');
         }
         
         const jobData = await jobRes.json();
-        console.log('[Job Details] Job data loaded:', jobData.id);
+        console.log('✅ [Job Details] Job data loaded:', jobData);
         setJob(jobData);
+        console.log('✅ [Job Details] Job state updated');
 
         // Fetch job files
-        console.log('[Job Details] Fetching files...');
+        console.log('📁 [Job Details] Fetching files from /api/files?jobId=' + jobId);
         const filesRes = await fetch(`/api/files?jobId=${jobId}`, {
           headers,
           credentials: 'include',
         });
+        console.log('📁 [Job Details] Files response status:', filesRes.status);
         
         if (filesRes.ok) {
           const filesData = await filesRes.json();
-          console.log('[Job Details] Files loaded:', filesData.length);
+          console.log('✅ [Job Details] Files loaded:', filesData.length, 'files');
           setFiles(filesData);
         } else {
-          console.warn('[Job Details] Files fetch failed:', filesRes.status);
+          console.warn('⚠️ [Job Details] Files fetch failed:', filesRes.status);
           // Don't fail the whole page if files can't be loaded
           setFiles([]);
         }
         
+        console.log('🎯 [Job Details] Setting loading to false');
         setLoading(false);
+        console.log('🎯 [Job Details] Fetch complete!');
       } catch (err: any) {
-        console.error('[Job Details] Error:', err);
+        console.error('🚨 [Job Details] CATCH ERROR:', err);
+        console.error('🚨 [Job Details] Error message:', err.message);
+        console.error('🚨 [Job Details] Error stack:', err.stack);
         setError(err.message || 'Failed to load job details');
         toast.error('Failed to load job details');
+        console.log('🚨 [Job Details] Setting loading to false after error');
         setLoading(false);
       }
     };
 
+    console.log('❓ [Job Details] Checking if should fetch. jobId:', jobId);
     if (jobId) {
+      console.log('✅ [Job Details] jobId exists, calling fetchJobDetails()');
       fetchJobDetails();
+    } else {
+      console.log('❌ [Job Details] No jobId, skipping fetch');
     }
   }, [jobId]);
 
