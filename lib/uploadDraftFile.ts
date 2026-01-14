@@ -54,8 +54,8 @@ export async function uploadDraftFile(file: File, draftJobId?: string | null): P
     const data = await response.json();
     console.log('[Upload] Success:', data);
     
-    // Return the file URL or key
-    return data.fileUrl || data.fileKey || data.url;
+    // Return the file key (not URL, as URLs are private/presigned)
+    return data.fileKey;
   } catch (error: any) {
     console.error('[Upload] Error:', error);
     throw error;

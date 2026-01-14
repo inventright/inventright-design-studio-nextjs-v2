@@ -28,13 +28,28 @@ export function FileUploadInput({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log('[FileUploadInput] File select triggered');
+    console.log('[FileUploadInput] Draft job ID:', draftJobId);
+    
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+      console.log('[FileUploadInput] No file selected');
+      return;
+    }
+    
+    console.log('[FileUploadInput] File selected:', file.name, 'Size:', file.size);
 
     // Check file size (4MB limit for Vercel)
     const MAX_SIZE = 4 * 1024 * 1024; // 4MB
     if (file.size > MAX_SIZE) {
+      console.log('[FileUploadInput] File too large:', file.size);
       toast.error(`File too large. Maximum size is 4MB.`);
+      return;
+    }
+    
+    if (!draftJobId) {
+      console.error('[FileUploadInput] No draft job ID available');
+      toast.error('Unable to upload: No draft job ID');
       return;
     }
 
