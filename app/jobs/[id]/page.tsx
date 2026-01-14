@@ -49,8 +49,24 @@ export default function JobDetail({ params }: JobDetailProps) {
   useEffect(() => {
     const fetchJobDetails = async () => {
       try {
+        // Get auth credentials
+        const authToken = localStorage.getItem('auth_token') || localStorage.getItem('wordpress_token');
+        const userData = localStorage.getItem('user_data');
+        
+        // Build headers with authentication
+        const headers: Record<string, string> = {};
+        if (authToken) {
+          headers['Authorization'] = `Bearer ${authToken}`;
+        }
+        if (userData) {
+          headers['X-User-Data'] = userData;
+        }
+        
         // Fetch job details
-        const jobRes = await fetch(`/api/jobs/${jobId}`);
+        const jobRes = await fetch(`/api/jobs/${jobId}`, {
+          headers,
+          credentials: 'include',
+        });
         if (!jobRes.ok) {
           throw new Error('Failed to fetch job details');
         }
@@ -58,7 +74,10 @@ export default function JobDetail({ params }: JobDetailProps) {
         setJob(jobData);
 
         // Fetch job files
-        const filesRes = await fetch(`/api/files?jobId=${jobId}`);
+        const filesRes = await fetch(`/api/files?jobId=${jobId}`, {
+          headers,
+          credentials: 'include',
+        });
         if (filesRes.ok) {
           const filesData = await filesRes.json();
           setFiles(filesData);
