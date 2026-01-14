@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import Header from "@/components/Header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, FileText, Package } from "lucide-react";
+import { Plus, FileText, Package, Trash2, Copy } from "lucide-react";
 import Link from "next/link";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -134,10 +134,56 @@ export default function ClientDashboard() {
 
   const handleStartVirtualPrototype = (orderId: string) => {
     router.push(`/job-intake?jobType=virtual_prototype&packageId=${orderId}`);
+  }  const handleDeleteJob = async (jobId: number, e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent navigation
+    e.stopPropagation();
+    
+    if (!confirm('Are you sure you want to delete this job? This action cannot be undone.')) {
+      return;
+    }
+    
+    try {
+      const response = await fetch(`/api/jobs/${jobId}`, {
+        method: 'DELETE',
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to delete job');
+      }
+      
+      toast.success('Job deleted successfully');
+      // Refresh the page to update the job list
+      window.location.reload();
+    } catch (error) {
+      console.error('Error deleting job:', error);
+      toast.error('Failed to delete job');
+    }
+  };
+  
+  const handleDuplicateJob = async (jobId: number, e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent navigation
+    e.stopPropagation();
+    
+    try {
+      const response = await fetch(`/api/jobs/${jobId}/duplicate`, {
+        method: 'POST',
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to duplicate job');
+      }
+      
+      const data = await response.json();
+      toast.success('Job duplicated successfully');
+      // Refresh the page to show the new job
+      window.location.reload();
+    } catch (error) {
+      console.error('Error duplicating job:', error);
+      toast.error('Failed to duplicate job');
+    }
   };
 
-  const handleStartSellSheet = (orderId: string) => {
-    router.push(`/job-intake?jobType=sell_sheet&packageId=${orderId}`);
+  const handleStartSellSheet = async (orderId: number) => {  router.push(`/job-intake?jobType=sell_sheet&packageId=${orderId}`);
   };
 
   return (
@@ -382,14 +428,35 @@ export default function ClientDashboard() {
                   }
                   
                   return (
-                    <Link key={job.id} href={`/jobs/${job.id}`}>
-                      <div className="p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-sm transition-all cursor-pointer">
-                        <div className="flex items-center justify-between mb-2">
-                          <h3 className="font-semibold text-gray-900">{job.title}</h3>
-                          <span className={`px-2 py-1 text-xs font-semibold rounded-full ${statusColors[job.status] || 'bg-gray-100 text-gray-800'}`}>
-                            {job.status}
-                          </span>
-                        </div>
+                    <div key={job.id} className="relative">
+                      <Link href={`/jobs/${job.id}`}>
+                        <div className="p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-sm transition-all cursor-pointer">
+                          <div className="flex items-center justify-between mb-2">
+                            <h3 className="font-semibold text-gray-900">{job.title}</h3>
+                            <div className="flex items-center gap-2">
+                              <span className={`px-2 py-1 text-xs font-semibold rounded-full ${statusColors[job.status] || 'bg-gray-100 text-gray-800'}`}>
+                                {job.status}
+                              </span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => handleDuplicateJob(job.id, e)}
+                                className="h-8 w-8 p-0 hover:bg-blue-100"
+                                title="Duplicate job"
+                              >
+                                <Copy className="h-4 w-4 text-blue-600" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => handleDeleteJob(job.id, e)}
+                                className="h-8 w-8 p-0 hover:bg-red-100"
+                                title="Delete job"
+                              >
+                                <Trash2 className="h-4 w-4 text-red-600" />
+                              </Button>
+                            </div>
+                          </div>
                         <div className="flex items-center gap-4 text-sm text-gray-600">
                           {job.packageType && (
                             <span className="flex items-center gap-1">
@@ -403,13 +470,14 @@ export default function ClientDashboard() {
                             <span className="text-xs text-gray-500">({draftAge} days old)</span>
                           )}
                         </div>
-                        {draftWarning && (
-                          <div className="mt-2 text-xs text-yellow-700 font-medium">
-                            {draftWarning}
-                          </div>
-                        )}
-                      </div>
-                    </Link>
+                          {draftWarning && (
+                            <div className="mt-2 text-xs text-yellow-700 font-medium">
+                              {draftWarning}
+                            </div>
+                          )}
+                        </div>
+                      </Link>
+                    </div>
                   );
                 })}
               </div>
