@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, use } from 'react';
 import { useWordPressAuth } from "@/hooks/useWordPressAuth";
 import Header from "@/components/Header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,7 +10,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 
 interface JobDetailProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 interface Job {
@@ -40,11 +40,15 @@ interface JobFile {
 
 export default function JobDetail({ params }: JobDetailProps) {
   console.log('🚀 [Job Details] Component mounted!');
-  console.log('🚀 [Job Details] Params:', params);
-  console.log('🚀 [Job Details] Job ID:', params.id);
+  console.log('🚀 [Job Details] Params (Promise):', params);
+  
+  // Unwrap the params Promise using React's use() hook (Next.js 15)
+  const unwrappedParams = use(params);
+  console.log('🚀 [Job Details] Unwrapped params:', unwrappedParams);
+  console.log('🚀 [Job Details] Job ID:', unwrappedParams.id);
   
   const { user } = useWordPressAuth();
-  const jobId = params.id;
+  const jobId = unwrappedParams.id;
   const [job, setJob] = useState<Job | null>(null);
   const [files, setFiles] = useState<JobFile[]>([]);
   const [loading, setLoading] = useState(true);
