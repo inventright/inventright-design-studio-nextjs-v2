@@ -10,6 +10,7 @@ interface FileUploadInputProps {
   label: string;
   value: string; // file key
   onChange: (fileKey: string) => void;
+  draftJobId?: string | null; // draft job ID for immediate upload
   accept?: string;
   placeholder?: string;
 }
@@ -18,6 +19,7 @@ export function FileUploadInput({
   label,
   value,
   onChange,
+  draftJobId,
   accept = 'image/*',
   placeholder = 'No file selected',
 }: FileUploadInputProps) {
@@ -40,7 +42,7 @@ export function FileUploadInput({
     setUploading(true);
 
     try {
-      const fileKey = await uploadDraftFile(file);
+      const fileKey = await uploadDraftFile(file, draftJobId);
       onChange(fileKey);
       toast.success(`${file.name} uploaded successfully`);
     } catch (error: any) {

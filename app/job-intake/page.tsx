@@ -31,6 +31,7 @@ function JobIntakeContent() {
   // User and package state
   const [user, setUser] = useState<any>(null);
   const [packageJob, setPackageJob] = useState<any>(null);
+  const [draftJobId, setDraftJobId] = useState<string | null>(null);
 
   // Basic form fields
   const [selectedDepartment, setSelectedDepartment] = useState('');
@@ -208,6 +209,20 @@ function JobIntakeContent() {
       }
     } else {
       console.log('No user data found in localStorage');
+    }
+    
+    // Generate or load draft job ID for file uploads
+    const storedDraftJobId = localStorage.getItem('draft_job_id');
+    if (storedDraftJobId) {
+      console.log('[Draft Job] Using existing draft job ID:', storedDraftJobId);
+      setDraftJobId(storedDraftJobId);
+    } else {
+      // Generate new draft job ID: draft_{userId}_{timestamp}
+      const userId = parsedUser?.id || 'guest';
+      const newDraftJobId = `draft_${userId}_${Date.now()}`;
+      console.log('[Draft Job] Generated new draft job ID:', newDraftJobId);
+      localStorage.setItem('draft_job_id', newDraftJobId);
+      setDraftJobId(newDraftJobId);
     }
   }, []);
 
@@ -661,6 +676,27 @@ function JobIntakeContent() {
         }
       }
 
+      // Associate draft files with the real job
+      if (draftJobId) {
+        try {
+          console.log('[Job Intake] Associating draft files with job:', newJob.id);
+          await fetch('/api/files/associate-draft', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              draftJobId,
+              realJobId: newJob.id
+            })
+          });
+          // Clear draft job ID after successful submission
+          localStorage.removeItem('draft_job_id');
+          console.log('[Job Intake] Draft job ID cleared');
+        } catch (error) {
+          console.error('[Job Intake] Error associating draft files:', error);
+          // Don't block job submission if file association fails
+        }
+      }
+      
       const draftKey = `job_intake_draft_${user?.id || 'guest'}`;
       localStorage.removeItem(draftKey);
       toast.success('Job request submitted successfully!');
@@ -897,6 +933,7 @@ function JobIntakeContent() {
                         label="Problem Photo"
                         value={problemPhotoFile}
                         onChange={setProblemPhotoFile}
+                        draftJobId={draftJobId}
                         accept="image/*"
                         placeholder="Select problem photo"
                       />
@@ -904,6 +941,7 @@ function JobIntakeContent() {
                         label="Solution Photo"
                         value={solutionPhotoFile}
                         onChange={setSolutionPhotoFile}
+                        draftJobId={draftJobId}
                         accept="image/*"
                         placeholder="Select solution photo"
                       />
@@ -930,6 +968,7 @@ function JobIntakeContent() {
                         label="Photo 1"
                         value={storyboard1File}
                         onChange={setStoryboard1File}
+                        draftJobId={draftJobId}
                         accept="image/*"
                         placeholder="Select photo 1"
                       />
@@ -937,6 +976,7 @@ function JobIntakeContent() {
                         label="Photo 2"
                         value={storyboard2File}
                         onChange={setStoryboard2File}
+                        draftJobId={draftJobId}
                         accept="image/*"
                         placeholder="Select photo 2"
                       />
@@ -944,6 +984,7 @@ function JobIntakeContent() {
                         label="Photo 3"
                         value={storyboard3File}
                         onChange={setStoryboard3File}
+                        draftJobId={draftJobId}
                         accept="image/*"
                         placeholder="Select photo 3"
                       />
