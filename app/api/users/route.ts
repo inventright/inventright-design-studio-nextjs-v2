@@ -124,7 +124,7 @@ export async function POST(request: NextRequest) {
 
     if (existingUser.length > 0) {
       // Update existing user
-      const updated = await db
+      await db
         .update(users)
         .set({
           name,
@@ -135,17 +135,23 @@ export async function POST(request: NextRequest) {
           lastSignedIn: new Date(),
           updatedAt: new Date(),
         })
+        .where(eq(users.openId, openId));
+      
+      // Fetch complete user with ALL fields including contact info
+      const completeUser = await db
+        .select()
+        .from(users)
         .where(eq(users.openId, openId))
-        .returning();
+        .limit(1);
 
       return NextResponse.json({
         success: true,
-        user: updated[0],
+        user: completeUser[0],
         created: false
       });
     } else {
       // Create new user
-      const newUser = await db
+      await db
         .insert(users)
         .values({
           openId,
@@ -154,12 +160,18 @@ export async function POST(request: NextRequest) {
           loginMethod,
           role,
           wordpressId,
-        })
-        .returning();
+        });
+      
+      // Fetch complete user with ALL fields
+      const completeUser = await db
+        .select()
+        .from(users)
+        .where(eq(users.openId, openId))
+        .limit(1);
 
       return NextResponse.json({
         success: true,
-        user: newUser[0],
+        user: completeUser[0],
         created: true
       });
     }
