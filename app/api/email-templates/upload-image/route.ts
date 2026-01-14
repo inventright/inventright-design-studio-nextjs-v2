@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAdmin } from "@/lib/auth-utils";
+import { requireAdmin } from "@/lib/auth-utils-flexible";
 import { db } from "@/lib/db";
 import { emailTemplateImages } from "@/lib/db/schema";
 

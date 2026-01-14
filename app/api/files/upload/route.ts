@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { fileUploads, jobs } from "@/lib/db/schema";
-import { requireAuth } from "@/lib/auth-utils";
+import { requireAuth } from "@/lib/auth-utils-flexible";
 import { uploadBase64File, generateFileKey } from "@/lib/storage";
 import { eq } from "drizzle-orm";
 

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { fileUploads, jobs } from "@/lib/db/schema";
-import { requireAuth } from "@/lib/auth-utils";
+import { requireAuth } from "@/lib/auth-utils-flexible";
 import { eq, desc } from "drizzle-orm";
 
 // GET /api/files?jobId=123 - Get files for a job

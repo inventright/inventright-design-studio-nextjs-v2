@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { voucherCodes, voucherUsage } from "@/lib/db/schema";
-import { requireAdmin, getCurrentUser } from "@/lib/auth-utils";
+import { requireAdmin, getCurrentUser } from "@/lib/auth-utils-flexible";
 import { eq, and, count } from "drizzle-orm";
 
 // GET /api/vouchers - Get all vouchers (admin) or validate voucher (public)

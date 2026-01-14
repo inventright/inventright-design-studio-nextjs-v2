@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { voucherCodes } from "@/lib/db/schema";
-import { requireAdmin } from "@/lib/auth-utils";
+import { requireAdmin } from "@/lib/auth-utils-flexible";
 import { eq } from "drizzle-orm";
 
 // GET /api/vouchers/[id] - Get single voucher
