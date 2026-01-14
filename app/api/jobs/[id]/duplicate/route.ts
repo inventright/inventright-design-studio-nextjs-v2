@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { jobs, files } from "@/lib/db/schema";
+import { jobs, fileUploads } from "@/lib/db/schema";
 import { requireAuth } from "@/lib/auth-utils-flexible";
 import { eq } from "drizzle-orm";
 
@@ -65,14 +65,14 @@ export async function POST(
       .returning();
 
     // Get files from the original job
-    const originalFiles = await db
+      const originalFiles = await db
       .select()
-      .from(files)
-      .where(eq(files.jobId, jobId));
+      .from(fileUploads)
+      .where(eq(fileUploads.jobId, jobId));
 
     // Duplicate files if any exist
     if (originalFiles.length > 0) {
-      await db.insert(files).values(
+      await db.insert(fileUploads).values(
         originalFiles.map((file) => ({
           jobId: duplicatedJob.id,
           fileName: file.fileName,
