@@ -300,8 +300,9 @@ function JobIntakeContent() {
         })
       );
 
+      // Exclude file objects from draft save to avoid quota exceeded errors
       const draftData = {
-        files: filesData,
+        // files excluded - can't serialize File objects
         jobName,
         selectedDepartment,
         coachName,
@@ -311,12 +312,12 @@ function JobIntakeContent() {
         productDescription,
         sellSheetLayout,
         photoDescription,
-        problemPhotoFile,
-        solutionPhotoFile,
+        // problemPhotoFile excluded - File object
+        // solutionPhotoFile excluded - File object
         problemSolutionDescription,
-        storyboard1File,
-        storyboard2File,
-        storyboard3File,
+        // storyboard1File excluded - File object
+        // storyboard2File excluded - File object
+        // storyboard3File excluded - File object
         storyboardDescription,
         benefitStatement,
         bulletPoints,
