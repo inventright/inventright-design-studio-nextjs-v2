@@ -96,6 +96,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate unique file key
+    // For draft uploads, include draft ID in the path so we can find them later
     const fileKey = generateFileKey(`jobs/${jobId}`, fileName);
 
     // Upload to Wasabi S3
@@ -104,10 +105,11 @@ export async function POST(request: NextRequest) {
     console.log('[Upload API] Upload successful:', url);
 
     // Save file metadata to database
+    // For draft uploads, jobId is null (will be updated when job is submitted)
     const [uploadedFile] = await db
       .insert(fileUploads)
       .values({
-        jobId,
+        jobId: isDraftJob ? null : parseInt(jobId),
         uploadedBy: parseInt((user as any).id),
         fileName,
         fileUrl: url,
