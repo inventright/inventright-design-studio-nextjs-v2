@@ -14,6 +14,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { ArrowLeft, Upload, Loader2, CheckCircle, Tag, X, FileIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import GlassCard from '@/components/ui/GlassCard';
+import { FileUploadInput } from '@/components/ui/FileUploadInput';
 import LineDrawingFields from '@/components/intake/LineDrawingFields';
 import VirtualPrototypeFields from '@/components/intake/VirtualPrototypeFields';
 import UserContactInfo from '@/components/intake/UserContactInfo';
@@ -300,7 +301,7 @@ function JobIntakeContent() {
         })
       );
 
-      // Exclude file objects from draft save to avoid quota exceeded errors
+      // Save file keys (not File objects) for draft persistence
       const draftData = {
         // files excluded - can't serialize File objects
         jobName,
@@ -312,12 +313,12 @@ function JobIntakeContent() {
         productDescription,
         sellSheetLayout,
         photoDescription,
-        // problemPhotoFile excluded - File object
-        // solutionPhotoFile excluded - File object
+        problemPhotoFile, // Now stores file key (string)
+        solutionPhotoFile, // Now stores file key (string)
         problemSolutionDescription,
-        // storyboard1File excluded - File object
-        // storyboard2File excluded - File object
-        // storyboard3File excluded - File object
+        storyboard1File, // Now stores file key (string)
+        storyboard2File, // Now stores file key (string)
+        storyboard3File, // Now stores file key (string)
         storyboardDescription,
         benefitStatement,
         bulletPoints,
@@ -834,29 +835,20 @@ function JobIntakeContent() {
                     <div className="space-y-4 pt-4">
                       <p className="text-black">Upload your Problem/Solution images below and give us the file names and how to use them here:</p>
                       <div className="space-y-2">
-                        <Label htmlFor="problemPhotoFile" className="text-black">
-                          Name of Problem Photo File:
-                        </Label>
-                        <Input
-                          id="problemPhotoFile"
+                            <FileUploadInput
+                          label="Problem Photo"
                           value={problemPhotoFile}
-                          onChange={(e) => setProblemPhotoFile(e.target.value)}
-                          placeholder="Problem photo filename"
-                          className="glass border-[#4791FF]/30 text-black placeholder:text-gray-500"
+                          onChange={setProblemPhotoFile}
+                          accept="image/*"
+                          placeholder="Select problem photo"
                         />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="solutionPhotoFile" className="text-black">
-                          Name of the Solution Photo File:
-                        </Label>
-                        <Input
-                          id="solutionPhotoFile"
-                          value={solutionPhotoFile}
-                          onChange={(e) => setSolutionPhotoFile(e.target.value)}
-                          placeholder="Solution photo filename"
-                          className="glass border-[#4791FF]/30 text-black placeholder:text-gray-500"
-                        />
-                      </div>
+                      <FileUploadInput
+                        label="Solution Photo"
+                        value={solutionPhotoFile}
+                        onChange={setSolutionPhotoFile}
+                        accept="image/*"
+                        placeholder="Select solution photo"
+                      />
                       <div className="space-y-2">
                         <Label htmlFor="problemSolutionDescription" className="text-black">
                           Describe how these photos should be used/manipulated for your Problem/Solution sell sheet:
@@ -876,42 +868,27 @@ function JobIntakeContent() {
                   {sellSheetLayout === 'Storyboard' && (
                     <div className="space-y-4 pt-4">
                       <p className="text-black">Upload your three storyboard images below and then give the file names and how we should use them here:</p>
-                      <div className="space-y-2">
-                        <Label htmlFor="storyboard1File" className="text-black">
-                          Storyboard Photo 1 File Name:
-                        </Label>
-                        <Input
-                          id="storyboard1File"
-                          value={storyboard1File}
-                          onChange={(e) => setStoryboard1File(e.target.value)}
-                          placeholder="Photo 1 filename"
-                          className="glass border-[#4791FF]/30 text-black placeholder:text-gray-500"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="storyboard2File" className="text-black">
-                          Storyboard Photo 2 File Name:
-                        </Label>
-                        <Input
-                          id="storyboard2File"
-                          value={storyboard2File}
-                          onChange={(e) => setStoryboard2File(e.target.value)}
-                          placeholder="Photo 2 filename"
-                          className="glass border-[#4791FF]/30 text-black placeholder:text-gray-500"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="storyboard3File" className="text-black">
-                          Storyboard Photo 3 File Name:
-                        </Label>
-                        <Input
-                          id="storyboard3File"
-                          value={storyboard3File}
-                          onChange={(e) => setStoryboard3File(e.target.value)}
-                          placeholder="Photo 3 filename"
-                          className="glass border-[#4791FF]/30 text-black placeholder:text-gray-500"
-                        />
-                      </div>
+                      <FileUploadInput
+                        label="Photo 1"
+                        value={storyboard1File}
+                        onChange={setStoryboard1File}
+                        accept="image/*"
+                        placeholder="Select photo 1"
+                      />
+                      <FileUploadInput
+                        label="Photo 2"
+                        value={storyboard2File}
+                        onChange={setStoryboard2File}
+                        accept="image/*"
+                        placeholder="Select photo 2"
+                      />
+                      <FileUploadInput
+                        label="Photo 3"
+                        value={storyboard3File}
+                        onChange={setStoryboard3File}
+                        accept="image/*"
+                        placeholder="Select photo 3"
+                      />
                       <div className="space-y-2">
                         <Label htmlFor="storyboardDescription" className="text-black">
                           Describe how these photos should be used/manipulated for your Storyboard sell sheet:
