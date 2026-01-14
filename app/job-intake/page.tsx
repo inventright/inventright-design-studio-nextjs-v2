@@ -214,7 +214,8 @@ function JobIntakeContent() {
     // Update in database
     try {
       // Get auth token and user data from localStorage for authentication
-      const authToken = localStorage.getItem('auth_token');
+      // Try both auth_token (new) and wordpress_token (legacy) for compatibility
+      const authToken = localStorage.getItem('auth_token') || localStorage.getItem('wordpress_token');
       const storedUserData = localStorage.getItem('user_data');
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
