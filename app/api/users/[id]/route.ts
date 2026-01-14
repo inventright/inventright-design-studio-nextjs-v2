@@ -114,3 +114,11 @@ export async function PATCH(
     );
   }
 }
+
+// PUT /api/users/[id] - Update user data (alias for PATCH)
+export async function PUT(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  return PATCH(request, { params });
+}
