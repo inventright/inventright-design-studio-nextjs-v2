@@ -11,7 +11,7 @@ import { getCurrentUser } from '@/lib/auth-utils-flexible';
 export async function POST(request: NextRequest) {
   try {
     // Authenticate user
-    const user = await getCurrentUser(request);
+    const user = await getCurrentUser();
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
