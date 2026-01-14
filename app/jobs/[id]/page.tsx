@@ -49,6 +49,14 @@ export default function JobDetail({ params }: JobDetailProps) {
   useEffect(() => {
     const fetchJobDetails = async () => {
       try {
+        // Wait for user to be loaded
+        if (!user) {
+          console.log('[Job Details] Waiting for user authentication...');
+          return;
+        }
+
+        console.log('[Job Details] Fetching job:', jobId);
+        
         // Get auth credentials
         const authToken = localStorage.getItem('auth_token') || localStorage.getItem('wordpress_token');
         const userData = localStorage.getItem('user_data');
@@ -63,38 +71,52 @@ export default function JobDetail({ params }: JobDetailProps) {
         }
         
         // Fetch job details
+        console.log('[Job Details] Fetching job data...');
         const jobRes = await fetch(`/api/jobs/${jobId}`, {
           headers,
           credentials: 'include',
         });
+        
         if (!jobRes.ok) {
-          throw new Error('Failed to fetch job details');
+          const errorData = await jobRes.json().catch(() => ({}));
+          console.error('[Job Details] Job fetch failed:', jobRes.status, errorData);
+          throw new Error(errorData.error || 'Failed to fetch job details');
         }
+        
         const jobData = await jobRes.json();
+        console.log('[Job Details] Job data loaded:', jobData.id);
         setJob(jobData);
 
         // Fetch job files
+        console.log('[Job Details] Fetching files...');
         const filesRes = await fetch(`/api/files?jobId=${jobId}`, {
           headers,
           credentials: 'include',
         });
+        
         if (filesRes.ok) {
           const filesData = await filesRes.json();
+          console.log('[Job Details] Files loaded:', filesData.length);
           setFiles(filesData);
+        } else {
+          console.warn('[Job Details] Files fetch failed:', filesRes.status);
+          // Don't fail the whole page if files can't be loaded
+          setFiles([]);
         }
+        
+        setLoading(false);
       } catch (err: any) {
-        console.error('Error fetching job details:', err);
+        console.error('[Job Details] Error:', err);
         setError(err.message || 'Failed to load job details');
         toast.error('Failed to load job details');
-      } finally {
         setLoading(false);
       }
     };
 
-    if (jobId) {
+    if (jobId && user) {
       fetchJobDetails();
     }
-  }, [jobId]);
+  }, [jobId, user]);
 
   const parseDescription = (description: string | null) => {
     if (!description) return null;
