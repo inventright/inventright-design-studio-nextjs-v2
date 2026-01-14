@@ -100,14 +100,23 @@ export default function WordPressLogin() {
         }
         
         // Save user info with role
-        const userInfo = {
+        const userInfo: any = {
           id: data.user_id,
           email: data.user_email,
           name: data.user_display_name,
           username: data.user_nicename,
           role: mappedRole,
           wordpressRoles: wordpressRoles,
-          loginMethod: 'wordpress'
+          loginMethod: 'wordpress',
+          firstName: '',
+          lastName: '',
+          phone: '',
+          address1: '',
+          address2: '',
+          city: '',
+          state: '',
+          zip: '',
+          country: ''
         };
         
         console.log('Saving user info:', userInfo);
@@ -212,7 +221,7 @@ export default function WordPressLogin() {
             const wordpressRoles = wpData.user.roles || [];
             const mappedRole = mapWordPressRole(wordpressRoles);
             
-            const userInfo = {
+            const userInfo: any = {
               id: wpData.user.id,
               email: wpData.user.email,
               name: googleUser.name,
@@ -220,7 +229,16 @@ export default function WordPressLogin() {
               role: mappedRole,
               wordpressRoles: wordpressRoles,
               loginMethod: 'google',
-              googleLinked: true
+              googleLinked: true,
+              firstName: '',
+              lastName: '',
+              phone: '',
+              address1: '',
+              address2: '',
+              city: '',
+              state: '',
+              zip: '',
+              country: ''
             };
             
             setAuthCookies(credential, userInfo);
@@ -275,7 +293,7 @@ export default function WordPressLogin() {
       console.log('[Google Login] No WordPress account found, creating new client account');
       
       // No matching WordPress account - create new client account
-      const userInfo = {
+      const userInfo: any = {
         id: googleUser.sub,
         email: googleUser.email,
         name: googleUser.name,
@@ -283,7 +301,16 @@ export default function WordPressLogin() {
         role: 'client' as DesignStudioRole,
         wordpressRoles: [],
         loginMethod: 'google',
-        googleLinked: false
+        googleLinked: false,
+        firstName: '',
+        lastName: '',
+        phone: '',
+        address1: '',
+        address2: '',
+        city: '',
+        state: '',
+        zip: '',
+        country: ''
       };
       
       setAuthCookies(credential, userInfo);
