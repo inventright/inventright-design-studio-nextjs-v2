@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { files } from '@/lib/db/schema';
+import { fileUploads } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { getCurrentUser } from '@/lib/auth-utils-flexible';
 
@@ -29,9 +29,9 @@ export async function POST(request: NextRequest) {
 
     // Update all files with the draft job ID to use the real job ID
     const result = await db
-      .update(files)
+      .update(fileUploads)
       .set({ jobId: realJobId.toString() })
-      .where(eq(files.jobId, draftJobId));
+      .where(eq(fileUploads.jobId, draftJobId));
 
     console.log(`[Associate Draft] Updated files successfully`);
 
