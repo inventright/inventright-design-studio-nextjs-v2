@@ -834,14 +834,13 @@ function JobIntakeContent() {
                   {sellSheetLayout === 'Problem vs. Solution' && (
                     <div className="space-y-4 pt-4">
                       <p className="text-black">Upload your Problem/Solution images below and give us the file names and how to use them here:</p>
-                      <div className="space-y-2">
-                            <FileUploadInput
-                          label="Problem Photo"
-                          value={problemPhotoFile}
-                          onChange={setProblemPhotoFile}
-                          accept="image/*"
-                          placeholder="Select problem photo"
-                        />
+                      <FileUploadInput
+                        label="Problem Photo"
+                        value={problemPhotoFile}
+                        onChange={setProblemPhotoFile}
+                        accept="image/*"
+                        placeholder="Select problem photo"
+                      />
                       <FileUploadInput
                         label="Solution Photo"
                         value={solutionPhotoFile}
