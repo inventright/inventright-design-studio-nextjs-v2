@@ -15,6 +15,13 @@
       "when": 1768187158564,
       "tag": "0001_slow_mentor",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1768353796942,
+      "tag": "0002_awesome_clint_barton",
+      "breakpoints": true
     }
   ]
 }

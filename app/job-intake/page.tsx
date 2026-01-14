@@ -124,14 +124,20 @@ function JobIntakeContent() {
           lastName = nameParts.slice(1).join(' ') || '';
         }
         
-        setUser({
-          firstName: firstName || parsedUser.firstName || '',
-          lastName: lastName || parsedUser.lastName || '',
-          email: parsedUser.email || '',
-          phone: parsedUser.phone || '',
-          username: parsedUser.username || '',
-          id: parsedUser.id || null
-        });
+      setUser({
+        id: parsedUser.id || null,
+        username: parsedUser.username || '',
+        firstName: firstName || parsedUser.firstName || '',
+        lastName: lastName || parsedUser.lastName || '',
+        email: parsedUser.email || '',
+        phone: parsedUser.phone || '',
+        address1: parsedUser.address1 || '',
+        address2: parsedUser.address2 || '',
+        city: parsedUser.city || '',
+        state: parsedUser.state || '',
+        zip: parsedUser.zip || '',
+        country: parsedUser.country || ''
+      });
         
         console.log('User set to:', {
           firstName,
@@ -207,16 +213,22 @@ function JobIntakeContent() {
     
     // Update in database
     try {
-      const response = await fetch('/api/users/' + user.id, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          firstName: updatedUser.firstName,
-          lastName: updatedUser.lastName,
-          email: updatedUser.email,
-          phone: updatedUser.phone
-        })
-      });
+    const response = await fetch('/api/users/' + user.id, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        firstName: updatedUser.firstName,
+        lastName: updatedUser.lastName,
+        email: updatedUser.email,
+        phone: updatedUser.phone,
+        address1: updatedUser.address1,
+        address2: updatedUser.address2,
+        city: updatedUser.city,
+        state: updatedUser.state,
+        zip: updatedUser.zip,
+        country: updatedUser.country
+      })
+    });
       
       if (!response.ok) {
         throw new Error('Failed to update user in database');

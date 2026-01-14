@@ -59,14 +59,32 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const { firstName, lastName, email, phone, role } = body;
+    const { 
+      firstName, 
+      lastName, 
+      email, 
+      phone, 
+      role,
+      address1,
+      address2,
+      city,
+      state,
+      zip,
+      country
+    } = body;
 
     // Build update object with only provided fields
-    const updateData: any = {};
+    const updateData: Record<string, any> = {};
     if (firstName !== undefined) updateData.firstName = firstName;
     if (lastName !== undefined) updateData.lastName = lastName;
     if (email !== undefined) updateData.email = email;
     if (phone !== undefined) updateData.phone = phone;
+    if (address1 !== undefined) updateData.address1 = address1;
+    if (address2 !== undefined) updateData.address2 = address2;
+    if (city !== undefined) updateData.city = city;
+    if (state !== undefined) updateData.state = state;
+    if (zip !== undefined) updateData.zip = zip;
+    if (country !== undefined) updateData.country = country;
     
     // Only admins can change roles
     if (role !== undefined && currentUser.data.role === 'Administrator') {
