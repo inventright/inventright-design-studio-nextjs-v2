@@ -75,11 +75,15 @@ export async function POST(
       await db.insert(fileUploads).values(
         originalFiles.map((file) => ({
           jobId: duplicatedJob.id,
+          uploadedBy: file.uploadedBy,
           fileName: file.fileName,
           fileUrl: file.fileUrl,
+          fileKey: file.fileKey,
           fileSize: file.fileSize,
           mimeType: file.mimeType,
-          uploadedAt: new Date(),
+          fileType: file.fileType,
+          googleDriveId: file.googleDriveId,
+          createdAt: new Date(),
         }))
       );
     }
