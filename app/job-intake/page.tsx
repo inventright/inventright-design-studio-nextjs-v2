@@ -152,8 +152,9 @@ function JobIntakeContent() {
       console.log('No user data found in localStorage');
     }
     
-    // Load saved draft from localStorage
-    const savedDraft = localStorage.getItem('job_intake_draft');
+    // Load saved draft from localStorage (user-specific)
+    const draftKey = `job_intake_draft_${parsedUser?.id || 'guest'}`;
+    const savedDraft = localStorage.getItem(draftKey);
     if (savedDraft) {
       try {
         const { data } = JSON.parse(savedDraft);
@@ -328,7 +329,8 @@ function JobIntakeContent() {
         formData
       };
 
-      localStorage.setItem('job_intake_draft', JSON.stringify({
+      const draftKey = `job_intake_draft_${user?.id || 'guest'}`;
+      localStorage.setItem(draftKey, JSON.stringify({
         data: draftData,
         timestamp: new Date().toISOString()
       }));
@@ -603,7 +605,8 @@ function JobIntakeContent() {
         }
       }
 
-      localStorage.removeItem('job_intake_draft');
+      const draftKey = `job_intake_draft_${user?.id || 'guest'}`;
+      localStorage.removeItem(draftKey);
       toast.success('Job request submitted successfully!');
       router.push(`/jobs/${newJob.id}`);
     } catch (error: any) {
