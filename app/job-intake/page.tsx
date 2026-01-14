@@ -213,22 +213,36 @@ function JobIntakeContent() {
     
     // Update in database
     try {
-    const response = await fetch('/api/users/' + user.id, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        firstName: updatedUser.firstName,
-        lastName: updatedUser.lastName,
-        email: updatedUser.email,
-        phone: updatedUser.phone,
-        address1: updatedUser.address1,
-        address2: updatedUser.address2,
-        city: updatedUser.city,
-        state: updatedUser.state,
-        zip: updatedUser.zip,
-        country: updatedUser.country
-      })
-    });
+      // Get auth token and user data from localStorage for authentication
+      const authToken = localStorage.getItem('auth_token');
+      const storedUserData = localStorage.getItem('user_data');
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+      }
+      if (storedUserData) {
+        headers['X-User-Data'] = storedUserData;
+      }
+      
+      const response = await fetch(`/api/users/${user.id}`, {
+        method: 'PUT',
+        headers,
+        credentials: 'include', // Include cookies if available
+        body: JSON.stringify({
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          phone: user.phone,
+          address1: user.address1,
+          address2: user.address2,
+          city: user.city,
+          state: user.state,
+          zip: user.zip,
+          country: user.country
+        })
+      });
       
       if (!response.ok) {
         throw new Error('Failed to update user in database');
