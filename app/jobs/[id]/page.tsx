@@ -49,12 +49,6 @@ export default function JobDetail({ params }: JobDetailProps) {
   useEffect(() => {
     const fetchJobDetails = async () => {
       try {
-        // Wait for user to be loaded
-        if (!user) {
-          console.log('[Job Details] Waiting for user authentication...');
-          return;
-        }
-
         console.log('[Job Details] Fetching job:', jobId);
         
         // Get auth credentials
@@ -113,10 +107,10 @@ export default function JobDetail({ params }: JobDetailProps) {
       }
     };
 
-    if (jobId && user) {
+    if (jobId) {
       fetchJobDetails();
     }
-  }, [jobId, user]);
+  }, [jobId]);
 
   const parseDescription = (description: string | null) => {
     if (!description) return null;
