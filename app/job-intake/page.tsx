@@ -279,30 +279,23 @@ function JobIntakeContent() {
 
   // Auto-save draft
   const autoSave = () => {
-    if (!user) return;
-
     if (autoSaveTimeout.current) {
       clearTimeout(autoSaveTimeout.current);
     }
-
-    autoSaveTimeout.current = setTimeout(async () => {
-      // Convert files to base64 for storage
-      const filesData = await Promise.all(
-        files.map(async (file) => {
-          const base64 = await new Promise<string>((resolve) => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result as string);
-            reader.readAsDataURL(file);
-          });
-          return {
-            name: file.name,
-            type: file.type,
-            size: file.size,
-            data: base64
-          };
-        })
-      );
-
+    
+    autoSaveTimeout.current = setTimeout(() => {
+      // Always get user ID from localStorage for consistency
+      let userId = 'guest';
+      try {
+        const storedUser = localStorage.getItem('user_data');
+        if (storedUser) {
+          const parsed = JSON.parse(storedUser);
+          userId = parsed.id || 'guest';
+        }
+      } catch (e) {
+        console.error('[Draft] Error getting user ID:', e);
+      }
+      
       // Save file keys (not File objects) for draft persistence
       const draftData = {
         // files excluded - can't serialize File objects
@@ -330,12 +323,16 @@ function JobIntakeContent() {
         formData
       };
 
-      const draftKey = `job_intake_draft_${user?.id || 'guest'}`;
+      const draftKey = `job_intake_draft_${userId}`;
+      console.log('[Draft] Saving to key:', draftKey);
+      
       localStorage.setItem(draftKey, JSON.stringify({
         data: draftData,
         timestamp: new Date().toISOString()
       }));
+      
       setLastSaved(new Date());
+      console.log('[Draft] Saved successfully');
     }, 2000);
   };
 
@@ -344,10 +341,63 @@ function JobIntakeContent() {
     if (user && (jobName || selectedDepartment)) {
       autoSave();
     }
-  }, [files, jobName, selectedDepartment, coachName, howHeard, memberStatus, category, productDescription,
-      sellSheetLayout, photoDescription, problemPhotoFile, solutionPhotoFile, problemSolutionDescription,
-      storyboard1File, storyboard2File, storyboard3File, storyboardDescription, benefitStatement,
-      bulletPoints, videoLink, additionalInfo, legalInfo, formData]);
+  }, [files, jobName, selectedDepartment, coachName, howHeard, memberStatus, 
+      category, productDescription, sellSheetLayout, photoDescription, 
+      problemPhotoFile, solutionPhotoFile, problemSolutionDescription,
+      storyboard1File, storyboard2File, storyboard3File, storyboardDescription, 
+      benefitStatement, bulletPoints, videoLink, additionalInfo, legalInfo, formData]);
+
+  // Save immediately when user leaves page (before debounce completes)
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      // Immediately save draft when user leaves page
+      let userId = 'guest';
+      try {
+        const storedUser = localStorage.getItem('user_data');
+        if (storedUser) {
+          userId = JSON.parse(storedUser).id || 'guest';
+        }
+      } catch (e) {}
+      
+      const draftData = {
+        jobName,
+        selectedDepartment,
+        coachName,
+        howHeard,
+        memberStatus,
+        category,
+        productDescription,
+        sellSheetLayout,
+        photoDescription,
+        problemPhotoFile,
+        solutionPhotoFile,
+        problemSolutionDescription,
+        storyboard1File,
+        storyboard2File,
+        storyboard3File,
+        storyboardDescription,
+        benefitStatement,
+        bulletPoints,
+        videoLink,
+        additionalInfo,
+        legalInfo,
+        formData,
+      };
+
+      const draftKey = `job_intake_draft_${userId}`;
+      localStorage.setItem(draftKey, JSON.stringify({
+        data: draftData,
+        timestamp: new Date().toISOString()
+      }));
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [jobName, selectedDepartment, coachName, howHeard, memberStatus, 
+      category, productDescription, sellSheetLayout, photoDescription,
+      problemPhotoFile, solutionPhotoFile, problemSolutionDescription,
+      storyboard1File, storyboard2File, storyboard3File, storyboardDescription,
+      benefitStatement, bulletPoints, videoLink, additionalInfo, legalInfo, formData]);
 
   // Static departments fallback for when database is not connected
   const staticDepartments = [

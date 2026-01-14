@@ -29,6 +29,13 @@ export function FileUploadInput({
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Check file size
+    const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+    if (file.size > MAX_SIZE) {
+      toast.error(`File too large. Maximum size is 10MB.`);
+      return;
+    }
+
     setFileName(file.name);
     setUploading(true);
 
@@ -38,7 +45,7 @@ export function FileUploadInput({
       toast.success(`${file.name} uploaded successfully`);
     } catch (error: any) {
       console.error('Upload error:', error);
-      toast.error(`Failed to upload ${file.name}`);
+      toast.error(error.message || `Failed to upload ${file.name}`);
       setFileName('');
     } finally {
       setUploading(false);
