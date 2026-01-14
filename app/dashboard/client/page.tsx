@@ -324,6 +324,15 @@ export default function ClientDashboard() {
           </Card>
         </div>
 
+        {/* Draft Expiration Notice */}
+        {jobs.some(j => j.status === 'Draft') && (
+          <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <p className="text-sm text-yellow-800">
+              <strong>⚠️ Important:</strong> Draft jobs are automatically deleted after 60 days of inactivity. Please submit your drafts before they expire.
+            </p>
+          </div>
+        )}
+
         <Card>
           <CardHeader>
             <CardTitle>Your Projects</CardTitle>
@@ -359,6 +368,19 @@ export default function ClientDashboard() {
                     Completed: 'bg-green-100 text-green-800',
                   };
                   
+                  // Calculate draft age if it's a draft
+                  const isDraft = job.status === 'Draft';
+                  let draftAge = 0;
+                  let draftWarning = '';
+                  if (isDraft) {
+                    const createdDate = new Date(job.createdAt);
+                    const now = new Date();
+                    draftAge = Math.floor((now.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24));
+                    if (draftAge > 45) {
+                      draftWarning = `⚠️ Expires in ${60 - draftAge} days`;
+                    }
+                  }
+                  
                   return (
                     <Link key={job.id} href={`/jobs/${job.id}`}>
                       <div className="p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-sm transition-all cursor-pointer">
@@ -377,7 +399,15 @@ export default function ClientDashboard() {
                           )}
                           <span>Priority: {job.priority}</span>
                           <span>Created {new Date(job.createdAt).toLocaleDateString()}</span>
+                          {isDraft && draftAge > 0 && (
+                            <span className="text-xs text-gray-500">({draftAge} days old)</span>
+                          )}
                         </div>
+                        {draftWarning && (
+                          <div className="mt-2 text-xs text-yellow-700 font-medium">
+                            {draftWarning}
+                          </div>
+                        )}
                       </div>
                     </Link>
                   );

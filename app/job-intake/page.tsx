@@ -31,7 +31,7 @@ function JobIntakeContent() {
   // User and package state
   const [user, setUser] = useState<any>(null);
   const [packageJob, setPackageJob] = useState<any>(null);
-  const [draftJobId, setDraftJobId] = useState<string | null>(null);
+  const [draftJobId, setDraftJobId] = useState<number | null>(null);
 
   // Basic form fields
   const [selectedDepartment, setSelectedDepartment] = useState('');
@@ -211,19 +211,34 @@ function JobIntakeContent() {
       console.log('No user data found in localStorage');
     }
     
-    // Generate or load draft job ID for file uploads
-    const storedDraftJobId = localStorage.getItem('draft_job_id');
-    if (storedDraftJobId) {
-      console.log('[Draft Job] Using existing draft job ID:', storedDraftJobId);
-      setDraftJobId(storedDraftJobId);
-    } else {
-      // Generate new draft job ID: draft_{userId}_{timestamp}
-      const userId = parsedUser?.id || 'guest';
-      const newDraftJobId = `draft_${userId}_${Date.now()}`;
-      console.log('[Draft Job] Generated new draft job ID:', newDraftJobId);
-      localStorage.setItem('draft_job_id', newDraftJobId);
-      setDraftJobId(newDraftJobId);
-    }
+    // Get or create draft job from database
+    const fetchDraftJob = async () => {
+      try {
+        const authToken = localStorage.getItem('wordpress_token') || localStorage.getItem('auth_token');
+        const userData = localStorage.getItem('user_data');
+        
+        const response = await fetch('/api/jobs/draft', {
+          headers: {
+            'Authorization': `Bearer ${authToken}`,
+            'X-User-Data': userData || '',
+          },
+          credentials: 'include',
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log('[Draft Job] Got draft job:', data.job.id);
+          setDraftJobId(data.job.id);
+          localStorage.setItem('draft_job_id', data.job.id.toString());
+        } else {
+          console.error('[Draft Job] Failed to get draft job:', response.status);
+        }
+      } catch (error) {
+        console.error('[Draft Job] Error fetching draft job:', error);
+      }
+    };
+    
+    fetchDraftJob();
   }, []);
 
   const handleUserInfoUpdate = async (updatedInfo: any) => {
@@ -600,15 +615,20 @@ function JobIntakeContent() {
         coachName
       };
 
-      const response = await fetch('/api/jobs', {
-        method: 'POST',
+      // Update the draft job to make it active
+      if (!draftJobId) {
+        throw new Error('No draft job ID found');
+      }
+
+      const response = await fetch(`/api/jobs/${draftJobId}`, {
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: jobName,
           description: JSON.stringify(finalFormData),
           departmentId: parseInt(selectedDepartment),
-          clientId: user.id,
           packageType: packageType || null,
+          status: 'Pending',
           isDraft: false
         })
       });
@@ -676,26 +696,9 @@ function JobIntakeContent() {
         }
       }
 
-      // Associate draft files with the real job
-      if (draftJobId) {
-        try {
-          console.log('[Job Intake] Associating draft files with job:', newJob.id);
-          await fetch('/api/files/associate-draft', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              draftJobId,
-              realJobId: newJob.id
-            })
-          });
-          // Clear draft job ID after successful submission
-          localStorage.removeItem('draft_job_id');
-          console.log('[Job Intake] Draft job ID cleared');
-        } catch (error) {
-          console.error('[Job Intake] Error associating draft files:', error);
-          // Don't block job submission if file association fails
-        }
-      }
+      // Clear draft job ID after successful submission
+      localStorage.removeItem('draft_job_id');
+      console.log('[Job Intake] Draft converted to active job:', newJob.id);
       
       const draftKey = `job_intake_draft_${user?.id || 'guest'}`;
       localStorage.removeItem(draftKey);

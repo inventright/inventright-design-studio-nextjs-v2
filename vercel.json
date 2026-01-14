@@ -1,5 +1,11 @@
 {
   "framework": "nextjs",
   "buildCommand": "pnpm build",
-  "installCommand": "pnpm install"
+  "installCommand": "pnpm install",
+  "crons": [
+    {
+      "path": "/api/jobs/cleanup-drafts",
+      "schedule": "0 2 * * *"
+    }
+  ]
 }

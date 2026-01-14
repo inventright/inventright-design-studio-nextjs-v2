@@ -66,33 +66,26 @@ export async function POST(request: NextRequest) {
       console.log('[Upload API] JSON upload:', fileName, 'Job:', jobId, 'Size:', fileBuffer.length);
     }
 
-    // Check if this is a draft job ID (starts with "draft_")
-    const isDraftJob = jobId.startsWith('draft_');
+    // Verify job exists and user has access
+    const [job] = await db.select().from(jobs).where(eq(jobs.id, parseInt(jobId)));
 
-    if (!isDraftJob) {
-      // For real jobs, verify job exists and user has access
-      const [job] = await db.select().from(jobs).where(eq(jobs.id, parseInt(jobId)));
+    if (!job) {
+      return NextResponse.json({ error: "Job not found" }, { status: 404 });
+    }
 
-      if (!job) {
-        return NextResponse.json({ error: "Job not found" }, { status: 404 });
-      }
+    // Check access permissions (allow uploads to own jobs or if admin/manager)
+    const userRole = (user as any).data?.role || "client";
+    const canUpload =
+      job.clientId === parseInt((user as any).id) ||
+      job.designerId === parseInt((user as any).id) ||
+      userRole === "admin" ||
+      userRole === "manager";
 
-      // Check access permissions
-      const userRole = (user as any).data?.role || "client";
-      const canUpload =
-        job.clientId === parseInt((user as any).id) ||
-        job.designerId === parseInt((user as any).id) ||
-        userRole === "admin" ||
-        userRole === "manager";
-
-      if (!canUpload) {
-        return NextResponse.json(
-          { error: "You don't have permission to upload files to this job" },
-          { status: 403 }
-        );
-      }
-    } else {
-      console.log('[Upload API] Draft job upload, skipping job verification');
+    if (!canUpload) {
+      return NextResponse.json(
+        { error: "You don't have permission to upload files to this job" },
+        { status: 403 }
+      );
     }
 
     // Generate unique file key
@@ -105,11 +98,10 @@ export async function POST(request: NextRequest) {
     console.log('[Upload API] Upload successful:', url);
 
     // Save file metadata to database
-    // For draft uploads, jobId is null (will be updated when job is submitted)
     const [uploadedFile] = await db
       .insert(fileUploads)
       .values({
-        jobId: isDraftJob ? null : parseInt(jobId),
+        jobId: parseInt(jobId),
         uploadedBy: parseInt((user as any).id),
         fileName,
         fileUrl: url,

@@ -75,7 +75,7 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const { status, priority, designerId, description } = body;
+    const { status, priority, designerId, description, title, departmentId, packageType, isDraft } = body;
 
     // Get existing job to check permissions
     const [existingJob] = await db
@@ -106,7 +106,12 @@ export async function PATCH(
     if (priority !== undefined) updates.priority = priority;
     if (designerId !== undefined) updates.designerId = designerId;
     if (description !== undefined) updates.description = description;
+    if (title !== undefined) updates.title = title;
+    if (departmentId !== undefined) updates.departmentId = departmentId;
+    if (packageType !== undefined) updates.packageType = packageType;
+    if (isDraft !== undefined) updates.isDraft = isDraft;
     updates.updatedAt = new Date();
+    updates.lastActivityDate = new Date();
 
     const [updatedJob] = await db
       .update(jobs)

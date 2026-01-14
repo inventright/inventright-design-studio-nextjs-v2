@@ -10,7 +10,7 @@ interface FileUploadInputProps {
   label: string;
   value: string; // file key
   onChange: (fileKey: string) => void;
-  draftJobId?: string | null; // draft job ID for immediate upload
+  draftJobId?: string | number | null; // draft job ID for immediate upload
   accept?: string;
   placeholder?: string;
 }
