@@ -146,63 +146,68 @@ function JobIntakeContent() {
           lastName,
           email: parsedUser.email
         });
+        
+        // Load saved draft from localStorage (user-specific)
+        const draftKey = `job_intake_draft_${parsedUser.id}`;
+        console.log('[Draft] Loading from key:', draftKey);
+        const savedDraft = localStorage.getItem(draftKey);
+        if (savedDraft) {
+          try {
+            console.log('[Draft] Found draft data');
+            const { data } = JSON.parse(savedDraft);
+        
+            // Restore files from base64 (async operation)
+            if (data.files && Array.isArray(data.files)) {
+              (async () => {
+                try {
+                  const restoredFiles = await Promise.all(
+                    data.files.map(async (fileData: any) => {
+                      const response = await fetch(fileData.data);
+                      const blob = await response.blob();
+                      return new File([blob], fileData.name, { type: fileData.type });
+                    })
+                  );
+                  setFiles(restoredFiles);
+                } catch (fileError) {
+                  console.error('Error restoring files:', fileError);
+                }
+              })();
+            }
+            setJobName(data.jobName || '');
+            setSelectedDepartment(data.selectedDepartment || '');
+            setCoachName(data.coachName || '');
+            setHowHeard(data.howHeard || '');
+            setMemberStatus(data.memberStatus || '');
+            setCategory(data.category || '');
+            setProductDescription(data.productDescription || '');
+            setSellSheetLayout(data.sellSheetLayout || '');
+            setPhotoDescription(data.photoDescription || '');
+            setProblemPhotoFile(data.problemPhotoFile || '');
+            setSolutionPhotoFile(data.solutionPhotoFile || '');
+            setProblemSolutionDescription(data.problemSolutionDescription || '');
+            setStoryboard1File(data.storyboard1File || '');
+            setStoryboard2File(data.storyboard2File || '');
+            setStoryboard3File(data.storyboard3File || '');
+            setStoryboardDescription(data.storyboardDescription || '');
+            setBenefitStatement(data.benefitStatement || '');
+            setBulletPoints(data.bulletPoints || '');
+            setVideoLink(data.videoLink || '');
+            setAdditionalInfo(data.additionalInfo || '');
+            setLegalInfo(data.legalInfo || []);
+            setFormData(data.formData || {});
+            console.log('[Draft] Loaded successfully');
+            toast.success('Draft loaded from previous session');
+          } catch (error) {
+            console.error('[Draft] Error loading draft:', error);
+          }
+        } else {
+          console.log('[Draft] No draft found for key:', draftKey);
+        }
       } catch (error) {
         console.error('Error loading user data:', error);
       }
     } else {
       console.log('No user data found in localStorage');
-    }
-    
-    // Load saved draft from localStorage (user-specific)
-    const draftKey = `job_intake_draft_${parsedUser?.id || 'guest'}`;
-    const savedDraft = localStorage.getItem(draftKey);
-    if (savedDraft) {
-      try {
-        const { data } = JSON.parse(savedDraft);
-        
-        // Restore files from base64 (async operation)
-        if (data.files && Array.isArray(data.files)) {
-          (async () => {
-            try {
-              const restoredFiles = await Promise.all(
-                data.files.map(async (fileData: any) => {
-                  const response = await fetch(fileData.data);
-                  const blob = await response.blob();
-                  return new File([blob], fileData.name, { type: fileData.type });
-                })
-              );
-              setFiles(restoredFiles);
-            } catch (fileError) {
-              console.error('Error restoring files:', fileError);
-            }
-          })();
-        }
-        setJobName(data.jobName || '');
-        setSelectedDepartment(data.selectedDepartment || '');
-        setCoachName(data.coachName || '');
-        setHowHeard(data.howHeard || '');
-        setMemberStatus(data.memberStatus || '');
-        setCategory(data.category || '');
-        setProductDescription(data.productDescription || '');
-        setSellSheetLayout(data.sellSheetLayout || '');
-        setPhotoDescription(data.photoDescription || '');
-        setProblemPhotoFile(data.problemPhotoFile || '');
-        setSolutionPhotoFile(data.solutionPhotoFile || '');
-        setProblemSolutionDescription(data.problemSolutionDescription || '');
-        setStoryboard1File(data.storyboard1File || '');
-        setStoryboard2File(data.storyboard2File || '');
-        setStoryboard3File(data.storyboard3File || '');
-        setStoryboardDescription(data.storyboardDescription || '');
-        setBenefitStatement(data.benefitStatement || '');
-        setBulletPoints(data.bulletPoints || '');
-        setVideoLink(data.videoLink || '');
-        setAdditionalInfo(data.additionalInfo || '');
-        setLegalInfo(data.legalInfo || []);
-        setFormData(data.formData || {});
-        toast.success('Draft loaded from previous session');
-      } catch (error) {
-        console.error('Error loading draft:', error);
-      }
     }
   }, []);
 
