@@ -110,9 +110,10 @@ function JobIntakeContent() {
   useEffect(() => {
     // Load user from WordPress localStorage
     const userData = localStorage.getItem('user_data');
+    let parsedUser: any = null;
     if (userData) {
       try {
-        const parsedUser = JSON.parse(userData);
+        parsedUser = JSON.parse(userData);
         console.log('Loaded WordPress user:', parsedUser);
         
         // Parse name into first and last name if needed
