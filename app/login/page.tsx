@@ -115,9 +115,9 @@ export default function WordPressLogin() {
         // Save token and user data to both localStorage and cookies
         setAuthCookies(data.token, userInfo);
         
-        // Sync user to database
+        // Sync user to database and get the database user ID
         try {
-          await fetch('/api/users', {
+          const dbResponse = await fetch('/api/users', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -131,6 +131,17 @@ export default function WordPressLogin() {
               wordpressId: data.user_id,
             })
           });
+          
+          if (dbResponse.ok) {
+            const dbData = await dbResponse.json();
+            if (dbData.success && dbData.user) {
+              // Update userInfo with the database ID instead of WordPress ID
+              userInfo.id = dbData.user.id;
+              console.log('Updated user ID from database:', userInfo.id);
+              // Re-save with correct database ID
+              setAuthCookies(data.token, userInfo);
+            }
+          }
         } catch (dbError) {
           console.warn('Could not sync user to database:', dbError);
         }
@@ -205,9 +216,9 @@ export default function WordPressLogin() {
             
             setAuthCookies(credential, userInfo);
             
-            // Sync user to database
+            // Sync user to database and get database ID
             try {
-              await fetch('/api/users', {
+              const dbResponse = await fetch('/api/users', {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
@@ -221,6 +232,15 @@ export default function WordPressLogin() {
                   wordpressId: wpData.user.id,
                 })
               });
+              
+              if (dbResponse.ok) {
+                const dbData = await dbResponse.json();
+                if (dbData.success && dbData.user) {
+                  userInfo.id = dbData.user.id;
+                  console.log('[Google Login] Updated user ID from database:', userInfo.id);
+                  setAuthCookies(credential, userInfo);
+                }
+              }
             } catch (dbError) {
               console.warn('[Google Login] Could not sync user to database:', dbError);
             }
@@ -250,9 +270,9 @@ export default function WordPressLogin() {
       
       setAuthCookies(credential, userInfo);
       
-      // Sync new client to database
+      // Sync new client to database and get database ID
       try {
-        await fetch('/api/users', {
+        const dbResponse = await fetch('/api/users', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -266,6 +286,15 @@ export default function WordPressLogin() {
             wordpressId: null,
           })
         });
+        
+        if (dbResponse.ok) {
+          const dbData = await dbResponse.json();
+          if (dbData.success && dbData.user) {
+            userInfo.id = dbData.user.id;
+            console.log('[Google Login] Updated user ID from database:', userInfo.id);
+            setAuthCookies(credential, userInfo);
+          }
+        }
       } catch (dbError) {
         console.warn('[Google Login] Could not sync new client to database:', dbError);
       }
