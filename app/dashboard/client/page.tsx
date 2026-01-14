@@ -134,7 +134,9 @@ export default function ClientDashboard() {
 
   const handleStartVirtualPrototype = (orderId: string) => {
     router.push(`/job-intake?jobType=virtual_prototype&packageId=${orderId}`);
-  }  const handleDeleteJob = async (jobId: number, e: React.MouseEvent) => {
+  };
+
+  const handleDeleteJob = async (jobId: number, e: React.MouseEvent) => {
     e.preventDefault(); // Prevent navigation
     e.stopPropagation();
     
@@ -183,7 +185,8 @@ export default function ClientDashboard() {
     }
   };
 
-  const handleStartSellSheet = async (orderId: number) => {  router.push(`/job-intake?jobType=sell_sheet&packageId=${orderId}`);
+  const handleStartSellSheet = async (orderId: number) => {
+    router.push(`/job-intake?jobType=sell_sheet&packageId=${orderId}`);
   };
 
   return (
