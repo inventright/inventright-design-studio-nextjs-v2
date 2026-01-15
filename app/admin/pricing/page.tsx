@@ -27,6 +27,8 @@ interface ProductPricing {
   stripeProductId: string | null;
   stripePriceId: string | null;
   isActive: boolean;
+  parentProductKey: string | null;
+  parentProductName?: string;
   tierName?: string;
 }
 
@@ -287,6 +289,11 @@ export default function PricingManagementPage() {
                           <div>
                             <div className="font-medium text-gray-900">{product.productName}</div>
                             <div className="text-sm text-gray-500">{product.productKey}</div>
+                            {product.parentProductName && (
+                              <div className="text-xs text-blue-600 mt-1">
+                                Add-on for: {product.parentProductName}
+                              </div>
+                            )}
                           </div>
                         </td>
                         <td className="px-4 py-3">

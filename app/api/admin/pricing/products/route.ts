@@ -5,12 +5,24 @@ import { eq, desc } from 'drizzle-orm';
 
 export async function GET(request: NextRequest) {
   try {
-    const products = await db
+    // Fetch all products
+    const allProducts = await db
       .select()
       .from(productPricing)
       .orderBy(productPricing.category, productPricing.productName);
 
-    return NextResponse.json({ products });
+    // Create a map of productKey to productName for parent lookups
+    const productMap = new Map(allProducts.map(p => [p.productKey, p.productName]));
+
+    // Add parent product names to products that have a parent
+    const productsWithParents = allProducts.map(product => ({
+      ...product,
+      parentProductName: product.parentProductKey 
+        ? productMap.get(product.parentProductKey) || null
+        : null
+    }));
+
+    return NextResponse.json({ products: productsWithParents });
   } catch (error) {
     console.error('Error fetching products:', error);
     return NextResponse.json(
