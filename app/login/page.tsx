@@ -15,6 +15,11 @@ import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 const WORDPRESS_API_URL = process.env.NEXT_PUBLIC_WORDPRESS_API_URL || 'https://inventtraining.com/wp-json';
 const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '694179851188-snel037oka5nn47302tblrs06s9n4qep.apps.googleusercontent.com';
 
+// Helper function to get redirect URL based on user role
+const getRedirectUrl = (role: string) => {
+  return role === 'admin' ? '/dashboard/admin' : '/job-intake';
+};
+
 export default function WordPressLogin() {
   const [loading, setLoading] = useState(false);
   const [credentials, setCredentials] = useState({
@@ -25,7 +30,18 @@ export default function WordPressLogin() {
   useEffect(() => {
     // Redirect to dashboard if already logged in
     if (isAuthenticated()) {
-      window.location.href = '/job-intake';
+      try {
+        const userData = localStorage.getItem('user_data');
+        if (userData) {
+          const user = JSON.parse(userData);
+          window.location.href = getRedirectUrl(user.role || 'client');
+        } else {
+          window.location.href = '/job-intake';
+        }
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+        window.location.href = '/job-intake';
+      }
     }
   }, []);
 
@@ -75,7 +91,7 @@ export default function WordPressLogin() {
             
             setAuthCookies(data.token, userInfo);
             toast.success('Welcome back!');
-            window.location.href = '/job-intake';
+            window.location.href = getRedirectUrl(data.user.role);
             return;
           }
         } catch (emailError) {
@@ -218,8 +234,9 @@ export default function WordPressLogin() {
         console.log('=== WORDPRESS LOGIN END ===');
         toast.success('Login successful!');
         
-        console.log('Redirecting to /job-intake');
-        window.location.href = '/job-intake';
+        const redirectUrl = getRedirectUrl(mappedRole);
+        console.log(`Redirecting to ${redirectUrl}`);
+        window.location.href = redirectUrl;
       } else {
         throw new Error('No token received');
       }
@@ -333,7 +350,7 @@ export default function WordPressLogin() {
             }
             
             toast.success('Logged in with Google! Account linked to WordPress.');
-            window.location.href = '/job-intake';
+            window.location.href = getRedirectUrl(mappedRole);
             return;
           }
         }
@@ -405,7 +422,7 @@ export default function WordPressLogin() {
       }
       
       toast.success('Logged in with Google!');
-      window.location.href = '/job-intake';
+      window.location.href = getRedirectUrl('client');
       
     } catch (error) {
       console.error('Google login error:', error);
