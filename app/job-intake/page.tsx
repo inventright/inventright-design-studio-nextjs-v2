@@ -86,6 +86,10 @@ function JobIntakeContent() {
   const [paymentAmount, setPaymentAmount] = useState(0);
   const [paymentLineItems, setPaymentLineItems] = useState<any[]>([]);
   const [processingPayment, setProcessingPayment] = useState(false);
+  
+  // Pricing from database
+  const [pricing, setPricing] = useState<Record<string, number>>({});
+  const [loadingPricing, setLoadingPricing] = useState(true);
 
   // Auto-save
   const autoSaveTimeout = useRef<NodeJS.Timeout | null>(null);
@@ -94,6 +98,28 @@ function JobIntakeContent() {
   // Load user from WordPress auth
   const [loadingDepts, setLoadingDepts] = useState(false);
   const departments: any[] = [];
+  
+  // Fetch pricing from database
+  useEffect(() => {
+    const fetchPricing = async () => {
+      try {
+        const response = await fetch('/api/pricing');
+        if (response.ok) {
+          const data = await response.json();
+          setPricing(data.pricing);
+          console.log('[Job Intake] Loaded pricing:', data.pricing);
+        } else {
+          console.error('[Job Intake] Failed to load pricing');
+        }
+      } catch (error) {
+        console.error('[Job Intake] Error loading pricing:', error);
+      } finally {
+        setLoadingPricing(false);
+      }
+    };
+    
+    fetchPricing();
+  }, []);
 
   // Handle URL parameters for pre-selection and design package
   useEffect(() => {
@@ -690,22 +716,19 @@ function JobIntakeContent() {
   // Pricing calculations
   const getBasePrice = (): number => {
     if (packageJob) return 0;
+    if (loadingPricing) return 0; // Wait for pricing to load
 
-    if (isLineDrawing && formData.numberOfDrawings) {
-      return parseInt(formData.numberOfDrawings) * 30;
+    // Get base price from database pricing
+    if (isLineDrawing) {
+      return pricing['line_drawings'] || 0;
     }
 
     if (isVirtualPrototype) {
-      let price = 499;
-      if (formData.arUpgrade) price += 99;
-      if (formData.arVirtualPrototype) price += 99;
-      if (formData.animatedVideo === 'rotation') price += 300;
-      if (formData.animatedVideo === 'exploded') price += 350;
-      if (formData.animatedVideo === 'both') price += 400;
-      return price;
+      return pricing['virtual_prototypes'] || 0;
     }
 
-    return 249; // Sell Sheets default
+    // Sell Sheets default
+    return pricing['sell_sheets'] || 0;
   };
 
   const calculateFinalPrice = (): number => {
