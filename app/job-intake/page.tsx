@@ -725,7 +725,7 @@ function JobIntakeContent() {
       const quantity = parseInt(formData.numberOfDrawings || '0');
       const lineDrawingPricing = pricing['line_drawings_data'];
       
-      if (lineDrawingPricing && lineDrawingPricing.minimumQuantity) {
+      if (lineDrawingPricing && typeof lineDrawingPricing === 'object' && 'minimumQuantity' in lineDrawingPricing) {
         const minQty = lineDrawingPricing.minimumQuantity;
         const minPrice = parseFloat(lineDrawingPricing.minimumPrice || lineDrawingPricing.price);
         const perUnit = parseFloat(lineDrawingPricing.perUnitPrice || '0');
