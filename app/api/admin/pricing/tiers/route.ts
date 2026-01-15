@@ -2,16 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { pricingTiers } from '@/lib/db/schema';
 import { eq, desc } from 'drizzle-orm';
-import { getUser } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await getUser();
-    
-    if (!user || user.role !== 'admin') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const tiers = await db
       .select()
       .from(pricingTiers)
@@ -29,12 +22,6 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const user = await getUser();
-    
-    if (!user || user.role !== 'admin') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const body = await request.json();
     const { name, displayName, description, wordpressMembershipLevel, isActive, sortOrder } = body;
 

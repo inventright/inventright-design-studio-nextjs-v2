@@ -2,19 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { pricingTiers } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
-import { getUser } from '@/lib/auth';
 
 export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const user = await getUser();
-    
-    if (!user || user.role !== 'admin') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const tierId = parseInt(params.id);
     if (isNaN(tierId)) {
       return NextResponse.json({ error: 'Invalid tier ID' }, { status: 400 });
@@ -56,12 +49,6 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const user = await getUser();
-    
-    if (!user || user.role !== 'admin') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const tierId = parseInt(params.id);
     if (isNaN(tierId)) {
       return NextResponse.json({ error: 'Invalid tier ID' }, { status: 400 });
