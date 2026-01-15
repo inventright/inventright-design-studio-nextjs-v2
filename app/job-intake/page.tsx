@@ -155,7 +155,8 @@ function JobIntakeContent() {
         city: parsedUser.city || '',
         state: parsedUser.state || '',
         zip: parsedUser.zip || '',
-        country: parsedUser.country || ''
+        country: parsedUser.country || '',
+        role: parsedUser.role || 'Client' // Preserve role from original data
       });
         
         console.log('User set to:', {
