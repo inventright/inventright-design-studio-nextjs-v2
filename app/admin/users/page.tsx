@@ -19,6 +19,7 @@ interface User {
   role: DesignStudioRole;
   wordpressId?: number;
   lastSignedIn: string;
+  createdAt?: string;
   loginMethod: string;
 }
 
@@ -98,6 +99,29 @@ export default function Users() {
   const handleImpersonate = async (user: User) => {
     // In a real app, this would create an impersonation session
     toast.info(`Impersonating ${user.name}...`);
+  };
+
+  const handleDeleteUser = async (user: User) => {
+    if (!confirm(`Are you sure you want to delete ${user.name}? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/admin/users/${user.id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete user');
+      }
+
+      // Remove user from local state
+      setUsers(users.filter(u => u.id !== user.id));
+      toast.success(`${user.name} has been deleted`);
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      toast.error('Failed to delete user');
+    }
     // Store original admin user data
     const currentUser = localStorage.getItem('user_data');
     if (currentUser) {
@@ -341,7 +365,16 @@ export default function Users() {
                         )}
                       </td>
                       <td className="py-4 px-4 text-sm text-gray-600">
-                        {user.lastSignedIn ? new Date(user.lastSignedIn).toLocaleDateString() : 'Never'}
+                        {(() => {
+                          if (!user.lastSignedIn) return 'Never logged in';
+                          const lastSignIn = new Date(user.lastSignedIn);
+                          const createdAt = new Date(user.createdAt || user.lastSignedIn);
+                          // If last sign in is within 1 second of creation, user hasn't logged in yet
+                          if (Math.abs(lastSignIn.getTime() - createdAt.getTime()) < 1000) {
+                            return 'Never logged in';
+                          }
+                          return lastSignIn.toLocaleDateString();
+                        })()}
                       </td>
                       <td className="py-4 px-4">
                         <div className="flex justify-end gap-2">
@@ -378,6 +411,14 @@ export default function Users() {
                                 className="text-xs"
                               >
                                 👤 Impersonate
+                              </Button>
+                              <Button
+                                onClick={() => handleDeleteUser(user)}
+                                variant="outline"
+                                size="sm"
+                                className="text-xs bg-red-50 hover:bg-red-100 text-red-700 border-red-200"
+                              >
+                                🗑️ Delete
                               </Button>
                             </>
                           )}
