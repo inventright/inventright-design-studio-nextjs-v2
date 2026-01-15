@@ -45,7 +45,15 @@ export default function DesignerAssignments() {
     line_drawings: [],
   });
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [saving, setSaving] = useState<{
+    sell_sheets: boolean;
+    virtual_prototypes: boolean;
+    line_drawings: boolean;
+  }>({
+    sell_sheets: false,
+    virtual_prototypes: false,
+    line_drawings: false,
+  });
 
   // Fetch designers and current assignments
   useEffect(() => {
@@ -106,7 +114,7 @@ export default function DesignerAssignments() {
   };
 
   const handleSave = async (jobType: keyof typeof selectedDesigners) => {
-    setSaving(true);
+    setSaving(prev => ({ ...prev, [jobType]: true }));
     try {
       const response = await fetch('/api/designer-assignments', {
         method: 'POST',
@@ -119,7 +127,9 @@ export default function DesignerAssignments() {
         })
       });
 
-      if (response.ok) {
+      const data = await response.json();
+
+      if (response.ok && data.success) {
         toast.success(`Saved assignments for ${getJobTypeLabel(jobType)}`);
         
         // Refresh assignments
@@ -131,13 +141,15 @@ export default function DesignerAssignments() {
           }
         }
       } else {
-        toast.error('Failed to save assignments');
+        const errorMsg = data.error || 'Failed to save assignments';
+        console.error('Save failed:', errorMsg, data);
+        toast.error(errorMsg);
       }
     } catch (error) {
       console.error('Error saving assignments:', error);
-      toast.error('Failed to save assignments');
+      toast.error(`Failed to save assignments: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
-      setSaving(false);
+      setSaving(prev => ({ ...prev, [jobType]: false }));
     }
   };
 
@@ -214,10 +226,10 @@ export default function DesignerAssignments() {
               </div>
               <Button
                 onClick={() => handleSave(jobType)}
-                disabled={saving}
+                disabled={saving[jobType]}
                 className="bg-blue-600 hover:bg-blue-700"
               >
-                {saving ? 'Saving...' : 'Save Assignments'}
+                {saving[jobType] ? 'Saving...' : 'Save Assignments'}
               </Button>
             </div>
           </>
