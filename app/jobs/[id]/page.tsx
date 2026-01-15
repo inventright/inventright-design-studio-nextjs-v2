@@ -460,7 +460,7 @@ export default function JobDetail({ params }: JobDetailProps) {
               </Card>
             )}
 
-            {/* Timeline */}Timeline Tabs */}
+            {/* Timeline Tabs */}
             <Card>
               <CardContent className="pt-6">
                 <Tabs defaultValue="comments" className="w-full">
