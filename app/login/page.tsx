@@ -34,6 +34,57 @@ export default function WordPressLogin() {
     setLoading(true);
 
     try {
+      // Check if username looks like an email
+      const isEmail = credentials.username.includes('@');
+      
+      // If it's an email, try email/password login first
+      if (isEmail) {
+        try {
+          const emailLoginResponse = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              email: credentials.username,
+              password: credentials.password
+            })
+          });
+
+          if (emailLoginResponse.ok) {
+            const data = await emailLoginResponse.json();
+            
+            const userInfo = {
+              id: data.user.id,
+              email: data.user.email,
+              name: data.user.name,
+              username: data.user.email.split('@')[0],
+              role: data.user.role,
+              wordpressRoles: [],
+              loginMethod: 'email',
+              firstName: data.user.firstName || '',
+              lastName: data.user.lastName || '',
+              phone: '',
+              address1: '',
+              address2: '',
+              city: '',
+              state: '',
+              zip: '',
+              country: ''
+            };
+            
+            setAuthCookies(data.token, userInfo);
+            toast.success('Welcome back!');
+            window.location.href = '/job-intake';
+            return;
+          }
+        } catch (emailError) {
+          console.log('[Login] Email login failed, trying WordPress:', emailError);
+          // Fall through to WordPress login
+        }
+      }
+      
+      // Try WordPress login
       const response = await fetch(`${WORDPRESS_API_URL}/jwt-auth/v1/token`, {
         method: 'POST',
         headers: {

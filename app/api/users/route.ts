@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import crypto from 'crypto';
+import bcrypt from 'bcryptjs';
 import { sendPasswordSetupEmail } from '@/lib/email';
 
 // GET - Fetch all users
@@ -56,6 +57,12 @@ export async function POST(request: NextRequest) {
       // Generate a unique openId for manually created users
       const generatedOpenId = `manual_${crypto.randomBytes(16).toString('hex')}`;
 
+      // Hash password if provided
+      let hashedPassword = null;
+      if (password && !sendPasswordLink) {
+        hashedPassword = await bcrypt.hash(password, 10);
+      }
+
       // Create new user
       const newUser = await db
         .insert(users)
@@ -63,10 +70,11 @@ export async function POST(request: NextRequest) {
           openId: generatedOpenId,
           name,
           email,
-          loginMethod: 'manual',
+          loginMethod: password && !sendPasswordLink ? 'email' : 'manual',
           role: role || 'client',
           wordpressId: null,
-        })
+          password: hashedPassword,
+        } as any)
         .returning();
 
       // Send password setup email if requested
@@ -76,8 +84,17 @@ export async function POST(request: NextRequest) {
           const setupToken = crypto.randomBytes(32).toString('hex');
           const setupLink = `${process.env.NEXT_PUBLIC_APP_URL || 'https://ds.inventright.com'}/setup-password?token=${setupToken}&email=${encodeURIComponent(email)}`;
           
-          // TODO: Store the setupToken in database with expiration time
-          // For now, we'll send the email with a placeholder link
+          // Store the setupToken in database with 24-hour expiration
+          const expiryDate = new Date();
+          expiryDate.setHours(expiryDate.getHours() + 24);
+          
+          await db
+            .update(users)
+            .set({
+              passwordResetToken: setupToken,
+              passwordResetExpiry: expiryDate,
+            } as any)
+            .where(eq(users.id, newUser[0].id));
           
           const emailSent = await sendPasswordSetupEmail(email, setupToken);
           
