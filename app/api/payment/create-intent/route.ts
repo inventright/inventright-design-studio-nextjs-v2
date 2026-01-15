@@ -5,7 +5,7 @@ import { productPricing, pricingTiers } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-12-18.acacia',
+  apiVersion: '2025-12-15.clover',
 });
 
 export async function POST(request: NextRequest) {
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
       .where(
         and(
           eq(productPricing.productKey, departmentKey),
-          eq(productPricing.tierId, tier.id),
+          eq(productPricing.pricingTierId, tier.id),
           eq(productPricing.isActive, true)
         )
       )
@@ -61,12 +61,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Calculate total amount
-    let totalAmount = parseFloat(departmentProduct.basePrice);
+    let totalAmount = parseFloat(departmentProduct.price);
     const lineItems = [
       {
         productKey: departmentProduct.productKey,
         productName: departmentProduct.productName,
-        price: parseFloat(departmentProduct.basePrice),
+        price: parseFloat(departmentProduct.price),
         quantity: 1,
         type: 'department'
       }
@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
         .from(productPricing)
         .where(
           and(
-            eq(productPricing.tierId, tier.id),
+            eq(productPricing.pricingTierId, tier.id),
             eq(productPricing.isActive, true)
           )
         );
@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
       for (const addOnKey of addOns) {
         const addOn = addOnProducts.find(p => p.productKey === addOnKey);
         if (addOn) {
-          const price = parseFloat(addOn.basePrice);
+          const price = parseFloat(addOn.price);
           totalAmount += price;
           lineItems.push({
             productKey: addOn.productKey,
