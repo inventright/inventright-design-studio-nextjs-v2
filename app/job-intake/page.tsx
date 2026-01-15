@@ -88,7 +88,14 @@ function JobIntakeContent() {
   const [processingPayment, setProcessingPayment] = useState(false);
   
   // Pricing from database
-  const [pricing, setPricing] = useState<Record<string, number>>({});
+  type PricingValue = number | {
+    price: string;
+    minimumQuantity?: number;
+    minimumPrice?: string;
+    perUnitPrice?: string;
+    maximumQuantity?: number;
+  };
+  const [pricing, setPricing] = useState<Record<string, PricingValue>>({});
   const [loadingPricing, setLoadingPricing] = useState(true);
 
   // Auto-save
