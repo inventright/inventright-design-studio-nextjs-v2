@@ -17,7 +17,7 @@ export async function setAuthCookies(token: string, userData: any) {
   } catch (error) {
     console.error('Failed to set auth cookies via API:', error);
     // Fallback to client-side cookie setting
-    const cookieOptions = 'path=/; max-age=604800; SameSite=Lax';
+    const cookieOptions = 'path=/; max-age=21600; SameSite=Lax'; // 6 hours
     document.cookie = `auth_token=${encodeURIComponent(token)}; ${cookieOptions}`;
     document.cookie = `user_data=${encodeURIComponent(JSON.stringify(userData))}; ${cookieOptions}`;
   }
