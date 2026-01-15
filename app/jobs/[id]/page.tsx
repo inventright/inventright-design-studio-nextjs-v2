@@ -584,14 +584,22 @@ export default function JobDetail({ params }: JobDetailProps) {
                             </p>
                           </div>
                         </div>
-                        <a
-                          href={file.fileUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                        <button
+                          onClick={async () => {
+                            try {
+                              const response = await fetch(`/api/files/${file.id}/download`);
+                              if (!response.ok) throw new Error('Failed to get download URL');
+                              const data = await response.json();
+                              window.open(data.url, '_blank');
+                            } catch (error) {
+                              console.error('Download error:', error);
+                              toast.error('Failed to download file');
+                            }
+                          }}
                           className="text-blue-600 hover:text-blue-700"
                         >
                           <Download className="w-4 h-4" />
-                        </a>
+                        </button>
                       </div>
                     </div>
                   ))}
