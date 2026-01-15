@@ -748,7 +748,7 @@ function JobIntakeContent() {
         }
       } else {
         // Fallback to simple pricing
-        basePrice = parseFloat(pricing['line_drawings'] || '0');
+        basePrice = parseFloat(String(pricing['line_drawings'] || '0'));
       }
       
       return basePrice;
@@ -756,30 +756,30 @@ function JobIntakeContent() {
 
     // Virtual Prototype with add-ons
     if (isVirtualPrototype) {
-      basePrice = parseFloat(pricing['virtual_prototypes'] || '0');
+      basePrice = parseFloat(String(pricing['virtual_prototypes'] || '0'));
       
       // Add AR upgrades
       if (formData.arUpgrade) {
-        basePrice += parseFloat(pricing['vp_ar_upgrade'] || '0');
+        basePrice += parseFloat(String(pricing['vp_ar_upgrade'] || '0'));
       }
       if (formData.arVirtualPrototype) {
-        basePrice += parseFloat(pricing['vp_ar_virtual_prototype'] || '0');
+        basePrice += parseFloat(String(pricing['vp_ar_virtual_prototype'] || '0'));
       }
       
       // Add animated video options
       if (formData.animatedVideo === 'rotation') {
-        basePrice += parseFloat(pricing['vp_animated_rotation'] || '0');
+        basePrice += parseFloat(String(pricing['vp_animated_rotation'] || '0'));
       } else if (formData.animatedVideo === 'exploded') {
-        basePrice += parseFloat(pricing['vp_animated_exploded'] || '0');
+        basePrice += parseFloat(String(pricing['vp_animated_exploded'] || '0'));
       } else if (formData.animatedVideo === 'both') {
-        basePrice += parseFloat(pricing['vp_animated_both'] || '0');
+        basePrice += parseFloat(String(pricing['vp_animated_both'] || '0'));
       }
       
       return basePrice;
     }
 
     // Sell Sheets default
-    return parseFloat(pricing['sell_sheets'] || '0');
+    return parseFloat(String(pricing['sell_sheets'] || '0'));
   };
 
   const calculateFinalPrice = (): number => {
