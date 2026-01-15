@@ -346,7 +346,7 @@ export default function JobDetail({ params }: JobDetailProps) {
                 {job.description && (
                   <div className="mt-4 pt-4 border-t border-gray-200">
                     <h3 className="text-gray-900 font-semibold mb-2">Description</h3>
-                    <p className="text-gray-700">{job.description}</p>
+                    <p className="text-gray-700 whitespace-pre-wrap break-words">{job.description}</p>
                   </div>
                 )}
               </CardContent>
@@ -485,7 +485,7 @@ export default function JobDetail({ params }: JobDetailProps) {
                         <div className="flex-1 flex items-center gap-2">
                           <Paperclip className="w-4 h-4 text-gray-400" />
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 truncate">
+                            <p className="text-sm font-medium text-gray-900 break-words">
                               {file.fileName}
                             </p>
                             <p className="text-xs text-gray-500">
