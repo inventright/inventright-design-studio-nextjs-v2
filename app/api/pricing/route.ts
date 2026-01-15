@@ -20,9 +20,21 @@ export async function GET(request: NextRequest) {
       );
 
     // Transform to a more usable format
-    const pricing: Record<string, number> = {};
+    const pricing: Record<string, any> = {};
     products.forEach(product => {
+      // For simple products, just store the price
       pricing[product.productKey] = parseFloat(product.price);
+      
+      // For products with quantity pricing, store full data
+      if (product.minimumQuantity) {
+        pricing[`${product.productKey}_data`] = {
+          price: parseFloat(product.price),
+          minimumQuantity: product.minimumQuantity,
+          minimumPrice: product.minimumPrice ? parseFloat(product.minimumPrice) : parseFloat(product.price),
+          perUnitPrice: product.perUnitPrice ? parseFloat(product.perUnitPrice) : 0,
+          maximumQuantity: product.maximumQuantity || 999
+        };
+      }
     });
 
     return NextResponse.json({ pricing, products });

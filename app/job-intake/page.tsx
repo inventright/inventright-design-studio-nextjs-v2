@@ -718,17 +718,61 @@ function JobIntakeContent() {
     if (packageJob) return 0;
     if (loadingPricing) return 0; // Wait for pricing to load
 
-    // Get base price from database pricing
+    let basePrice = 0;
+
+    // Line Drawings with quantity-based pricing
     if (isLineDrawing) {
-      return pricing['line_drawings'] || 0;
+      const quantity = parseInt(formData.numberOfDrawings || '0');
+      const lineDrawingPricing = pricing['line_drawings_data'];
+      
+      if (lineDrawingPricing && lineDrawingPricing.minimumQuantity) {
+        const minQty = lineDrawingPricing.minimumQuantity;
+        const minPrice = parseFloat(lineDrawingPricing.minimumPrice || lineDrawingPricing.price);
+        const perUnit = parseFloat(lineDrawingPricing.perUnitPrice || '0');
+        const maxQty = lineDrawingPricing.maximumQuantity || 999;
+        
+        const actualQty = Math.min(quantity, maxQty);
+        
+        if (actualQty <= minQty) {
+          basePrice = minPrice;
+        } else {
+          const additionalUnits = actualQty - minQty;
+          basePrice = minPrice + (additionalUnits * perUnit);
+        }
+      } else {
+        // Fallback to simple pricing
+        basePrice = parseFloat(pricing['line_drawings'] || '0');
+      }
+      
+      return basePrice;
     }
 
+    // Virtual Prototype with add-ons
     if (isVirtualPrototype) {
-      return pricing['virtual_prototypes'] || 0;
+      basePrice = parseFloat(pricing['virtual_prototypes'] || '0');
+      
+      // Add AR upgrades
+      if (formData.arUpgrade) {
+        basePrice += parseFloat(pricing['vp_ar_upgrade'] || '0');
+      }
+      if (formData.arVirtualPrototype) {
+        basePrice += parseFloat(pricing['vp_ar_virtual_prototype'] || '0');
+      }
+      
+      // Add animated video options
+      if (formData.animatedVideo === 'rotation') {
+        basePrice += parseFloat(pricing['vp_animated_rotation'] || '0');
+      } else if (formData.animatedVideo === 'exploded') {
+        basePrice += parseFloat(pricing['vp_animated_exploded'] || '0');
+      } else if (formData.animatedVideo === 'both') {
+        basePrice += parseFloat(pricing['vp_animated_both'] || '0');
+      }
+      
+      return basePrice;
     }
 
     // Sell Sheets default
-    return pricing['sell_sheets'] || 0;
+    return parseFloat(pricing['sell_sheets'] || '0');
   };
 
   const calculateFinalPrice = (): number => {
@@ -764,19 +808,30 @@ function JobIntakeContent() {
         throw new Error('Invalid department selected');
       }
 
-      // Detect add-ons from formData (Virtual Prototype specific)
+      // Prepare quantity for Line Drawings
+      const quantity = isLineDrawing ? parseInt(formData.numberOfDrawings || '1') : 1;
+
+      // Detect general add-ons (rush, extra revision, etc.)
       const addOns: string[] = [];
+      // TODO: Add logic to detect general add-ons from form
+
+      // Detect Virtual Prototype specific add-ons
+      const vpAddOns: any = {};
       if (isVirtualPrototype) {
-        if (formData.arUpgrade) addOns.push('ar_upgrade');
-        if (formData.arVirtualPrototype) addOns.push('ar_virtual_prototype');
+        if (formData.arUpgrade) vpAddOns.arUpgrade = true;
+        if (formData.arVirtualPrototype) vpAddOns.arVirtualPrototype = true;
         if (formData.animatedVideo) {
-          if (formData.animatedVideo === 'rotation') addOns.push('animated_video_rotation');
-          if (formData.animatedVideo === 'exploded') addOns.push('animated_video_exploded');
-          if (formData.animatedVideo === 'both') addOns.push('animated_video_both');
+          vpAddOns.animatedVideo = formData.animatedVideo; // 'rotation', 'exploded', or 'both'
         }
       }
 
-      console.log('[Payment] Initiating payment for:', { departmentKey, addOns, voucherCode: appliedVoucher?.code });
+      console.log('[Payment] Initiating payment for:', { 
+        departmentKey, 
+        quantity, 
+        addOns, 
+        vpAddOns, 
+        voucherCode: appliedVoucher?.code 
+      });
 
       // Create payment intent
       const response = await fetch('/api/payment/create-intent', {
@@ -784,7 +839,9 @@ function JobIntakeContent() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           departmentKey,
+          quantity,
           addOns,
+          vpAddOns,
           voucherCode: appliedVoucher?.code,
           userId: user.id,
           tierName: 'Default Pricing'

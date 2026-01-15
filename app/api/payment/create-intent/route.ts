@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { db } from '@/lib/db';
 import { productPricing, pricingTiers } from '@/lib/db/schema';
-import { eq, and, isNull } from 'drizzle-orm';
+import { eq, and, isNull, or } from 'drizzle-orm';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-12-15.clover',
@@ -13,7 +13,9 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { 
       departmentKey, 
-      addOns = [],
+      quantity = 1, // For Line Drawings
+      addOns = [], // General add-ons (rush, extra revision, etc.)
+      vpAddOns = {}, // Virtual Prototype specific add-ons
       voucherCode,
       userId,
       tierName = 'Default Pricing',
@@ -68,35 +70,60 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Calculate total amount
-    let totalAmount = parseFloat(departmentProduct.price);
+    // Calculate department price (with quantity support for Line Drawings)
+    let departmentPrice = parseFloat(departmentProduct.price);
+    let actualQuantity = quantity;
+
+    // Handle quantity-based pricing (e.g., Line Drawings)
+    if (departmentProduct.minimumQuantity && quantity > 0) {
+      const minQty = departmentProduct.minimumQuantity;
+      const minPrice = departmentProduct.minimumPrice 
+        ? parseFloat(departmentProduct.minimumPrice) 
+        : parseFloat(departmentProduct.price);
+      const perUnit = departmentProduct.perUnitPrice 
+        ? parseFloat(departmentProduct.perUnitPrice) 
+        : 0;
+      const maxQty = departmentProduct.maximumQuantity || 999;
+
+      actualQuantity = Math.min(quantity, maxQty);
+
+      if (actualQuantity <= minQty) {
+        departmentPrice = minPrice;
+      } else {
+        const additionalUnits = actualQuantity - minQty;
+        departmentPrice = minPrice + (additionalUnits * perUnit);
+      }
+    }
+
+    let totalAmount = departmentPrice;
     const lineItems = [
       {
         productKey: departmentProduct.productKey,
         productName: departmentProduct.productName,
-        price: parseFloat(departmentProduct.price),
-        quantity: 1,
+        price: departmentPrice,
+        quantity: actualQuantity,
         type: 'department'
       }
     ];
 
-    // Add add-ons
+    // Get all products for this tier (for add-ons and VP add-ons)
+    const productConditions = [eq(productPricing.isActive, true)];
+    
+    if (pricingTierId === null) {
+      productConditions.push(isNull(productPricing.pricingTierId));
+    } else {
+      productConditions.push(eq(productPricing.pricingTierId, pricingTierId));
+    }
+
+    const allProducts = await db
+      .select()
+      .from(productPricing)
+      .where(and(...productConditions));
+
+    // Add general add-ons (rush, extra revision, source files, etc.)
     if (addOns.length > 0) {
-      const addOnConditions = [eq(productPricing.isActive, true)];
-      
-      if (pricingTierId === null) {
-        addOnConditions.push(isNull(productPricing.pricingTierId));
-      } else {
-        addOnConditions.push(eq(productPricing.pricingTierId, pricingTierId));
-      }
-
-      const addOnProducts = await db
-        .select()
-        .from(productPricing)
-        .where(and(...addOnConditions));
-
       for (const addOnKey of addOns) {
-        const addOn = addOnProducts.find(p => p.productKey === addOnKey);
+        const addOn = allProducts.find(p => p.productKey === addOnKey);
         if (addOn) {
           const price = parseFloat(addOn.price);
           totalAmount += price;
@@ -107,6 +134,68 @@ export async function POST(request: NextRequest) {
             quantity: 1,
             type: addOn.category
           });
+        }
+      }
+    }
+
+    // Add Virtual Prototype specific add-ons
+    if (vpAddOns && Object.keys(vpAddOns).length > 0) {
+      // AR Upgrade
+      if (vpAddOns.arUpgrade) {
+        const arUpgrade = allProducts.find(p => p.productKey === 'vp_ar_upgrade');
+        if (arUpgrade) {
+          const price = parseFloat(arUpgrade.price);
+          totalAmount += price;
+          lineItems.push({
+            productKey: arUpgrade.productKey,
+            productName: arUpgrade.productName,
+            price,
+            quantity: 1,
+            type: 'addon'
+          });
+        }
+      }
+
+      // AR Virtual Prototype
+      if (vpAddOns.arVirtualPrototype) {
+        const arVP = allProducts.find(p => p.productKey === 'vp_ar_virtual_prototype');
+        if (arVP) {
+          const price = parseFloat(arVP.price);
+          totalAmount += price;
+          lineItems.push({
+            productKey: arVP.productKey,
+            productName: arVP.productName,
+            price,
+            quantity: 1,
+            type: 'addon'
+          });
+        }
+      }
+
+      // Animated Video
+      if (vpAddOns.animatedVideo) {
+        let animatedKey = '';
+        if (vpAddOns.animatedVideo === 'rotation') {
+          animatedKey = 'vp_animated_rotation';
+        } else if (vpAddOns.animatedVideo === 'exploded') {
+          animatedKey = 'vp_animated_exploded';
+        } else if (vpAddOns.animatedVideo === 'both') {
+          animatedKey = 'vp_animated_both';
+        }
+
+        if (animatedKey) {
+          const animated = allProducts.find(p => p.productKey === animatedKey);
+          if (animated) {
+            const price = parseFloat(animated.price);
+            totalAmount += price;
+            lineItems.push({
+              productKey: animated.productKey,
+              productName: animated.productName,
+              price,
+              quantity: 1,
+              type: 'addon'
+            });
+          }
         }
       }
     }
@@ -131,7 +220,9 @@ export async function POST(request: NextRequest) {
       metadata: {
         userId: userId?.toString() || '',
         departmentKey,
+        quantity: actualQuantity.toString(),
         addOns: JSON.stringify(addOns),
+        vpAddOns: JSON.stringify(vpAddOns),
         voucherCode: voucherCode || '',
         tierName: tierName || 'Default Pricing',
         tierId: pricingTierId?.toString() || 'null',

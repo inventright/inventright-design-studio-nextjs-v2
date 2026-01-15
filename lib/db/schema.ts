@@ -361,8 +361,14 @@ export const productPricing = pgTable("productPricing", {
   category: varchar("category", { length: 100 }).notNull(), // "department", "addon", "rush"
   departmentId: integer("departmentId").references(() => departments.id), // If it's a department product
   pricingTierId: integer("pricingTierId").references(() => pricingTiers.id), // null = default pricing
+  parentProductKey: varchar("parentProductKey", { length: 100 }), // For nested add-ons (e.g., AR upgrade is child of virtual_prototypes)
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
   currency: varchar("currency", { length: 3 }).default("USD").notNull(),
+  // Quantity-based pricing fields (optional, for products like line drawings)
+  minimumQuantity: integer("minimumQuantity"), // Min units required (e.g., 3 for line drawings)
+  minimumPrice: decimal("minimumPrice", { precision: 10, scale: 2 }), // Price for min quantity (e.g., $90 for 3)
+  perUnitPrice: decimal("perUnitPrice", { precision: 10, scale: 2 }), // Price per additional unit (e.g., $30/drawing)
+  maximumQuantity: integer("maximumQuantity"), // Max quantity allowed (e.g., 10 for line drawings)
   stripeProductId: varchar("stripeProductId", { length: 255 }), // Stripe product ID
   stripePriceId: varchar("stripePriceId", { length: 255 }), // Stripe price ID
   isActive: boolean("isActive").default(true).notNull(),
