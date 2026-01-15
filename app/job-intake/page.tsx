@@ -768,6 +768,33 @@ function JobIntakeContent() {
         throw new Error('No draft job ID found');
       }
 
+      // Get assigned designer for this job type
+      let assignedDesignerId = null;
+      try {
+        // Map department ID to job type
+        const departmentToJobType: { [key: string]: string } = {
+          '1': 'sell_sheets',
+          '2': 'virtual_prototypes',
+          '3': 'line_drawings'
+        };
+        const jobType = departmentToJobType[selectedDepartment];
+        
+        if (jobType) {
+          const assignmentResponse = await fetch('/api/designer-assignments');
+          if (assignmentResponse.ok) {
+            const data = await assignmentResponse.json();
+            const assignments = data.assignments?.[jobType];
+            if (assignments && assignments.length > 0) {
+              assignedDesignerId = assignments[0].designerId;
+              console.log('[Job Intake] Auto-assigned designer:', assignedDesignerId, 'for job type:', jobType);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('[Job Intake] Error fetching designer assignment:', error);
+        // Continue without designer assignment
+      }
+
       const response = await fetch(`/api/jobs/${draftJobId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -776,7 +803,8 @@ function JobIntakeContent() {
           description: JSON.stringify(finalFormData),
           departmentId: parseInt(selectedDepartment),
           packageType: packageType || null,
-          status: 'Pending',
+          designerId: assignedDesignerId,
+          status: assignedDesignerId ? 'Assigned to Designer' : 'New Job',
           isDraft: false
         })
       });
