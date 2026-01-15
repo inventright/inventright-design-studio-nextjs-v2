@@ -18,6 +18,7 @@ import { FileUploadInput } from '@/components/ui/FileUploadInput';
 import LineDrawingFields from '@/components/intake/LineDrawingFields';
 import VirtualPrototypeFields from '@/components/intake/VirtualPrototypeFields';
 import UserContactInfo from '@/components/intake/UserContactInfo';
+import StripePaymentForm from '@/components/payment/StripePaymentForm';
 
 function JobIntakeContent() {
   const pathname = usePathname();
@@ -78,6 +79,13 @@ function JobIntakeContent() {
   const [voucherCode, setVoucherCode] = useState('');
   const [appliedVoucher, setAppliedVoucher] = useState<any>(null);
   const [checkingVoucher, setCheckingVoucher] = useState(false);
+
+  // Payment state
+  const [showPayment, setShowPayment] = useState(false);
+  const [paymentClientSecret, setPaymentClientSecret] = useState<string | null>(null);
+  const [paymentAmount, setPaymentAmount] = useState(0);
+  const [paymentLineItems, setPaymentLineItems] = useState<any[]>([]);
+  const [processingPayment, setProcessingPayment] = useState(false);
 
   // Auto-save
   const autoSaveTimeout = useRef<NodeJS.Timeout | null>(null);

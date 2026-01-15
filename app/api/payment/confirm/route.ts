@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { db } from '@/lib/db';
-import { paymentTransactions, paymentLineItems } from '@/lib/db/schema';
+import { payments, paymentLineItems } from '@/lib/db/schema';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2024-12-18.acacia',
@@ -34,29 +34,31 @@ export async function POST(request: NextRequest) {
     
     // Create payment transaction record
     const [transaction] = await db
-      .insert(paymentTransactions)
+      .insert(payments)
       .values({
         jobId: jobId || null,
         userId: parseInt(paymentIntent.metadata.userId) || null,
         stripePaymentIntentId: paymentIntent.id,
         stripeChargeId: paymentIntent.latest_charge as string || null,
-        amount: (paymentIntent.amount / 100).toString(), // Convert from cents
-        currency: paymentIntent.currency,
-        status: 'completed',
-        paymentMethod: paymentIntent.payment_method_types[0] || 'card',
+        totalAmount: (paymentIntent.amount / 100).toString(), // Convert from cents
+        subtotal: (paymentIntent.amount / 100).toString(),
+        discountAmount: '0',
+        currency: paymentIntent.currency.toUpperCase(),
+        status: 'succeeded',
+        voucherCode: paymentIntent.metadata.voucherCode || null,
         metadata: {
           departmentKey: paymentIntent.metadata.departmentKey,
           addOns: paymentIntent.metadata.addOns,
-          voucherCode: paymentIntent.metadata.voucherCode,
           tierName: paymentIntent.metadata.tierName,
         },
+        paidAt: new Date(),
       } as any)
       .returning();
 
     // Create line item records
     if (lineItemsData.length > 0 && transaction) {
       const lineItemRecords = lineItemsData.map((item: any) => ({
-        transactionId: transaction.id,
+        paymentId: transaction.id,
         productKey: item.productKey,
         productName: item.productName,
         quantity: item.quantity || 1,
