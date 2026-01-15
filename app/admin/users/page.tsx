@@ -105,7 +105,7 @@ export default function Users() {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        const setupUrl = `${window.location.origin}/setup-password?token=${data.token}`;
+        const setupUrl = `${window.location.origin}/setup-password?token=${data.token}&email=${encodeURIComponent(data.email)}`;
         await navigator.clipboard.writeText(setupUrl);
         toast.success('Password setup link copied to clipboard!');
       } else {

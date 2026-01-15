@@ -46,6 +46,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       token,
+      email: user.email,
       expiresAt: expiry.toISOString(),
     });
   } catch (error) {
