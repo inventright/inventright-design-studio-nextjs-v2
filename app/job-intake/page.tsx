@@ -467,7 +467,7 @@ function JobIntakeContent() {
       
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('jobId', draftJobId || '');
+      formData.append('jobId', draftJobId ? draftJobId.toString() : '');
       formData.append('fileType', 'input');
 
       const response = await fetch('/api/files/upload', {
