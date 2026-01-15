@@ -733,7 +733,7 @@ function JobIntakeContent() {
       const lineDrawingPricing = pricing['line_drawings_data'];
       
       if (lineDrawingPricing && typeof lineDrawingPricing === 'object' && 'minimumQuantity' in lineDrawingPricing) {
-        const minQty = lineDrawingPricing.minimumQuantity;
+        const minQty = lineDrawingPricing.minimumQuantity || 1;
         const minPrice = parseFloat(lineDrawingPricing.minimumPrice || lineDrawingPricing.price);
         const perUnit = parseFloat(lineDrawingPricing.perUnitPrice || '0');
         const maxQty = lineDrawingPricing.maximumQuantity || 999;
