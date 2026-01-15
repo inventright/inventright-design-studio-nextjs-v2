@@ -345,8 +345,80 @@ export default function JobDetail({ params }: JobDetailProps) {
                 </div>
                 {job.description && (
                   <div className="mt-4 pt-4 border-t border-gray-200">
-                    <h3 className="text-gray-900 font-semibold mb-2">Description</h3>
-                    <p className="text-gray-700 whitespace-pre-wrap break-words">{job.description}</p>
+                    <h3 className="text-gray-900 font-semibold mb-3">Job Details</h3>
+                    {(() => {
+                      try {
+                        const formData = JSON.parse(job.description);
+                        const fieldLabels: Record<string, string> = {
+                          // Basic fields
+                          howHeard: 'How did you hear about us?',
+                          memberStatus: 'Member Status',
+                          coachName: 'Coach Name',
+                          category: 'Category',
+                          productDescription: 'Product Description',
+                          
+                          // Sell Sheet fields
+                          sellSheetLayout: 'Sell Sheet Layout',
+                          photoDescription: 'Photo Description',
+                          problemPhotoFile: 'Problem Photo File',
+                          solutionPhotoFile: 'Solution Photo File',
+                          problemSolutionDescription: 'Problem/Solution Description',
+                          storyboard1File: 'Storyboard 1 File',
+                          storyboard2File: 'Storyboard 2 File',
+                          storyboard3File: 'Storyboard 3 File',
+                          storyboardDescription: 'Storyboard Description',
+                          benefitStatement: 'Benefit Statement',
+                          bulletPoints: 'Bullet Points',
+                          videoLink: 'Video Link',
+                          legalInfo: 'Legal Information',
+                          additionalInfo: 'Additional Information',
+                          
+                          // Line Drawing fields
+                          virtualPrototype: 'Virtual Prototype',
+                          drawingType: 'Drawing Type',
+                          numberOfDrawings: 'Number of Drawings',
+                          drawingDetails: 'Drawing Details',
+                          
+                          // Virtual Prototype fields
+                          prototypePurpose: 'Prototype Purpose',
+                          targetAudience: 'Target Audience',
+                          keyFeatures: 'Key Features',
+                          dimensions: 'Dimensions',
+                          materials: 'Materials',
+                          colorPreferences: 'Color Preferences',
+                          functionalRequirements: 'Functional Requirements',
+                          budget: 'Budget',
+                          timeline: 'Timeline',
+                          referenceImages: 'Reference Images',
+                          additionalNotes: 'Additional Notes',
+                        };
+                        
+                        return (
+                          <div className="space-y-3">
+                            {Object.entries(formData).map(([key, value]) => {
+                              // Skip empty values
+                              if (!value || (Array.isArray(value) && value.length === 0)) return null;
+                              
+                              const label = fieldLabels[key] || key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+                              
+                              return (
+                                <div key={key} className="border-b border-gray-100 pb-2">
+                                  <p className="text-sm font-semibold text-gray-700 mb-1">{label}:</p>
+                                  <p className="text-sm text-gray-900 whitespace-pre-wrap break-words">
+                                    {Array.isArray(value) ? value.join(', ') : String(value)}
+                                  </p>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        );
+                      } catch (e) {
+                        // If description is not JSON, display as plain text
+                        return (
+                          <p className="text-gray-700 whitespace-pre-wrap break-words">{job.description}</p>
+                        );
+                      }
+                    })()}
                   </div>
                 )}
               </CardContent>
