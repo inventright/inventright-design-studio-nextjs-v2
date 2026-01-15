@@ -61,8 +61,16 @@ function JobIntakeContent() {
   // Department-specific form data
   const [formData, setFormData] = useState<any>({});
 
-  // Files
-  const [files, setFiles] = useState<File[]>([]);
+  // Files - now tracks both File objects and upload metadata
+  const [files, setFiles] = useState<Array<{
+    file: File;
+    uploading?: boolean;
+    progress?: number;
+    uploaded?: boolean;
+    fileKey?: string;
+    fileId?: number;
+    error?: string;
+  }>>([]);
   const [uploading, setUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
 
@@ -452,20 +460,83 @@ function JobIntakeContent() {
   const isVirtualPrototype = department?.name === 'Virtual Prototypes';
   const isDesignPackage = department?.name === 'Design Package';
 
-  // File handling
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const newFiles = Array.from(e.target.files);
-      setFiles([...files, ...newFiles]);
+  // Upload file immediately to draft job
+  const uploadFileToDraft = async (file: File, index: number) => {
+    try {
+      console.log(`[Job Intake] Uploading ${file.name} to draft job ${draftJobId}`);
+      
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('jobId', draftJobId || '');
+      formData.append('fileType', 'input');
+
+      const response = await fetch('/api/files/upload', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Upload failed' }));
+        console.error(`[Job Intake] Failed to upload ${file.name}:`, errorData);
+        
+        // Update file state with error
+        setFiles(prev => prev.map((f, i) => 
+          i === index ? { ...f, uploading: false, error: errorData.error || 'Upload failed' } : f
+        ));
+        toast.error(`Failed to upload ${file.name}`);
+        return;
+      }
+
+      const uploadedFile = await response.json();
+      console.log(`[Job Intake] Successfully uploaded ${file.name}, fileKey:`, uploadedFile.fileKey);
+      
+      // Update file state with upload success and fileKey
+      setFiles(prev => prev.map((f, i) => 
+        i === index ? { 
+          ...f, 
+          uploading: false, 
+          uploaded: true, 
+          fileKey: uploadedFile.fileKey,
+          fileId: uploadedFile.id 
+        } : f
+      ));
+      
+      toast.success(`${file.name} uploaded successfully`);
+    } catch (error: any) {
+      console.error(`[Job Intake] Error uploading ${file.name}:`, error);
+      setFiles(prev => prev.map((f, i) => 
+        i === index ? { ...f, uploading: false, error: error.message || 'Upload failed' } : f
+      ));
+      toast.error(`Failed to upload ${file.name}`);
     }
   };
 
-  const handleDrop = (e: React.DragEvent) => {
+  // File handling
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const newFiles = Array.from(e.target.files);
+      const fileObjects = newFiles.map(file => ({ file, uploading: true, progress: 0 }));
+      setFiles([...files, ...fileObjects]);
+      
+      // Upload each file immediately
+      for (let i = 0; i < newFiles.length; i++) {
+        await uploadFileToDraft(newFiles[i], files.length + i);
+      }
+    }
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
     if (e.dataTransfer.files) {
       const newFiles = Array.from(e.dataTransfer.files);
-      setFiles([...files, ...newFiles]);
+      const fileObjects = newFiles.map(file => ({ file, uploading: true, progress: 0 }));
+      setFiles([...files, ...fileObjects]);
+      
+      // Upload each file immediately
+      for (let i = 0; i < newFiles.length; i++) {
+        await uploadFileToDraft(newFiles[i], files.length + i);
+      }
     }
   };
 
@@ -479,7 +550,11 @@ function JobIntakeContent() {
   };
 
   const removeFile = (index: number) => {
+    const fileToRemove = files[index];
+    // TODO: Optionally delete from Wasabi if already uploaded
+    // For now, just remove from UI - file will remain in draft until job is submitted or deleted
     setFiles(files.filter((_, i) => i !== index));
+    toast.success(`${fileToRemove.file.name} removed`);
   };
 
   // Legal info checkbox handler
@@ -647,25 +722,14 @@ function JobIntakeContent() {
       
       console.log('[Job Intake] Job created successfully:', newJob.id);
 
-      if (files.length > 0) {
-        for (const file of files) {
-          const reader = new FileReader();
-          const fileData = await new Promise<string>((resolve) => {
-            reader.onload = () => resolve(reader.result as string);
-            reader.readAsDataURL(file);
-          });
-
-          await fetch('/api/files/upload', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              jobId: newJob.id,
-              fileName: file.name,
-              fileData,
-              mimeType: file.type
-            })
-          });
-        }
+      // Files are already uploaded to Wasabi during selection
+      // Just verify all files were uploaded successfully
+      const failedFiles = files.filter(f => !f.uploaded || f.error);
+      if (failedFiles.length > 0) {
+        console.warn(`[Job Intake] ${failedFiles.length} files failed to upload:`, failedFiles.map(f => f.file.name));
+        toast.error(`${failedFiles.length} file(s) failed to upload. Please try again.`);
+      } else if (files.length > 0) {
+        console.log(`[Job Intake] All ${files.length} files were successfully uploaded`);
       }
 
       // Update design package status if this is part of a design package
@@ -1039,19 +1103,38 @@ function JobIntakeContent() {
 
               {files.length > 0 && (
              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                  {files.map((file, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
-                      <div className="flex items-center space-x-3 overflow-hidden">
-                        <FileIcon className="w-5 h-5 text-[#4791FF] flex-shrink-0" />
-                        <span className="text-sm text-gray-700 truncate">{file.name}</span>
+                  {files.map((fileObj, index) => (
+                    <div key={index} className="flex flex-col p-3 bg-white rounded-lg border border-gray-200">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3 overflow-hidden flex-1">
+                          <FileIcon className="w-5 h-5 text-[#4791FF] flex-shrink-0" />
+                          <div className="flex-1 overflow-hidden">
+                            <span className="text-sm text-gray-700 truncate block">{fileObj.file.name}</span>
+                            <span className="text-xs text-gray-500">{(fileObj.file.size / 1024 / 1024).toFixed(2)} MB</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          {fileObj.uploading && (
+                            <Loader2 className="w-4 h-4 text-[#4791FF] animate-spin" />
+                          )}
+                          {fileObj.uploaded && (
+                            <span className="text-green-500 text-xs font-semibold">✓ Uploaded</span>
+                          )}
+                          {fileObj.error && (
+                            <span className="text-red-500 text-xs font-semibold">✗ Failed</span>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => removeFile(index)}
+                            className="text-gray-400 hover:text-red-500 transition-colors"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => removeFile(index)}
-                        className="text-gray-400 hover:text-red-500 transition-colors"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
+                      {fileObj.error && (
+                        <p className="text-xs text-red-500 mt-1">{fileObj.error}</p>
+                      )}
                     </div>
                   ))}
                 </div>
