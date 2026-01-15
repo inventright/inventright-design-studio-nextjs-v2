@@ -9,7 +9,7 @@ import GlassCard from '@/components/ui/GlassCard';
 import { toast } from 'sonner';
 import { getRoleDisplayName } from '@/lib/roleMapping';
 import type { DesignStudioRole } from '@/lib/roleMapping';
-import { Plus, X, Mail } from 'lucide-react';
+import { Plus, X, Mail, Copy } from 'lucide-react';
 
 interface User {
   id: number;
@@ -89,6 +89,32 @@ export default function Users() {
   const handleResetPassword = async (user: User) => {
     // In a real app, this would call WordPress API to send password reset email
     toast.success(`Password reset email sent to ${user.email}`);
+  };
+
+  const handleCopyPasswordLink = async (user: User) => {
+    try {
+      // Generate password setup token by calling the API
+      const response = await fetch('/api/admin/generate-password-token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId: user.id }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        const setupUrl = `${window.location.origin}/setup-password?token=${data.token}`;
+        await navigator.clipboard.writeText(setupUrl);
+        toast.success('Password setup link copied to clipboard!');
+      } else {
+        toast.error(data.error || 'Failed to generate password link');
+      }
+    } catch (error) {
+      console.error('Error copying password link:', error);
+      toast.error('Failed to copy password link');
+    }
   };
 
   const handleLogoutUser = async (user: User) => {
@@ -378,6 +404,15 @@ export default function Users() {
                                 className="text-xs"
                               >
                                 🔑 Reset Password
+                              </Button>
+                              <Button
+                                onClick={() => handleCopyPasswordLink(user)}
+                                variant="outline"
+                                size="sm"
+                                className="text-xs"
+                                title="Copy password setup link"
+                              >
+                                <Copy className="w-3 h-3" />
                               </Button>
                               <Button
                                 onClick={() => handleLogoutUser(user)}

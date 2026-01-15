@@ -42,7 +42,7 @@ export async function POST(
     const message = messageParts.join('\n');
     const encodedMessage = Buffer.from(message).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
     await gmail.users.messages.send({ userId: 'me', requestBody: { raw: encodedMessage } });
-    const newLogs = await db.insert(emailLogs).values({ recipient: originalEmail.recipient, subject: originalEmail.subject, body: originalEmail.body, status: 'sent', resentFrom: emailId, metadata: originalEmail.metadata } as any).returning();
+    const newLogs = await db.insert(emailLogs).values({ recipient: originalEmail.recipient, subject: originalEmail.subject, body: originalEmail.body, status: 'sent', resentFrom: emailId, metadata: originalEmail.metadata } as any).returning() as any[];
     return NextResponse.json({ success: true, message: 'Email resent successfully', log: newLogs[0] });
   } catch (error) {
     console.error('[Email Logs API] Error resending email:', error);
