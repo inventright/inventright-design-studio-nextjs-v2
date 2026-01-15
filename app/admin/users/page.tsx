@@ -87,8 +87,45 @@ export default function Users() {
   };
 
   const handleResetPassword = async (user: User) => {
-    // In a real app, this would call WordPress API to send password reset email
-    toast.success(`Password reset email sent to ${user.email}`);
+    try {
+      // Generate password reset token via API
+      const response = await fetch('/api/admin/generate-password-token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId: user.id }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        // Send password reset email
+        const emailResponse = await fetch('/api/admin/send-password-reset', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ 
+            email: user.email, 
+            token: data.token 
+          }),
+        });
+
+        const emailData = await emailResponse.json();
+
+        if (emailResponse.ok && emailData.success) {
+          toast.success(`Password reset email sent to ${user.email}`);
+        } else {
+          toast.error(emailData.error || 'Failed to send password reset email');
+        }
+      } else {
+        toast.error(data.error || 'Failed to generate reset token');
+      }
+    } catch (error) {
+      console.error('Error sending password reset:', error);
+      toast.error('Failed to send password reset email');
+    }
   };
 
   const handleCopyPasswordLink = async (user: User) => {
