@@ -718,6 +718,76 @@ function JobIntakeContent() {
     }
   };
 
+  // Payment initiation
+  const initiatePayment = async () => {
+    if (!user?.id || !draftJobId) {
+      toast.error('User or draft job not found');
+      return;
+    }
+
+    setProcessingPayment(true);
+
+    try {
+      // Map department ID to product key
+      const departmentToProductKey: { [key: string]: string } = {
+        '1': 'sell_sheets',
+        '2': 'virtual_prototypes',
+        '3': 'line_drawings'
+      };
+
+      const departmentKey = departmentToProductKey[selectedDepartment];
+      if (!departmentKey) {
+        throw new Error('Invalid department selected');
+      }
+
+      // Detect add-ons from formData (Virtual Prototype specific)
+      const addOns: string[] = [];
+      if (isVirtualPrototype) {
+        if (formData.arUpgrade) addOns.push('ar_upgrade');
+        if (formData.arVirtualPrototype) addOns.push('ar_virtual_prototype');
+        if (formData.animatedVideo) {
+          if (formData.animatedVideo === 'rotation') addOns.push('animated_video_rotation');
+          if (formData.animatedVideo === 'exploded') addOns.push('animated_video_exploded');
+          if (formData.animatedVideo === 'both') addOns.push('animated_video_both');
+        }
+      }
+
+      console.log('[Payment] Initiating payment for:', { departmentKey, addOns, voucherCode: appliedVoucher?.code });
+
+      // Create payment intent
+      const response = await fetch('/api/payment/create-intent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          departmentKey,
+          addOns,
+          voucherCode: appliedVoucher?.code,
+          userId: user.id,
+          tierName: 'Default Pricing'
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to create payment intent');
+      }
+
+      const data = await response.json();
+      
+      setPaymentClientSecret(data.clientSecret);
+      setPaymentAmount(data.amount);
+      setPaymentLineItems(data.lineItems);
+      setShowPayment(true);
+      
+      console.log('[Payment] Payment intent created:', data.amount);
+    } catch (error: any) {
+      console.error('[Payment] Error initiating payment:', error);
+      toast.error('Failed to initiate payment: ' + error.message);
+    } finally {
+      setProcessingPayment(false);
+    }
+  };
+
   // Form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -737,6 +807,12 @@ function JobIntakeContent() {
       return;
     }
 
+    // Initiate payment instead of directly submitting
+    await initiatePayment();
+  };
+
+  // Finalize job after successful payment
+  const finalizeJob = async () => {
     setUploading(true);
 
     try {
@@ -883,6 +959,42 @@ function JobIntakeContent() {
     } finally {
       setUploading(false);
     }
+  };
+
+  // Handle payment success
+  const handlePaymentSuccess = async (paymentIntentId: string) => {
+    console.log('[Payment] Payment succeeded:', paymentIntentId);
+    
+    try {
+      // Confirm payment in database
+      const confirmResponse = await fetch('/api/payment/confirm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          paymentIntentId,
+          jobId: draftJobId
+        })
+      });
+
+      if (!confirmResponse.ok) {
+        throw new Error('Failed to confirm payment');
+      }
+
+      // Finalize the job
+      await finalizeJob();
+    } catch (error: any) {
+      console.error('[Payment] Error after payment success:', error);
+      toast.error('Payment succeeded but job finalization failed. Please contact support.');
+    }
+  };
+
+  // Handle payment error
+  const handlePaymentError = (error: string) => {
+    console.error('[Payment] Payment failed:', error);
+    setShowPayment(false);
+    setProcessingPayment(false);
+    toast.error(`Payment failed: ${error}. Please check your card details and try again.`);
+    // Form remains visible, user can retry
   };
 
   return (
@@ -1293,23 +1405,57 @@ function JobIntakeContent() {
               </div>
             </div>
 
-            <Button
-              type="submit"
-              disabled={uploading}
-              className="w-full bg-[#4791FF] hover:bg-[#3680ee] text-white h-14 text-lg font-bold rounded-xl shadow-lg shadow-[#4791FF]/20 transition-all active:scale-[0.98]"
-            >
-              {uploading ? (
-                <>
-                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                  Submitting Request...
-                </>
-              ) : (
-                <>
-                  <CheckCircle className="w-5 h-5 mr-2" />
-                  Submit Job Request
-                </>
-              )}
-            </Button>
+            {!showPayment ? (
+              <Button
+                type="submit"
+                disabled={uploading || processingPayment}
+                className="w-full bg-[#4791FF] hover:bg-[#3680ee] text-white h-14 text-lg font-bold rounded-xl shadow-lg shadow-[#4791FF]/20 transition-all active:scale-[0.98]"
+              >
+                {processingPayment ? (
+                  <>
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    Preparing Payment...
+                  </>
+                ) : uploading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    Submitting Request...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="w-5 h-5 mr-2" />
+                    Continue to Payment
+                  </>
+                )}
+              </Button>
+            ) : (
+              <div className="space-y-4">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <p className="text-sm text-blue-800">
+                    <strong>Almost done!</strong> Complete payment to submit your job request.
+                  </p>
+                </div>
+                
+                {paymentClientSecret && (
+                  <StripePaymentForm
+                    clientSecret={paymentClientSecret}
+                    amount={paymentAmount}
+                    lineItems={paymentLineItems}
+                    onSuccess={handlePaymentSuccess}
+                    onError={handlePaymentError}
+                  />
+                )}
+                
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowPayment(false)}
+                  className="w-full"
+                >
+                  Back to Form
+                </Button>
+              </div>
+            )}
           </form>
         </GlassCard>
       </main>
