@@ -19,7 +19,7 @@ const getGmailClient = () => {
 export async function sendPasswordSetupEmail(to: string, token: string) {
   const gmail = getGmailClient();
   
-  const setupUrl = `${process.env.NEXT_PUBLIC_APP_URL}/set-password?token=${token}`;
+  const setupUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://ds.inventright.com'}/setup-password?token=${token}`;
   
   const htmlBody = `
     <!DOCTYPE html>
