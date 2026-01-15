@@ -28,12 +28,11 @@ export const refreshTokenIfNeeded = async () => {
     const payload = JSON.parse(atob(tokenParts[1]));
     const currentTime = Math.floor(Date.now() / 1000);
     
-    // If token expires in less than 3 days, refresh it
-    // This ensures continuous session with 7-day tokens
+    // If token expires in less than 7 days, refresh it
     const timeUntilExpiry = payload.exp - currentTime;
-    const threeDays = 3 * 24 * 60 * 60;
+    const sevenDays = 7 * 24 * 60 * 60;
     
-    if (timeUntilExpiry < threeDays && timeUntilExpiry > 0) {
+    if (timeUntilExpiry < sevenDays && timeUntilExpiry > 0) {
       console.log('[Auth] Token expiring soon, refreshing...');
       
       const response = await fetch('/api/auth/refresh', {
@@ -72,7 +71,7 @@ export const refreshTokenIfNeeded = async () => {
   }
 };
 
-export const isAuthenticated = () => {
+export const isAuthenticated = async () => {
   const token = getWordPressToken();
   const user = getWordPressUser();
   
@@ -96,15 +95,20 @@ export const isAuthenticated = () => {
     
     // Check if token has expired
     if (payload.exp && payload.exp < currentTime) {
-      console.warn('[Auth] Token has expired, clearing authentication');
-      logout();
-      return false;
+      console.warn('[Auth] Token has expired, attempting refresh...');
+      
+      // Try to refresh the token
+      const refreshed = await refreshTokenIfNeeded();
+      if (!refreshed) {
+        console.warn('[Auth] Token refresh failed, logging out');
+        logout();
+        return false;
+      }
+      return true;
     }
     
-    // Proactively refresh token if expiring soon (async, don't wait)
-    refreshTokenIfNeeded().catch(err => 
-      console.error('[Auth] Background token refresh failed:', err)
-    );
+    // Proactively refresh token if expiring soon
+    await refreshTokenIfNeeded();
   } catch (error) {
     console.error('[Auth] Error validating token:', error);
     logout();
@@ -124,4 +128,14 @@ export const logout = () => {
     document.cookie = 'user_data=; path=/; max-age=0';
     window.location.href = '/';
   }
+};
+
+// Initialize auth check with token refresh on app load
+export const initializeAuth = async () => {
+  const authenticated = await isAuthenticated();
+  if (authenticated) {
+    // Refresh token proactively on app load
+    await refreshTokenIfNeeded();
+  }
+  return authenticated;
 };

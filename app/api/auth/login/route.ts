@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
         role: user.role,
       },
       JWT_SECRET,
-      { expiresIn: "7d" }
+      { expiresIn: "7d" } // 7 days as per user preference
     );
 
     // Return user data and token
