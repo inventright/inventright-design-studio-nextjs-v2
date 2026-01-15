@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useWordPressAuth } from "@/hooks/useWordPressAuth";
 import Header from "@/components/Header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Settings, Database, Users, Briefcase, CheckCircle } from "lucide-react";
+import { Settings, Database, Users, Briefcase, CheckCircle, Mail } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
@@ -148,6 +148,20 @@ export default function AdminDashboard() {
               <Link href="/admin/designer-assignments">
                 <Button variant="outline" className="w-full">
                   Manage Assignments
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Email Monitoring</CardTitle>
+              <CardDescription>View and manage outgoing emails</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link href="/admin/emails">
+                <Button variant="outline" className="w-full">
+                  View Email Logs
                 </Button>
               </Link>
             </CardContent>

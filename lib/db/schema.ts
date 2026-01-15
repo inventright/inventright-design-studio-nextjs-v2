@@ -314,3 +314,17 @@ export const designPackageOrders = pgTable("designPackageOrders", {
 
 export type DesignPackageOrder = typeof designPackageOrders.$inferSelect;
 export type InsertDesignPackageOrder = typeof designPackageOrders.$inferInsert;
+
+// Email Logs table for monitoring outgoing emails
+export const emailLogs = pgTable('email_logs', {
+  id: serial('id').primaryKey(),
+  recipient: varchar('recipient', { length: 255 }).notNull(),
+  subject: varchar('subject', { length: 500 }).notNull(),
+  body: text('body').notNull(),
+  status: varchar('status', { length: 50 }).notNull().default('sent'),
+  errorMessage: text('error_message'),
+  sentAt: timestamp('sent_at').defaultNow(),
+  resentFrom: integer('resent_from').references(() => emailLogs.id),
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at').defaultNow(),
+});

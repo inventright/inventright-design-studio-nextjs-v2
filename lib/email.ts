@@ -1,4 +1,6 @@
 import { google } from 'googleapis';
+import { db } from '@/lib/db';
+import { emailLogs } from '@/lib/db/schema';
 
 const getGmailClient = () => {
   // Decode Base64 encoded service account credentials
@@ -16,10 +18,33 @@ const getGmailClient = () => {
   return google.gmail({ version: 'v1', auth });
 };
 
+async function logEmail(
+  recipient: string,
+  subject: string,
+  body: string,
+  status: 'sent' | 'failed',
+  errorMessage?: string,
+  metadata?: any
+) {
+  try {
+    await db.insert(emailLogs).values({
+      recipient,
+      subject,
+      body,
+      status,
+      errorMessage,
+      metadata: metadata ? JSON.stringify(metadata) : null,
+    } as any);
+  } catch (error) {
+    console.error('[Email] Failed to log email:', error);
+  }
+}
+
 export async function sendPasswordSetupEmail(to: string, token: string) {
   const gmail = getGmailClient();
   
   const setupUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://ds.inventright.com'}/setup-password?token=${token}`;
+  const subject = 'Set Up Your inventRight Design Studio Password';
   
   const htmlBody = `
     <!DOCTYPE html>
@@ -61,7 +86,7 @@ export async function sendPasswordSetupEmail(to: string, token: string) {
   const messageParts = [
     'From: support@inventright.com',
     `To: ${to}`,
-    'Subject: Set Up Your inventRight Design Studio Password',
+    `Subject: ${subject}`,
     'MIME-Version: 1.0',
     'Content-Type: text/html; charset=utf-8',
     '',
@@ -85,9 +110,25 @@ export async function sendPasswordSetupEmail(to: string, token: string) {
     });
 
     console.log('[Email] Password setup email sent successfully:', response.data);
+    
+    // Log successful email
+    await logEmail(to, subject, htmlBody, 'sent', undefined, { 
+      type: 'password_setup',
+      token: token.substring(0, 10) + '...',
+      setupUrl 
+    });
+    
     return response.data;
   } catch (error) {
     console.error('[Email] Failed to send password setup email:', error);
+    
+    // Log failed email
+    await logEmail(to, subject, htmlBody, 'failed', error instanceof Error ? error.message : 'Unknown error', {
+      type: 'password_setup',
+      token: token.substring(0, 10) + '...',
+      setupUrl
+    });
+    
     throw error;
   }
 }
@@ -96,6 +137,7 @@ export async function sendPasswordResetEmail(to: string, token: string) {
   const gmail = getGmailClient();
   
   const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL}/reset-password?token=${token}`;
+  const subject = 'Reset Your inventRight Design Studio Password';
   
   const htmlBody = `
     <!DOCTYPE html>
@@ -137,7 +179,7 @@ export async function sendPasswordResetEmail(to: string, token: string) {
   const messageParts = [
     'From: support@inventright.com',
     `To: ${to}`,
-    'Subject: Reset Your inventRight Design Studio Password',
+    `Subject: ${subject}`,
     'MIME-Version: 1.0',
     'Content-Type: text/html; charset=utf-8',
     '',
@@ -161,9 +203,25 @@ export async function sendPasswordResetEmail(to: string, token: string) {
     });
 
     console.log('[Email] Password reset email sent successfully:', response.data);
+    
+    // Log successful email
+    await logEmail(to, subject, htmlBody, 'sent', undefined, {
+      type: 'password_reset',
+      token: token.substring(0, 10) + '...',
+      resetUrl
+    });
+    
     return response.data;
   } catch (error) {
     console.error('[Email] Failed to send password reset email:', error);
+    
+    // Log failed email
+    await logEmail(to, subject, htmlBody, 'failed', error instanceof Error ? error.message : 'Unknown error', {
+      type: 'password_reset',
+      token: token.substring(0, 10) + '...',
+      resetUrl
+    });
+    
     throw error;
   }
 }
@@ -199,10 +257,12 @@ export async function sendTestEmail(to: string, subject: string, body: string) {
     </html>
   `;
 
+  const fullSubject = `[TEST] ${subject}`;
+  
   const messageParts = [
     'From: support@inventright.com',
     `To: ${to}`,
-    `Subject: [TEST] ${subject}`,
+    `Subject: ${fullSubject}`,
     'MIME-Version: 1.0',
     'Content-Type: text/html; charset=utf-8',
     '',
@@ -226,9 +286,25 @@ export async function sendTestEmail(to: string, subject: string, body: string) {
     });
 
     console.log('[Email] Test email sent successfully:', response.data);
+    
+    // Log successful email
+    await logEmail(to, fullSubject, htmlBody, 'sent', undefined, {
+      type: 'test',
+      originalSubject: subject,
+      originalBody: body
+    });
+    
     return response.data;
   } catch (error) {
     console.error('[Email] Failed to send test email:', error);
+    
+    // Log failed email
+    await logEmail(to, fullSubject, htmlBody, 'failed', error instanceof Error ? error.message : 'Unknown error', {
+      type: 'test',
+      originalSubject: subject,
+      originalBody: body
+    });
+    
     throw error;
   }
 }
