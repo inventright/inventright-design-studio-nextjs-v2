@@ -122,23 +122,6 @@ export default function Users() {
       console.error('Error deleting user:', error);
       toast.error('Failed to delete user');
     }
-    // Store original admin user data
-    const currentUser = localStorage.getItem('user_data');
-    if (currentUser) {
-      localStorage.setItem('impersonation_original_user', currentUser);
-    }
-    // Set impersonated user data
-    const impersonatedUserData = {
-      id: user.wordpressId || user.id,
-      email: user.email,
-      name: user.name,
-      role: user.role,
-      loginMethod: user.loginMethod
-    };
-    localStorage.setItem('user_data', JSON.stringify(impersonatedUserData));
-    localStorage.setItem('impersonating', 'true');
-    // Redirect to their dashboard
-    window.location.href = '/dashboard';
   };
 
   const handleRoleChange = async (user: User, newRole: DesignStudioRole) => {
