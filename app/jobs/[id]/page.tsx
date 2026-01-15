@@ -8,9 +8,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, FileText, Loader2, Upload, Send, Download, Paperclip, User, Clock } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
+import JobTimeline from "@/components/jobs/JobTimeline";
+import StatusAutomationInfo from "@/components/jobs/StatusAutomationInfo";
 
 interface JobDetailProps {
   params: Promise<{ id: string }>;
@@ -280,14 +283,20 @@ export default function JobDetail({ params }: JobDetailProps) {
   }
 
   const statusColors: Record<string, string> = {
-    Draft: 'bg-gray-100 text-gray-800',
-    Pending: 'bg-yellow-100 text-yellow-800',
-    'In Progress': 'bg-blue-100 text-blue-800',
-    Review: 'bg-purple-100 text-purple-800',
-    Completed: 'bg-green-100 text-green-800',
+    'New Job': 'bg-blue-100 text-blue-800',
+    'Job in Progress': 'bg-purple-100 text-purple-800',
+    'Proof Sent': 'bg-green-100 text-green-800',
+    'Revisions Requested': 'bg-yellow-100 text-yellow-800',
+    'Job Complete': 'bg-emerald-100 text-emerald-800',
+    // Legacy statuses for backward compatibility
+    'Draft': 'bg-gray-100 text-gray-800',
+    'Pending': 'bg-yellow-100 text-yellow-800',
+    'In Progress': 'bg-purple-100 text-purple-800',
+    'Review': 'bg-purple-100 text-purple-800',
+    'Completed': 'bg-green-100 text-green-800',
   };
 
-  const availableStatuses = ['Draft', 'Pending', 'In Progress', 'Review', 'Completed'];
+  const availableStatuses = ['New Job', 'Job in Progress', 'Proof Sent', 'Revisions Requested', 'Job Complete'];
 
   return (
     <>
@@ -424,78 +433,85 @@ export default function JobDetail({ params }: JobDetailProps) {
               </CardContent>
             </Card>
 
-            {/* Messages/Comments */}
+            {/* Comments & Timeline Tabs */}
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Send className="w-5 h-5" />
-                  Messages
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {/* Messages List */}
-                <div className="space-y-4 mb-4 max-h-96 overflow-y-auto">
-                  {messages.length === 0 ? (
-                    <p className="text-gray-500 text-sm text-center py-4">No messages yet</p>
-                  ) : (
-                    messages.map((message) => (
-                      <div key={message.id} className="border border-gray-200 rounded-lg p-4">
-                        <div className="flex items-start gap-3">
-                          <div className="flex-shrink-0">
-                            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                              <User className="w-4 h-4 text-blue-600" />
-                            </div>
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="font-semibold text-gray-900">
-                                {message.userName || message.userEmail || 'Unknown User'}
-                              </span>
-                              {message.userRole && (
-                                <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-gray-100 text-gray-700">
-                                  {message.userRole}
-                                </span>
-                              )}
-                              <span className="text-xs text-gray-500 flex items-center gap-1">
-                                <Clock className="w-3 h-3" />
-                                {new Date(message.createdAt).toLocaleString()}
-                              </span>
-                            </div>
-                            <p className="text-gray-700 whitespace-pre-wrap">{message.content}</p>
-                          </div>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-
-                {/* New Message Input */}
-                <div className="space-y-2">
-                  <Textarea
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    placeholder="Type your message..."
-                    className="min-h-[100px]"
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-                        handleSendMessage();
-                      }
-                    }}
-                  />
-                  <div className="flex justify-end">
-                    <Button
-                      onClick={handleSendMessage}
-                      disabled={!newMessage.trim() || sendingMessage}
-                    >
-                      {sendingMessage ? (
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              <CardContent className="pt-6">
+                <Tabs defaultValue="comments" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2 mb-4">
+                    <TabsTrigger value="comments">Comments</TabsTrigger>
+                    <TabsTrigger value="timeline">Timeline</TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="comments" className="space-y-4">
+                    {/* Messages List */}
+                    <div className="space-y-4 max-h-96 overflow-y-auto">
+                      {messages.length === 0 ? (
+                        <p className="text-gray-500 text-sm text-center py-4">No messages yet</p>
                       ) : (
-                        <Send className="w-4 h-4 mr-2" />
+                        messages.map((message) => (
+                          <div key={message.id} className="border border-gray-200 rounded-lg p-4">
+                            <div className="flex items-start gap-3">
+                              <div className="flex-shrink-0">
+                                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                                  <User className="w-4 h-4 text-blue-600" />
+                                </div>
+                              </div>
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className="font-semibold text-gray-900">
+                                    {message.userName || message.userEmail || 'Unknown User'}
+                                  </span>
+                                  {message.userRole && (
+                                    <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-gray-100 text-gray-700">
+                                      {message.userRole}
+                                    </span>
+                                  )}
+                                  <span className="text-xs text-gray-500 flex items-center gap-1">
+                                    <Clock className="w-3 h-3" />
+                                    {new Date(message.createdAt).toLocaleString()}
+                                  </span>
+                                </div>
+                                <p className="text-gray-700 whitespace-pre-wrap">{message.content}</p>
+                              </div>
+                            </div>
+                          </div>
+                        ))
                       )}
-                      Send Message
-                    </Button>
-                  </div>
-                </div>
+                    </div>
+
+                    {/* New Message Input */}
+                    <div className="space-y-2">
+                      <Textarea
+                        value={newMessage}
+                        onChange={(e) => setNewMessage(e.target.value)}
+                        placeholder="Type your message..."
+                        className="min-h-[100px]"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                            handleSendMessage();
+                          }
+                        }}
+                      />
+                      <div className="flex justify-end">
+                        <Button
+                          onClick={handleSendMessage}
+                          disabled={!newMessage.trim() || sendingMessage}
+                        >
+                          {sendingMessage ? (
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          ) : (
+                            <Send className="w-4 h-4 mr-2" />
+                          )}
+                          Send Message
+                        </Button>
+                      </div>
+                    </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="timeline">
+                    <JobTimeline job={job} messages={messages} files={files} />
+                  </TabsContent>
+                </Tabs>
               </CardContent>
             </Card>
           </div>
@@ -522,6 +538,9 @@ export default function JobDetail({ params }: JobDetailProps) {
                 </Select>
               </CardContent>
             </Card>
+            
+            {/* Status Automation Info */}
+            <StatusAutomationInfo />
 
             {/* Files */}
             <Card>
