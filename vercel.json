@@ -2,6 +2,11 @@
   "framework": "nextjs",
   "buildCommand": "pnpm build",
   "installCommand": "pnpm install",
+  "build": {
+    "env": {
+      "NODE_OPTIONS": "--max-old-space-size=4096"
+    }
+  },
   "functions": {
     "app/api/files/upload/route.ts": {
       "maxDuration": 60,
