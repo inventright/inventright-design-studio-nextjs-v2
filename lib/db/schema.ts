@@ -1,4 +1,4 @@
-import { pgTable, serial, varchar, text, timestamp, integer, boolean, decimal, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, serial, varchar, text, timestamp, integer, boolean, decimal, pgEnum, jsonb } from "drizzle-orm/pg-core";
 
 /**
  * Role enum for PostgreSQL
