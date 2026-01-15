@@ -24,7 +24,8 @@ export async function PUT(
       pricingTierId,
       price,
       currency,
-      isActive
+      isActive,
+      parentProductKey
     } = body;
 
     const [product] = await db
@@ -39,6 +40,7 @@ export async function PUT(
         price: price.toString(),
         currency: currency || 'USD',
         isActive,
+        parentProductKey: parentProductKey || null,
         updatedAt: new Date()
       })
       .where(eq(productPricing.id, productId))

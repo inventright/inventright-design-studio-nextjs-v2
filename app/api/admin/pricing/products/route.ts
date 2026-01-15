@@ -44,7 +44,8 @@ export async function POST(request: NextRequest) {
       pricingTierId,
       price,
       currency,
-      isActive
+      isActive,
+      parentProductKey
     } = body;
 
     if (!productKey || !productName || !category || price === undefined) {
@@ -65,7 +66,8 @@ export async function POST(request: NextRequest) {
         pricingTierId: pricingTierId || null,
         price: price.toString(),
         currency: currency || 'USD',
-        isActive: isActive ?? true
+        isActive: isActive ?? true,
+        parentProductKey: parentProductKey || null
       })
       .returning();
 
