@@ -463,45 +463,118 @@ function JobIntakeContent() {
   // Upload file immediately to draft job
   const uploadFileToDraft = async (file: File, index: number) => {
     try {
-      console.log(`[Job Intake] Uploading ${file.name} to draft job ${draftJobId}`);
+      console.log(`[Job Intake] Uploading ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB) to draft job ${draftJobId}`);
       
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('jobId', draftJobId ? draftJobId.toString() : '');
-      formData.append('fileType', 'input');
+      const FILE_SIZE_THRESHOLD = 4 * 1024 * 1024; // 4MB
+      const useLargeFileUpload = file.size > FILE_SIZE_THRESHOLD;
 
-      const response = await fetch('/api/files/upload', {
-        method: 'POST',
-        body: formData
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Upload failed' }));
-        console.error(`[Job Intake] Failed to upload ${file.name}:`, errorData);
+      if (useLargeFileUpload) {
+        // Use presigned URL for large files
+        console.log(`[Job Intake] Using presigned URL for large file: ${file.name}`);
         
-        // Update file state with error
-        setFiles(prev => prev.map((f, i) => 
-          i === index ? { ...f, uploading: false, error: errorData.error || 'Upload failed' } : f
-        ));
-        toast.error(`Failed to upload ${file.name}`);
-        return;
-      }
+        // Step 1: Get presigned URL
+        const presignedResponse = await fetch('/api/files/presigned-url', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            fileName: file.name,
+            mimeType: file.type,
+            jobId: draftJobId ? draftJobId.toString() : ''
+          })
+        });
 
-      const uploadedFile = await response.json();
-      console.log(`[Job Intake] Successfully uploaded ${file.name}, fileKey:`, uploadedFile.fileKey);
-      
-      // Update file state with upload success and fileKey
-      setFiles(prev => prev.map((f, i) => 
-        i === index ? { 
-          ...f, 
-          uploading: false, 
-          uploaded: true, 
-          fileKey: uploadedFile.fileKey,
-          fileId: uploadedFile.id 
-        } : f
-      ));
-      
-      toast.success(`${file.name} uploaded successfully`);
+        if (!presignedResponse.ok) {
+          throw new Error('Failed to get presigned URL');
+        }
+
+        const { presignedUrl, fileKey } = await presignedResponse.json();
+
+        // Step 2: Upload directly to Wasabi
+        const uploadResponse = await fetch(presignedUrl, {
+          method: 'PUT',
+          body: file,
+          headers: {
+            'Content-Type': file.type,
+          }
+        });
+
+        if (!uploadResponse.ok) {
+          throw new Error('Failed to upload to storage');
+        }
+
+        // Step 3: Save metadata
+        const metadataResponse = await fetch('/api/files/save-metadata', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            jobId: draftJobId ? draftJobId.toString() : '',
+            fileName: file.name,
+            fileKey,
+            fileSize: file.size,
+            mimeType: file.type,
+            fileType: 'input'
+          })
+        });
+
+        if (!metadataResponse.ok) {
+          throw new Error('Failed to save file metadata');
+        }
+
+        const uploadedFile = await metadataResponse.json();
+        console.log(`[Job Intake] Successfully uploaded large file ${file.name}, fileKey:`, uploadedFile.fileKey);
+        
+        // Update file state with upload success
+        setFiles(prev => prev.map((f, i) => 
+          i === index ? { 
+            ...f, 
+            uploading: false, 
+            uploaded: true, 
+            fileKey: uploadedFile.fileKey,
+            fileId: uploadedFile.id 
+          } : f
+        ));
+        
+        toast.success(`${file.name} uploaded successfully`);
+      } else {
+        // Use standard upload for smaller files
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('jobId', draftJobId ? draftJobId.toString() : '');
+        formData.append('fileType', 'input');
+
+        const response = await fetch('/api/files/upload', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ error: 'Upload failed' }));
+          console.error(`[Job Intake] Failed to upload ${file.name}:`, errorData);
+          
+          // Update file state with error
+          setFiles(prev => prev.map((f, i) => 
+            i === index ? { ...f, uploading: false, error: errorData.error || 'Upload failed' } : f
+          ));
+          toast.error(`Failed to upload ${file.name}`);
+          return;
+        }
+
+        const uploadedFile = await response.json();
+        console.log(`[Job Intake] Successfully uploaded ${file.name}, fileKey:`, uploadedFile.fileKey);
+        
+        // Update file state with upload success and fileKey
+        setFiles(prev => prev.map((f, i) => 
+          i === index ? { 
+            ...f, 
+            uploading: false, 
+            uploaded: true, 
+            fileKey: uploadedFile.fileKey,
+            fileId: uploadedFile.id 
+          } : f
+        ));
+        
+        toast.success(`${file.name} uploaded successfully`);
+      }
     } catch (error: any) {
       console.error(`[Job Intake] Error uploading ${file.name}:`, error);
       setFiles(prev => prev.map((f, i) => 

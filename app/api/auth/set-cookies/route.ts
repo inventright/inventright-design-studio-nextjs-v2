@@ -18,7 +18,7 @@ export async function POST(request: Request) {
     // Set cookies with proper security settings
     cookieStore.set('auth_token', token, {
       path: '/',
-      maxAge: 60 * 60 * 6, // 6 hours
+      maxAge: 60 * 60 * 24 * 7, // 7 days
       sameSite: 'lax',
       secure: process.env.NODE_ENV === 'production',
       httpOnly: false // Allow client-side access for compatibility
@@ -26,7 +26,7 @@ export async function POST(request: Request) {
 
     cookieStore.set('user_data', JSON.stringify(userData), {
       path: '/',
-      maxAge: 60 * 60 * 6, // 6 hours
+      maxAge: 60 * 60 * 24 * 7, // 7 days
       sameSite: 'lax',
       secure: process.env.NODE_ENV === 'production',
       httpOnly: false // Allow client-side access for compatibility
