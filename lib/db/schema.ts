@@ -328,3 +328,118 @@ export const emailLogs = pgTable('email_logs', {
   metadata: jsonb('metadata'),
   createdAt: timestamp('created_at').defaultNow(),
 });
+
+export type EmailLog = typeof emailLogs.$inferSelect;
+export type InsertEmailLog = typeof emailLogs.$inferInsert;
+
+/**
+ * Pricing tiers for membership-based pricing
+ */
+export const pricingTiers = pgTable("pricingTiers", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 100 }).notNull().unique(), // e.g., "standard", "premium", "vip"
+  displayName: varchar("displayName", { length: 100 }).notNull(), // e.g., "Standard Member"
+  description: text("description"),
+  wordpressMembershipLevel: varchar("wordpressMembershipLevel", { length: 100 }), // Maps to WordPress membership
+  isActive: boolean("isActive").default(true).notNull(),
+  sortOrder: integer("sortOrder").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+});
+
+export type PricingTier = typeof pricingTiers.$inferSelect;
+export type InsertPricingTier = typeof pricingTiers.$inferInsert;
+
+/**
+ * Product pricing for job intake items with tier support
+ */
+export const productPricing = pgTable("productPricing", {
+  id: serial("id").primaryKey(),
+  productKey: varchar("productKey", { length: 100 }).notNull(), // e.g., "sell_sheets", "rush_delivery"
+  productName: varchar("productName", { length: 255 }).notNull(),
+  productDescription: text("productDescription"),
+  category: varchar("category", { length: 100 }).notNull(), // "department", "addon", "rush"
+  departmentId: integer("departmentId").references(() => departments.id), // If it's a department product
+  pricingTierId: integer("pricingTierId").references(() => pricingTiers.id), // null = default pricing
+  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  currency: varchar("currency", { length: 3 }).default("USD").notNull(),
+  stripeProductId: varchar("stripeProductId", { length: 255 }), // Stripe product ID
+  stripePriceId: varchar("stripePriceId", { length: 255 }), // Stripe price ID
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+});
+
+export type ProductPricing = typeof productPricing.$inferSelect;
+export type InsertProductPricing = typeof productPricing.$inferInsert;
+
+/**
+ * Payment transactions for job submissions
+ */
+export const payments = pgTable("payments", {
+  id: serial("id").primaryKey(),
+  jobId: integer("jobId").references(() => jobs.id).notNull(),
+  userId: integer("userId").references(() => users.id).notNull(),
+  stripeSessionId: varchar("stripeSessionId", { length: 255 }).unique(),
+  stripePaymentIntentId: varchar("stripePaymentIntentId", { length: 255 }).unique(),
+  stripeChargeId: varchar("stripeChargeId", { length: 255 }),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(), // Total amount
+  subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(), // Before discounts
+  discountAmount: decimal("discountAmount", { precision: 10, scale: 2 }).default("0").notNull(),
+  currency: varchar("currency", { length: 3 }).default("USD").notNull(),
+  status: varchar("status", { length: 50 }).default("pending").notNull(), // pending, succeeded, failed, refunded, partially_refunded
+  voucherCode: varchar("voucherCode", { length: 50 }),
+  voucherId: integer("voucherId").references(() => voucherCodes.id),
+  pricingTierId: integer("pricingTierId").references(() => pricingTiers.id),
+  metadata: jsonb("metadata"), // Additional payment details
+  paidAt: timestamp("paidAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+});
+
+export type Payment = typeof payments.$inferSelect;
+export type InsertPayment = typeof payments.$inferInsert;
+
+/**
+ * Payment line items - detailed breakdown of what was purchased
+ */
+export const paymentLineItems = pgTable("paymentLineItems", {
+  id: serial("id").primaryKey(),
+  paymentId: integer("paymentId").references(() => payments.id, { onDelete: "cascade" }).notNull(),
+  productPricingId: integer("productPricingId").references(() => productPricing.id),
+  productKey: varchar("productKey", { length: 100 }).notNull(),
+  productName: varchar("productName", { length: 255 }).notNull(),
+  description: text("description"),
+  quantity: integer("quantity").default(1).notNull(),
+  unitPrice: decimal("unitPrice", { precision: 10, scale: 2 }).notNull(),
+  totalPrice: decimal("totalPrice", { precision: 10, scale: 2 }).notNull(),
+  isUpgrade: boolean("isUpgrade").default(false).notNull(), // If this is an upgrade/addon to another item
+  parentLineItemId: integer("parentLineItemId"), // Links upgrades to their parent product
+  stripeProductId: varchar("stripeProductId", { length: 255 }),
+  stripePriceId: varchar("stripePriceId", { length: 255 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type PaymentLineItem = typeof paymentLineItems.$inferSelect;
+export type InsertPaymentLineItem = typeof paymentLineItems.$inferInsert;
+
+/**
+ * Refunds for payment transactions
+ */
+export const refunds = pgTable("refunds", {
+  id: serial("id").primaryKey(),
+  paymentId: integer("paymentId").references(() => payments.id).notNull(),
+  stripeRefundId: varchar("stripeRefundId", { length: 255 }).unique(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  currency: varchar("currency", { length: 3 }).default("USD").notNull(),
+  reason: varchar("reason", { length: 255 }),
+  status: varchar("status", { length: 50 }).default("pending").notNull(), // pending, succeeded, failed, cancelled
+  refundedBy: integer("refundedBy").references(() => users.id), // Admin who issued refund
+  notes: text("notes"),
+  metadata: jsonb("metadata"),
+  processedAt: timestamp("processedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type Refund = typeof refunds.$inferSelect;
+export type InsertRefund = typeof refunds.$inferInsert;
