@@ -186,7 +186,7 @@ export default function ClientDashboard() {
     }
   };
 
-  const handleStartSellSheet = async (orderId: number) => {
+  const handleStartSellSheet = async (orderId: string) => {
     router.push(`/job-intake?jobType=sell_sheet&packageId=${orderId}`);
   };
 
