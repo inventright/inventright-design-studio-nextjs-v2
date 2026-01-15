@@ -324,7 +324,7 @@ export const emailLogs = pgTable('email_logs', {
   status: varchar('status', { length: 50 }).notNull().default('sent'),
   errorMessage: text('error_message'),
   sentAt: timestamp('sent_at').defaultNow(),
-  resentFrom: integer('resent_from').references(() => emailLogs.id),
+  resentFrom: integer('resent_from'),
   metadata: jsonb('metadata'),
   createdAt: timestamp('created_at').defaultNow(),
 });
