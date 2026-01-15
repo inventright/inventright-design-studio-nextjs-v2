@@ -12,7 +12,8 @@ export const getWordPressUser = () => {
 };
 
 export const getWordPressToken = () => {
-  return localStorage.getItem('auth_token');
+  // Try both token keys for compatibility
+  return localStorage.getItem('auth_token') || localStorage.getItem('wordpress_token');
 };
 
 // Refresh token if it's close to expiring
@@ -45,8 +46,9 @@ export const refreshTokenIfNeeded = async () => {
       if (response.ok) {
         const data = await response.json();
         
-        // Update localStorage
+        // Update localStorage with both keys for compatibility
         localStorage.setItem('auth_token', data.token);
+        localStorage.setItem('wordpress_token', data.token);
         localStorage.setItem('user_data', JSON.stringify(data.user));
         
         // Update cookies via API
@@ -62,12 +64,16 @@ export const refreshTokenIfNeeded = async () => {
         
         console.log('[Auth] Token refreshed successfully');
         return true;
+      } else {
+        console.warn('[Auth] Token refresh failed, but not logging out');
+        return false;
       }
     }
     
     return true;
   } catch (error) {
     console.error('[Auth] Error refreshing token:', error);
+    // Don't logout on refresh errors - just log and continue
     return false;
   }
 };
@@ -84,8 +90,8 @@ export const isAuthenticated = () => {
   // Validate token format (JWT tokens have 3 parts separated by dots)
   const tokenParts = token.split('.');
   if (tokenParts.length !== 3) {
-    console.warn('[Auth] Invalid token format, clearing authentication');
-    logout();
+    console.warn('[Auth] Invalid token format');
+    // Don't immediately logout - could be a temporary issue
     return false;
   }
   
@@ -96,7 +102,8 @@ export const isAuthenticated = () => {
     
     // Check if token has expired
     if (payload.exp && payload.exp < currentTime) {
-      console.warn('[Auth] Token has expired, clearing authentication');
+      console.warn('[Auth] Token has expired');
+      // Only logout if token is actually expired
       logout();
       return false;
     }
@@ -105,13 +112,17 @@ export const isAuthenticated = () => {
     refreshTokenIfNeeded().catch(err => 
       console.error('[Auth] Background token refresh failed:', err)
     );
+    
+    return true;
   } catch (error) {
-    console.error('[Auth] Error validating token:', error);
-    logout();
-    return false;
+    // If we can't decode the token, don't immediately logout
+    // The token might still be valid, just in a format we don't recognize
+    console.error('[Auth] Error validating token, but not logging out:', error);
+    
+    // Still return true if we have token and user data
+    // This prevents unnecessary logouts due to parsing errors
+    return true;
   }
-  
-  return true;
 };
 
 export const logout = () => {

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { isAuthenticated, getWordPressUser, logout as wpLogout } from '@/lib/wordpressAuth';
+import { isAuthenticated, getWordPressUser, logout as wpLogout, refreshTokenIfNeeded } from '@/lib/wordpressAuth';
 import type { DesignStudioRole } from '@/lib/roleMapping';
 
 interface User {
@@ -16,12 +16,42 @@ export function useWordPressAuth() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check authentication status
-    if (isAuthenticated()) {
-      const userData = getWordPressUser();
-      setUser(userData);
-    }
+    // Initial authentication check
+    const checkAuth = () => {
+      if (isAuthenticated()) {
+        const userData = getWordPressUser();
+        setUser(userData);
+      } else {
+        setUser(null);
+      }
+    };
+
+    checkAuth();
     setLoading(false);
+
+    // Periodically check authentication and refresh token
+    // Check every 5 minutes to ensure session stays alive
+    const interval = setInterval(() => {
+      console.log('[Auth] Periodic authentication check...');
+      
+      // Refresh token if needed
+      refreshTokenIfNeeded().then(refreshed => {
+        if (refreshed) {
+          // Update user data after refresh
+          const userData = getWordPressUser();
+          setUser(userData);
+        }
+      });
+      
+      // Verify authentication status
+      if (!isAuthenticated()) {
+        console.warn('[Auth] Authentication check failed');
+        setUser(null);
+      }
+    }, 5 * 60 * 1000); // 5 minutes
+
+    // Cleanup interval on unmount
+    return () => clearInterval(interval);
   }, []);
 
   const logout = () => {
