@@ -1,6 +1,7 @@
-'use client';
+"use client";
 
 import { useEffect, useState } from 'react';
+import Header from '@/components/Header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -122,7 +123,9 @@ export default function EmailMonitoringPage() {
   };
 
   return (
-    <div className="container mx-auto py-8 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+      <Header />
+      <div className="container mx-auto py-8 px-4 pt-24">
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold">Email Monitoring</h1>
@@ -244,6 +247,7 @@ export default function EmailMonitoringPage() {
           Showing {emails.length} email log{emails.length !== 1 ? 's' : ''}
         </div>
       )}
+      </div>
     </div>
   );
 }
