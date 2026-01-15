@@ -17,7 +17,17 @@ const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '6941798511
 
 // Helper function to get redirect URL based on user role
 const getRedirectUrl = (role: string) => {
-  return role === 'admin' ? '/dashboard/admin' : '/job-intake';
+  switch (role) {
+    case 'admin':
+      return '/dashboard/admin';
+    case 'manager':
+      return '/dashboard/manager';
+    case 'designer':
+      return '/dashboard/designer';
+    case 'client':
+    default:
+      return '/job-intake';
+  }
 };
 
 export default function WordPressLogin() {
