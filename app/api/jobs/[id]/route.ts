@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { jobs } from "@/lib/db/schema";
+import { jobs, users } from "@/lib/db/schema";
 import { requireAuth } from "@/lib/auth-utils-flexible";
 import { eq } from "drizzle-orm";
 
@@ -22,8 +22,25 @@ export async function GET(
     }
 
     const [job] = await db
-      .select()
+      .select({
+        id: jobs.id,
+        title: jobs.title,
+        description: jobs.description,
+        status: jobs.status,
+        priority: jobs.priority,
+        packageType: jobs.packageType,
+        clientId: jobs.clientId,
+        designerId: jobs.designerId,
+        designerName: users.name,
+        designerEmail: users.email,
+        departmentId: jobs.departmentId,
+        isDraft: jobs.isDraft,
+        archived: jobs.archived,
+        createdAt: jobs.createdAt,
+        updatedAt: jobs.updatedAt,
+      })
       .from(jobs)
+      .leftJoin(users, eq(jobs.designerId, users.id))
       .where(eq(jobs.id, jobId))
       .limit(1);
 

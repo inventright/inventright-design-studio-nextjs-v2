@@ -28,6 +28,8 @@ interface Job {
   packageType: string | null;
   clientId: number;
   designerId: number | null;
+  designerName?: string | null;
+  designerEmail?: string | null;
   departmentId: number | null;
   isDraft: boolean;
   archived: boolean;
@@ -284,6 +286,7 @@ export default function JobDetail({ params }: JobDetailProps) {
 
   const statusColors: Record<string, string> = {
     'New Job': 'bg-blue-100 text-blue-800',
+    'Assigned to Designer': 'bg-indigo-100 text-indigo-800',
     'Job in Progress': 'bg-purple-100 text-purple-800',
     'Proof Sent': 'bg-green-100 text-green-800',
     'Revisions Requested': 'bg-yellow-100 text-yellow-800',
@@ -296,7 +299,7 @@ export default function JobDetail({ params }: JobDetailProps) {
     'Completed': 'bg-green-100 text-green-800',
   };
 
-  const availableStatuses = ['New Job', 'Job in Progress', 'Proof Sent', 'Revisions Requested', 'Job Complete'];
+  const availableStatuses = ['New Job', 'Assigned to Designer', 'Job in Progress', 'Proof Sent', 'Revisions Requested', 'Job Complete'];
 
   return (
     <>
@@ -429,11 +432,35 @@ export default function JobDetail({ params }: JobDetailProps) {
                       }
                     })()}
                   </div>
-                )}
-              </CardContent>
+                )}              </CardContent>
             </Card>
 
-            {/* Comments & Timeline Tabs */}
+            {/* Assigned Designer Card */}
+            {job.designerId && job.designerName && (
+              <Card className="border-indigo-200 bg-indigo-50/30">
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <User className="w-5 h-5 text-indigo-600" />
+                    Assigned Designer
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-semibold">
+                      {job.designerName.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900">{job.designerName}</p>
+                      {job.designerEmail && (
+                        <p className="text-sm text-gray-600">{job.designerEmail}</p>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Timeline */}Timeline Tabs */}
             <Card>
               <CardContent className="pt-6">
                 <Tabs defaultValue="comments" className="w-full">
