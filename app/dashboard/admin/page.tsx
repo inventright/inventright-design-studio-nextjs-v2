@@ -166,6 +166,20 @@ export default function AdminDashboard() {
               </Link>
             </CardContent>
           </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Pricing Management</CardTitle>
+              <CardDescription>Manage product pricing and tiers</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link href="/admin/pricing">
+                <Button variant="outline" className="w-full">
+                  Manage Pricing
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
         </div>
 
         <Card className="mt-8">
