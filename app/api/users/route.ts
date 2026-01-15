@@ -78,6 +78,7 @@ export async function POST(request: NextRequest) {
         .returning();
 
       // Send password setup email if requested
+      let emailError = null;
       if (sendPasswordLink) {
         try {
           // Generate a secure token for password setup
@@ -96,15 +97,11 @@ export async function POST(request: NextRequest) {
             } as any)
             .where(eq(users.id, newUser[0].id));
           
-          const emailSent = await sendPasswordSetupEmail(email, setupToken);
-          
-          if (!emailSent) {
-            console.error('[Users API] Failed to send password setup email');
-            // Don't fail user creation if email fails, just log it
-          }
-        } catch (emailError) {
-          console.error('[Users API] Error sending password setup email:', emailError);
-          // Don't fail user creation if email fails
+          await sendPasswordSetupEmail(email, setupToken);
+        } catch (error) {
+          console.error('[Users API] Error sending password setup email:', error);
+          emailError = error instanceof Error ? error.message : 'Unknown error';
+          // Don't fail user creation if email fails, but report it
         }
       }
 
@@ -119,8 +116,9 @@ export async function POST(request: NextRequest) {
         user: newUser[0],
         created: true,
         message: sendPasswordLink 
-          ? 'User created! Password setup link sent to email.' 
-          : 'User created successfully.'
+          ? (emailError ? `User created but email failed to send: ${emailError}` : 'User created! Password setup link sent to email.') 
+          : 'User created successfully.',
+        emailError: emailError
       });
     }
 

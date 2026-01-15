@@ -41,8 +41,6 @@ async function logEmail(
 }
 
 export async function sendPasswordSetupEmail(to: string, token: string) {
-  const gmail = getGmailClient();
-  
   const setupUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://ds.inventright.com'}/setup-password?token=${token}&email=${encodeURIComponent(to)}`;
   const subject = 'Set Up Your inventRight Design Studio Password';
   
@@ -102,6 +100,7 @@ export async function sendPasswordSetupEmail(to: string, token: string) {
     .replace(/=+$/, '');
 
   try {
+    const gmail = getGmailClient();
     const response = await gmail.users.messages.send({
       userId: 'me',
       requestBody: {
@@ -195,6 +194,7 @@ export async function sendPasswordResetEmail(to: string, token: string) {
     .replace(/=+$/, '');
 
   try {
+    const gmail = getGmailClient();
     const response = await gmail.users.messages.send({
       userId: 'me',
       requestBody: {
@@ -278,6 +278,7 @@ export async function sendTestEmail(to: string, subject: string, body: string) {
     .replace(/=+$/, '');
 
   try {
+    const gmail = getGmailClient();
     const response = await gmail.users.messages.send({
       userId: 'me',
       requestBody: {
