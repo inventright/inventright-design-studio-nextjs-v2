@@ -215,11 +215,24 @@ function AdminJobsContent() {
                       <td className="py-4 px-4">
                         <div>
                           <div className="font-medium text-gray-900">{job.title}</div>
-                          {job.description && (
-                            <div className="text-sm text-gray-500 truncate max-w-md">
-                              {job.description}
-                            </div>
-                          )}
+                          {job.description && (() => {
+                            try {
+                              const desc = typeof job.description === 'string' ? JSON.parse(job.description) : job.description;
+                              const productName = desc.productName || desc.department || desc.packageType || 'Product';
+                              return (
+                                <div className="text-sm text-gray-500 truncate max-w-md">
+                                  {productName}
+                                </div>
+                              );
+                            } catch (e) {
+                              // If not JSON, display as-is
+                              return (
+                                <div className="text-sm text-gray-500 truncate max-w-md">
+                                  {job.description}
+                                </div>
+                              );
+                            }
+                          })()}
                         </div>
                       </td>
                       <td className="py-4 px-4">
