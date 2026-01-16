@@ -36,24 +36,37 @@ import {
   AlignRight,
   ImagePlus,
   Link as LinkIcon,
+  LinkIcon as Link2Icon,
+  Unlink,
   IndentIncrease,
   IndentDecrease,
   Undo,
   Redo,
+  Library,
 } from "lucide-react";
 import { INSERT_IMAGE_COMMAND } from "./ImagePlugin";
+import { $isLinkNode, TOGGLE_LINK_COMMAND } from "@lexical/link";
+import { useState } from "react";
+import MediaLibraryModal from "../MediaLibraryModal";
 
 export default function ToolbarPlugin() {
   const [editor] = useLexicalComposerContext();
   const [isBold, setIsBold] = useState(false);
   const [isItalic, setIsItalic] = useState(false);
   const [blockType, setBlockType] = useState("paragraph");
+  const [isLink, setIsLink] = useState(false);
+  const [mediaLibraryOpen, setMediaLibraryOpen] = useState(false);
 
   const updateToolbar = useCallback(() => {
     const selection = $getSelection();
     if ($isRangeSelection(selection)) {
       setIsBold(selection.hasFormat("bold"));
       setIsItalic(selection.hasFormat("italic"));
+
+      // Check if selection is within a link
+      const node = selection.anchor.getNode();
+      const parent = node.getParent();
+      setIsLink($isLinkNode(parent) || $isLinkNode(node));
 
       const anchorNode = selection.anchor.getNode();
       const element =
@@ -156,6 +169,24 @@ export default function ToolbarPlugin() {
     };
   };
 
+  const insertLink = () => {
+    if (!isLink) {
+      const url = prompt("Enter the URL:");
+      if (url) {
+        editor.dispatchCommand(TOGGLE_LINK_COMMAND, url);
+      }
+    } else {
+      editor.dispatchCommand(TOGGLE_LINK_COMMAND, null);
+    }
+  };
+
+  const handleMediaLibrarySelect = (url: string) => {
+    editor.dispatchCommand(INSERT_IMAGE_COMMAND, {
+      src: url,
+      altText: "Email image",
+    });
+  };
+
   return (
     <div className="border-b bg-gray-50 p-2 flex flex-wrap gap-1 rounded-t-xl">
       {/* Text Style Dropdown */}
@@ -242,6 +273,18 @@ export default function ToolbarPlugin() {
         <ListOrdered className="w-4 h-4" />
       </Button>
 
+      {/* Link/Unlink */}
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={insertLink}
+        className={isLink ? "bg-gray-200" : ""}
+        title={isLink ? "Remove link" : "Insert link"}
+      >
+        {isLink ? <Unlink className="w-4 h-4" /> : <Link2Icon className="w-4 h-4" />}
+      </Button>
+
       {/* Image Upload */}
       <Button
         type="button"
@@ -250,8 +293,26 @@ export default function ToolbarPlugin() {
         onClick={handleImageUpload}
       >
         <ImagePlus className="w-4 h-4" />
-        <span className="ml-1">Upload Image</span>
+        <span className="ml-1">Upload</span>
       </Button>
+
+      {/* Media Library */}
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={() => setMediaLibraryOpen(true)}
+      >
+        <Library className="w-4 h-4" />
+        <span className="ml-1">Library</span>
+      </Button>
+
+      {/* Media Library Modal */}
+      <MediaLibraryModal
+        open={mediaLibraryOpen}
+        onClose={() => setMediaLibraryOpen(false)}
+        onSelectImage={handleMediaLibrarySelect}
+      />
     </div>
   );
 }

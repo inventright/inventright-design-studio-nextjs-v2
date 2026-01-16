@@ -162,6 +162,26 @@ export type EmailTemplateImage = typeof emailTemplateImages.$inferSelect;
 export type InsertEmailTemplateImage = typeof emailTemplateImages.$inferInsert;
 
 /**
+ * Email media library for storing reusable images across email templates
+ */
+export const emailMediaLibrary = pgTable("emailMediaLibrary", {
+  id: serial("id").primaryKey(),
+  fileName: varchar("fileName", { length: 500 }).notNull(),
+  fileUrl: text("fileUrl").notNull(),
+  fileKey: text("fileKey").notNull(),
+  fileSize: integer("fileSize"),
+  mimeType: varchar("mimeType", { length: 100 }),
+  width: integer("width"),
+  height: integer("height"),
+  uploadedBy: integer("uploadedBy").references(() => users.id),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+});
+
+export type EmailMediaLibraryItem = typeof emailMediaLibrary.$inferSelect;
+export type InsertEmailMediaLibraryItem = typeof emailMediaLibrary.$inferInsert;
+
+/**
  * Voucher codes for discounts
  */
 export const voucherCodes = pgTable("voucherCodes", {
