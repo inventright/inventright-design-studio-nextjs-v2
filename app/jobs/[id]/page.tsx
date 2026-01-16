@@ -636,7 +636,11 @@ export default function JobDetail({ params }: JobDetailProps) {
                   </SelectTrigger>
                   <SelectContent>
                     {availableStatuses.map((status) => (
-                      <SelectItem key={status} value={status}>
+                      <SelectItem 
+                        key={status} 
+                        value={status}
+                        className={`${statusColors[status] || 'bg-gray-100 text-gray-800'} font-medium my-1 rounded-md`}
+                      >
                         {status}
                       </SelectItem>
                     ))}
