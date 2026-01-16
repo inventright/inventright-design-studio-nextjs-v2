@@ -268,7 +268,7 @@ export default function JobDetail({ params }: JobDetailProps) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          designerId: newDesignerId ? parseInt(newDesignerId) : null,
+          designerId: newDesignerId === 'unassigned' ? null : parseInt(newDesignerId),
         }),
       });
 
@@ -501,7 +501,7 @@ export default function JobDetail({ params }: JobDetailProps) {
                 {user?.role === 'admin' ? (
                   <div className="space-y-3">
                     <Select 
-                      value={job.designerId?.toString() || ''} 
+                      value={job.designerId?.toString() || 'unassigned'} 
                       onValueChange={handleDesignerChange}
                       disabled={changingDesigner}
                     >
@@ -509,7 +509,7 @@ export default function JobDetail({ params }: JobDetailProps) {
                         <SelectValue placeholder="Select a designer" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Unassigned</SelectItem>
+                        <SelectItem value="unassigned">Unassigned</SelectItem>
                         {designers.map((designer) => (
                           <SelectItem key={designer.id} value={designer.id.toString()}>
                             {designer.name} ({designer.email})
