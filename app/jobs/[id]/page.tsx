@@ -121,11 +121,13 @@ export default function JobDetail({ params }: JobDetailProps) {
 
         // Fetch files
         console.log('📁 [Job Details] Fetching files...');
-        const filesResponse = await fetch(`/api/jobs/${jobId}/files`);
-        if (filesResponse.ok) {
-          const filesData = await filesResponse.json();
-          console.log('✅ [Job Details] Files loaded:', filesData.length);
-          setFiles(filesData);
+        try {
+          const filesResponse = await fetch(`/api/jobs/${jobId}/files`);
+          if (filesResponse.ok) {
+            const filesData = await filesResponse.json();
+            console.log('✅ [Job Details] Files loaded:', filesData.length);
+            setFiles(filesData);
+          }
         } catch (error) {
           console.log('⚠️ [Job Details] Files fetch failed, continuing without files');
         }
