@@ -74,6 +74,8 @@ export default function JobDetail({ params }: JobDetailProps) {
   const jobId = unwrappedParams.id;
   const [job, setJob] = useState<Job | null>(null);
   const [files, setFiles] = useState<JobFile[]>([]);
+  const [payment, setPayment] = useState<any>(null);
+  const [paymentLineItems, setPaymentLineItems] = useState<any[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -124,8 +126,21 @@ export default function JobDetail({ params }: JobDetailProps) {
           const filesData = await filesResponse.json();
           console.log('✅ [Job Details] Files loaded:', filesData.length);
           setFiles(filesData);
-        } else {
+        } catch (error) {
           console.log('⚠️ [Job Details] Files fetch failed, continuing without files');
+        }
+
+        // Fetch payment information
+        try {
+          const paymentResponse = await fetch(`/api/jobs/${jobId}/payment`);
+          if (paymentResponse.ok) {
+            const paymentData = await paymentResponse.json();
+            console.log('✅ [Job Details] Payment loaded:', paymentData);
+            setPayment(paymentData.payment);
+            setPaymentLineItems(paymentData.lineItems);
+          }
+        } catch (error) {
+          console.log('⚠️ [Job Details] No payment found for this job');
         }
 
         // Fetch messages
@@ -744,6 +759,83 @@ export default function JobDetail({ params }: JobDetailProps) {
             
             {/* Status Automation Info */}
             <StatusAutomationInfo />
+
+            {/* Payment Receipt */}
+            {payment && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Payment Receipt</CardTitle>
+                  <CardDescription>
+                    Payment processed on {new Date(payment.paidAt).toLocaleDateString()}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {/* Payment Summary */}
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Subtotal:</span>
+                        <span className="font-medium">${parseFloat(payment.subtotal).toFixed(2)}</span>
+                      </div>
+                      {parseFloat(payment.discountAmount) > 0 && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600">Discount:</span>
+                          <span className="font-medium text-green-600">-${parseFloat(payment.discountAmount).toFixed(2)}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between text-base font-bold border-t pt-2">
+                        <span>Total:</span>
+                        <span>${parseFloat(payment.amount).toFixed(2)} {payment.currency}</span>
+                      </div>
+                    </div>
+
+                    {/* Line Items */}
+                    {paymentLineItems.length > 0 && (
+                      <div className="border-t pt-4">
+                        <h4 className="text-sm font-semibold text-gray-700 mb-2">Items Purchased:</h4>
+                        <div className="space-y-1">
+                          {paymentLineItems.map((item: any) => (
+                            <div key={item.id} className="flex justify-between text-sm">
+                              <span className="text-gray-600">
+                                {item.productName} {item.quantity > 1 && `(×${item.quantity})`}
+                              </span>
+                              <span className="font-medium">${parseFloat(item.totalPrice).toFixed(2)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Stripe Receipt Link */}
+                    {payment.stripePaymentIntentId && (
+                      <div className="border-t pt-4">
+                        <a
+                          href={`https://dashboard.stripe.com/payments/${payment.stripePaymentIntentId}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 hover:underline"
+                        >
+                          <FileText className="w-4 h-4" />
+                          View Receipt in Stripe
+                        </a>
+                      </div>
+                    )}
+
+                    {/* Payment Status */}
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="text-gray-600">Status:</span>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        payment.status === 'succeeded' ? 'bg-green-100 text-green-800' :
+                        payment.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-red-100 text-red-800'
+                      }`}>
+                        {payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}
+                      </span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Files */}
             <Card>
