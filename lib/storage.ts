@@ -45,8 +45,10 @@ export async function uploadFile(
 
   await s3Client.send(command);
 
-  // Construct public URL (note: may not work if bucket is private)
-  const url = `${process.env.WASABI_ENDPOINT}/${BUCKET_NAME}/${key}`;
+  // Construct public URL for Wasabi
+  // Format: https://{bucket}.s3.{region}.wasabisys.com/{key}
+  const region = process.env.WASABI_REGION || "us-east-1";
+  const url = `https://${BUCKET_NAME}.s3.${region}.wasabisys.com/${key}`;
 
   return { key, url };
 }
