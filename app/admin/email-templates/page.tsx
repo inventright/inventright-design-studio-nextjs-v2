@@ -162,7 +162,7 @@ export default function EmailTemplatesPage() {
       subject: template.subject,
       body: template.body,
       triggerEvent: template.triggerEvent || "",
-      departmentId: template.departmentId ? template.departmentId.toString() : "",
+      departmentId: template.departmentId ? template.departmentId.toString() : "0",
       isActive: template.isActive,
     });
     setDialogOpen(true);
@@ -175,7 +175,7 @@ export default function EmailTemplatesPage() {
       subject: "",
       body: "",
       triggerEvent: "",
-      departmentId: "",
+      departmentId: "0",
       isActive: true,
     });
     setTestEmail("");
@@ -420,7 +420,7 @@ export default function EmailTemplatesPage() {
                         <SelectValue placeholder="Select a department" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">None (All Departments)</SelectItem>
+                        <SelectItem value="0">None (All Departments)</SelectItem>
                         {departments.map((dept) => (
                           <SelectItem key={dept.id} value={dept.id.toString()}>
                             {dept.name}

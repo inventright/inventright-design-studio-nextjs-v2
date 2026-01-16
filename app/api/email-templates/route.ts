@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
         subject,
         body: templateBody,
         triggerEvent: triggerEvent || null,
-        departmentId: departmentId ? parseInt(departmentId) : null,
+        departmentId: departmentId && departmentId !== "0" ? parseInt(departmentId) : null,
         isActive: isActive !== undefined ? isActive : true,
       })
       .returning();
