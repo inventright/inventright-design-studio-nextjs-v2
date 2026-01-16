@@ -1496,7 +1496,7 @@ function JobIntakeContent() {
               </div>
             </div>
 
-            {!showPayment ? (
+            {!showPayment && (
               <Button
                 type="submit"
                 disabled={uploading || processingPayment}
