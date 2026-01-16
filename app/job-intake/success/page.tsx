@@ -82,8 +82,8 @@ function PaymentSuccessContent() {
   return (
     <>
       <Header />
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4">
-        <div className="max-w-2xl mx-auto">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center px-4">
+        <div className="max-w-2xl w-full">
           <Card>
             <CardHeader>
               <CardTitle className="text-center text-2xl">
@@ -160,8 +160,8 @@ export default function PaymentSuccessPage() {
     <Suspense fallback={
       <>
         <Header />
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4">
-          <div className="max-w-2xl mx-auto">
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center px-4">
+          <div className="max-w-2xl w-full">
             <Card>
               <CardContent className="py-12">
                 <div className="flex flex-col items-center justify-center">
