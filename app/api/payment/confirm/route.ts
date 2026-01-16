@@ -29,8 +29,34 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get line items from metadata or calculate from payment intent
-    const lineItemsData = JSON.parse(paymentIntent.metadata.lineItems || '[]');
+    // Get line items from metadata - parse products string if lineItems not available
+    let lineItemsData = [];
+    try {
+      if (paymentIntent.metadata.lineItems) {
+        lineItemsData = JSON.parse(paymentIntent.metadata.lineItems);
+      } else if (paymentIntent.metadata.products) {
+        // Parse products string like "Virtual Prototypes ($500), Rush Service ($100)"
+        // This is a fallback - we'll create basic line items from the products string
+        const productsStr = paymentIntent.metadata.products;
+        const productItems = productsStr.split(', ');
+        lineItemsData = productItems.map((item: string) => {
+          const match = item.match(/^(.+?)\s*\(\$([\d.]+)\)$/);
+          if (match) {
+            return {
+              productKey: paymentIntent.metadata.departmentKey || 'unknown',
+              productName: match[1],
+              price: parseFloat(match[2]),
+              quantity: 1,
+              type: 'product'
+            };
+          }
+          return null;
+        }).filter(Boolean);
+      }
+    } catch (e) {
+      console.error('Error parsing line items:', e);
+      lineItemsData = [];
+    }
     
     // Create payment transaction record
     const [transaction] = await db
