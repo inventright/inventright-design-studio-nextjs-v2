@@ -54,7 +54,7 @@ export default function DesignPackagePage() {
   }, [orderId]);
 
   const handleStartVirtualPrototype = () => {
-    router.push(`/job-intake?jobType=virtual_prototype&packageId=${orderId}`);
+    router.push(`/job-intake?jobType=virtual_prototype&packageId=${orderId}&voucher=DSPVP26`);
   };
 
   const handleStartSellSheet = () => {
@@ -62,7 +62,7 @@ export default function DesignPackagePage() {
       toast.error('Please complete your Virtual Prototype first');
       return;
     }
-    router.push(`/job-intake?jobType=sell_sheet&packageId=${orderId}`);
+    router.push(`/job-intake?jobType=sell_sheet&packageId=${orderId}&voucher=DSPSS26`);
   };
 
   const getStatusBadge = (status: string) => {

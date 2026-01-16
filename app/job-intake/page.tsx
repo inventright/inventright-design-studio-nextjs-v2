@@ -28,6 +28,7 @@ function JobIntakeContent() {
   const packageId = searchParams.get('packageId');
   const packageType = searchParams.get('type');
   const jobType = searchParams.get('jobType'); // Pre-select job type from URL
+  const voucherParam = searchParams.get('voucher'); // Auto-apply voucher from URL
 
   // User and package state
   const [user, setUser] = useState<any>(null);
@@ -144,8 +145,36 @@ function JobIntakeContent() {
       }
     }
 
-    // Auto-apply Design Studio Package voucher if packageId is present
-    if (packageId && !appliedVoucher) {
+    // Auto-apply voucher from URL parameter
+    if (voucherParam && !appliedVoucher) {
+      setVoucherCode(voucherParam);
+      // Automatically validate and apply the voucher
+      const autoApplyVoucher = async () => {
+        try {
+          const response = await fetch(`/api/trpc/vouchers.validate?input=${encodeURIComponent(JSON.stringify({ code: voucherParam }))}`);
+          const data = await response.json();
+          const result = data.result.data;
+
+          if (result.valid && result.voucher) {
+            setAppliedVoucher({
+              code: result.voucher.code,
+              discountType: result.voucher.discountType,
+              discountAmount: parseFloat(result.voucher.discountValue)
+            });
+            toast.success(`Voucher ${voucherParam} applied successfully!`);
+            console.log(`[Job Intake] Auto-applied voucher: ${voucherParam}`);
+          } else {
+            console.error(`[Job Intake] Invalid voucher from URL: ${voucherParam}`);
+          }
+        } catch (error) {
+          console.error('[Job Intake] Error auto-applying voucher:', error);
+        }
+      };
+      autoApplyVoucher();
+    }
+
+    // Auto-apply Design Studio Package voucher if packageId is present (legacy support)
+    if (packageId && !appliedVoucher && !voucherParam) {
       setAppliedVoucher({
         code: 'DESIGN_STUDIO_PACKAGE',
         discount: 100,
@@ -154,7 +183,7 @@ function JobIntakeContent() {
       });
       console.log(`[Job Intake] Auto-applied Design Studio Package voucher for package: ${packageId}`);
     }
-  }, [jobType, packageId]);
+  }, [jobType, packageId, voucherParam]);
 
   // Load user from WordPress auth and localStorage draft
   useEffect(() => {
