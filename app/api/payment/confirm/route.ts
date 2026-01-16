@@ -125,6 +125,51 @@ export async function POST(request: NextRequest) {
       await db.insert(paymentLineItems).values(lineItemRecords as any);
     }
 
+    // Check if this is a Design Package purchase and create design package order
+    if (paymentIntent.metadata.departmentKey === 'design_package' || paymentIntent.metadata.departmentName === 'Design Package') {
+      console.log('[Payment Confirm] Creating design package order...');
+      const { designPackageOrders } = await import('@/lib/db/schema');
+      
+      const [packageOrder] = await db
+        .insert(designPackageOrders)
+        .values({
+          orderId: paymentIntent.id, // Use payment intent ID as order ID
+          clientId: parseInt(paymentIntent.metadata.userId),
+          purchaseDate: new Date(),
+          virtualPrototypeStatus: 'not_started',
+          sellSheetStatus: 'locked',
+          packageStatus: 'active',
+        } as any)
+        .returning();
+      
+      console.log('[Payment Confirm] Design package order created:', packageOrder?.id);
+      
+      // Send email notification for Design Package purchase
+      try {
+        const { sendTestEmail } = await import('@/lib/email');
+        const clientEmail = paymentIntent.metadata.customerEmail || paymentIntent.receipt_email;
+        
+        if (clientEmail) {
+          const designPackageUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://ds.inventright.com'}/design-package/${paymentIntent.id}`;
+          const emailBody = `
+            <p>Thank you for purchasing the Design Package!</p>
+            <p>Click the link below to get started with your Virtual Prototype:</p>
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${designPackageUrl}" style="display: inline-block; padding: 12px 24px; background-color: #2563eb; color: white; text-decoration: none; border-radius: 5px;">Access Your Design Package</a>
+            </div>
+            <p>Or copy and paste this link into your browser:</p>
+            <p style="word-break: break-all; color: #2563eb;">${designPackageUrl}</p>
+          `;
+          
+          await sendTestEmail(clientEmail, 'Your Design Package is Ready!', emailBody);
+          console.log('[Payment Confirm] Design Package purchase email sent to:', clientEmail);
+        }
+      } catch (emailError) {
+        console.error('[Payment Confirm] Failed to send Design Package email:', emailError);
+        // Don't fail the payment confirmation if email fails
+      }
+    }
+
     return NextResponse.json({
       success: true,
       transaction,

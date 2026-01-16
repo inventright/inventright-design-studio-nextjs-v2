@@ -174,6 +174,7 @@ export const voucherCodes = pgTable("voucherCodes", {
   usedCount: integer("usedCount").default(0).notNull(),
   validFrom: timestamp("validFrom"),
   validUntil: timestamp("validUntil"),
+  departmentId: integer("departmentId").references(() => departments.id),
   isActive: boolean("isActive").default(true).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),

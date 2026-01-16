@@ -66,13 +66,28 @@ export default function VouchersPage() {
     usesPerUser: "",
     validFrom: "",
     validUntil: "",
+    departmentId: "",
     isActive: true,
     doesNotExpire: false,
   });
+  const [departments, setDepartments] = useState<{id: number, name: string}[]>([]);
 
   useEffect(() => {
     fetchVouchers();
+    fetchDepartments();
   }, []);
+
+  const fetchDepartments = async () => {
+    try {
+      const response = await fetch('/api/departments');
+      if (response.ok) {
+        const data = await response.json();
+        setDepartments(data);
+      }
+    } catch (error) {
+      console.error('Error fetching departments:', error);
+    }
+  };
 
   const fetchVouchers = async () => {
     try {
@@ -102,6 +117,7 @@ export default function VouchersPage() {
         usesPerUser: formData.usesPerUser ? parseInt(formData.usesPerUser) : null,
         validFrom: formData.validFrom || null,
         validUntil: formData.doesNotExpire ? null : formData.validUntil || null,
+        departmentId: formData.departmentId ? parseInt(formData.departmentId) : null,
         isActive: formData.isActive,
       };
 
@@ -167,6 +183,7 @@ export default function VouchersPage() {
       validUntil: voucher.validUntil
         ? new Date(voucher.validUntil).toISOString().split("T")[0]
         : "",
+      departmentId: (voucher as any).departmentId?.toString() || "",
       isActive: voucher.isActive,
       doesNotExpire: !voucher.validUntil,
     });
@@ -183,6 +200,7 @@ export default function VouchersPage() {
       usesPerUser: "",
       validFrom: "",
       validUntil: "",
+      departmentId: "",
       isActive: true,
       doesNotExpire: false,
     });
@@ -385,6 +403,30 @@ export default function VouchersPage() {
                     required
                   />
                 </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="departmentId">Department (Optional)</Label>
+                <Select
+                  value={formData.departmentId}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, departmentId: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="All Departments" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">All Departments</SelectItem>
+                    {departments.map((dept) => (
+                      <SelectItem key={dept.id} value={dept.id.toString()}>
+                        {dept.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-sm text-gray-500">
+                  Restrict voucher to a specific department/service
+                </p>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">

@@ -14,6 +14,8 @@ function PaymentSuccessContent() {
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [jobId, setJobId] = useState<number | null>(null);
   const [errorMessage, setErrorMessage] = useState<string>('');
+  const [isDesignPackage, setIsDesignPackage] = useState<boolean>(false);
+  const [designPackageOrderId, setDesignPackageOrderId] = useState<string | null>(null);
 
   useEffect(() => {
     const confirmPayment = async () => {
@@ -53,12 +55,24 @@ function PaymentSuccessContent() {
           setJobId(data.jobId || parseInt(storedJobId || '0'));
           setStatus('success');
           
+          // Check if this is a Design Package purchase
+          const isPackage = data.transaction?.metadata?.departmentKey === 'design_package' || 
+                           data.transaction?.metadata?.departmentName === 'Design Package';
+          setIsDesignPackage(isPackage);
+          
+          if (isPackage) {
+            // Use payment intent ID as order ID for Design Package
+            setDesignPackageOrderId(paymentIntentId);
+          }
+          
           // Clean up localStorage
           localStorage.removeItem('pending_payment_job_id');
           
-          // Redirect to job page after 3 seconds
+          // Redirect after 3 seconds
           setTimeout(() => {
-            if (data.jobId || storedJobId) {
+            if (isPackage && paymentIntentId) {
+              router.push(`/design-package/${paymentIntentId}`);
+            } else if (data.jobId || storedJobId) {
               router.push(`/jobs/${data.jobId || storedJobId}`);
             } else {
               router.push('/dashboard/client');
@@ -110,16 +124,23 @@ function PaymentSuccessContent() {
                       Thank you for your payment!
                     </h3>
                     <p className="text-gray-600 text-center mb-6">
-                      Your job has been successfully created and payment has been processed.
-                      You will be redirected to your job details shortly.
+                      {isDesignPackage 
+                        ? 'Your Design Package has been purchased! You will be redirected to start your project shortly.'
+                        : 'Your job has been successfully created and payment has been processed. You will be redirected to your job details shortly.'}
                     </p>
-                    {jobId && (
+                    {isDesignPackage && designPackageOrderId ? (
+                      <Link href={`/design-package/${designPackageOrderId}`}>
+                        <Button>
+                          Start Design Package
+                        </Button>
+                      </Link>
+                    ) : jobId ? (
                       <Link href={`/jobs/${jobId}`}>
                         <Button>
                           View Job Details
                         </Button>
                       </Link>
-                    )}
+                    ) : null}
                   </>
                 )}
 
