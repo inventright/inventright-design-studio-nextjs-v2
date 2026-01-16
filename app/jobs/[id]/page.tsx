@@ -386,10 +386,10 @@ export default function JobDetail({ params }: JobDetailProps) {
 
   const statusColors: Record<string, string> = {
     'New Job': 'bg-purple-600 text-white',
-    'Assigned to Designer': 'bg-indigo-100 text-indigo-800',
-    'Job in Progress': 'bg-purple-100 text-purple-800',
-    'Proof Sent': 'bg-green-100 text-green-800',
-    'Revisions Requested': 'bg-yellow-100 text-yellow-800',
+    'Assigned to Designer': 'bg-indigo-600 text-white',
+    'Job in Progress': 'bg-purple-500 text-white',
+    'Proof Sent': 'bg-green-600 text-white',
+    'Revisions Requested': 'bg-yellow-500 text-white',
     'Job Complete': 'bg-orange-500 text-white',
     'Cancel Job': 'bg-red-600 text-white',
     // Legacy statuses for backward compatibility
