@@ -865,6 +865,11 @@ function JobIntakeContent() {
 
       const data = await response.json();
       
+      // Store job ID for success page
+      if (draftJobId) {
+        localStorage.setItem('pending_payment_job_id', draftJobId.toString());
+      }
+      
       setPaymentClientSecret(data.clientSecret);
       setPaymentAmount(data.amount);
       setPaymentLineItems(data.lineItems);
