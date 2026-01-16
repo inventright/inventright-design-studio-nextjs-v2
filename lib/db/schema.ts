@@ -170,6 +170,7 @@ export const emailMediaLibrary = pgTable("emailMediaLibrary", {
   fileName: varchar("fileName", { length: 500 }).notNull(),
   fileUrl: text("fileUrl").notNull(),
   fileKey: text("fileKey").notNull(),
+  base64Data: text("base64Data"),
   fileSize: integer("fileSize"),
   mimeType: varchar("mimeType", { length: 100 }),
   width: integer("width"),

@@ -53,14 +53,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate unique file key using existing utility
+    // Convert file to base64 for database storage
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const base64Data = buffer.toString('base64');
+    
+    // Generate unique file key for reference (not used for S3 anymore)
     const fileKey = generateFileKey('email-media', file.name);
 
-    // Upload to Wasabi S3 using existing utility
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const { url: fileUrl } = await uploadFile(fileKey, buffer, file.type);
-
-    console.log('[Email Media API] File uploaded successfully:', { fileKey, fileUrl });
+    console.log('[Email Media API] File converted to base64, size:', buffer.length);
 
     // Get image dimensions if possible (server-side, using sharp if available)
     let width: number | null = null;
@@ -78,13 +78,14 @@ export async function POST(request: NextRequest) {
       // Dimensions are optional, continue without them
     }
 
-    // Save to database
+    // Save to database with temporary placeholder URL
     const [mediaItem] = await db
       .insert(emailMediaLibrary)
       .values({
         fileName: file.name,
-        fileUrl,
+        fileUrl: '', // Will be updated below with ID-based URL
         fileKey,
+        base64Data,
         fileSize: file.size,
         mimeType: file.type,
         width,
@@ -93,9 +94,20 @@ export async function POST(request: NextRequest) {
       } as any)
       .returning();
 
+    // Generate proxy URL using the media item ID
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://ds.inventright.com';
+    const proxyUrl = `${baseUrl}/api/email-media/${mediaItem.id}`;
+
+    // Update the media item with the correct URL
+    await db
+      .update(emailMediaLibrary)
+      .set({ fileUrl: proxyUrl })
+      .where(eq(emailMediaLibrary.id, mediaItem.id));
+
     console.log('[Email Media API] Media item saved to database:', mediaItem.id);
 
-    return NextResponse.json(mediaItem);
+    // Return the updated media item
+    return NextResponse.json({ ...mediaItem, fileUrl: proxyUrl });
   } catch (error: any) {
     console.error('[Email Media API] Error uploading media:', error);
     console.error('[Email Media API] Error details:', {
@@ -126,38 +138,20 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // Get media item to delete from S3
-    const [mediaItem] = await db
-      .select()
-      .from(emailMediaLibrary)
+    // Delete from database (base64 data is stored in DB, no S3 cleanup needed)
+    const result = await db
+      .delete(emailMediaLibrary)
       .where(eq(emailMediaLibrary.id, parseInt(id)))
-      .limit(1);
+      .returning();
 
-    if (!mediaItem) {
+    if (result.length === 0) {
       return NextResponse.json(
         { error: 'Media item not found' },
         { status: 404 }
       );
     }
 
-    // Delete from database first for fast response
-    await db
-      .delete(emailMediaLibrary)
-      .where(eq(emailMediaLibrary.id, parseInt(id)));
-
     console.log('[Email Media API] Media item deleted from database:', id);
-
-    // Delete from S3 asynchronously (don't wait for it)
-    // This makes the response instant while still cleaning up S3
-    deleteFile(mediaItem.fileKey)
-      .then(() => {
-        console.log('[Email Media API] File deleted from S3:', mediaItem.fileKey);
-      })
-      .catch((s3Error) => {
-        console.error('[Email Media API] Error deleting from S3:', s3Error);
-        // S3 deletion failed but database is already cleaned up
-        // This is acceptable as orphaned S3 files can be cleaned up later
-      });
 
     return NextResponse.json({ success: true });
   } catch (error) {

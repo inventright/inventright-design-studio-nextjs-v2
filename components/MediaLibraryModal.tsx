@@ -108,6 +108,13 @@ export default function MediaLibraryModal({
   const handleDelete = async (id: number) => {
     if (!confirm("Are you sure you want to delete this image?")) return;
 
+    // Optimistic UI update - remove immediately
+    const previousItems = mediaItems;
+    setMediaItems(mediaItems.filter((item) => item.id !== id));
+    if (selectedId === id) {
+      setSelectedId(null);
+    }
+
     try {
       const response = await fetch(`/api/email-media?id=${id}`, {
         method: "DELETE",
@@ -115,15 +122,15 @@ export default function MediaLibraryModal({
 
       if (response.ok) {
         toast.success("Image deleted successfully");
-        setMediaItems(mediaItems.filter((item) => item.id !== id));
-        if (selectedId === id) {
-          setSelectedId(null);
-        }
       } else {
+        // Revert on error
         toast.error("Failed to delete image");
+        setMediaItems(previousItems);
       }
     } catch (error) {
+      // Revert on error
       toast.error("Error deleting image");
+      setMediaItems(previousItems);
     }
   };
 
