@@ -385,12 +385,13 @@ export default function JobDetail({ params }: JobDetailProps) {
   }
 
   const statusColors: Record<string, string> = {
-    'New Job': 'bg-blue-100 text-blue-800',
+    'New Job': 'bg-purple-600 text-white',
     'Assigned to Designer': 'bg-indigo-100 text-indigo-800',
     'Job in Progress': 'bg-purple-100 text-purple-800',
     'Proof Sent': 'bg-green-100 text-green-800',
     'Revisions Requested': 'bg-yellow-100 text-yellow-800',
-    'Job Complete': 'bg-emerald-100 text-emerald-800',
+    'Job Complete': 'bg-orange-500 text-white',
+    'Cancel Job': 'bg-red-600 text-white',
     // Legacy statuses for backward compatibility
     'Draft': 'bg-gray-100 text-gray-800',
     'Pending': 'bg-yellow-100 text-yellow-800',
@@ -399,7 +400,7 @@ export default function JobDetail({ params }: JobDetailProps) {
     'Completed': 'bg-green-100 text-green-800',
   };
 
-  const availableStatuses = ['New Job', 'Assigned to Designer', 'Job in Progress', 'Proof Sent', 'Revisions Requested', 'Job Complete'];
+  const availableStatuses = ['New Job', 'Assigned to Designer', 'Job in Progress', 'Proof Sent', 'Revisions Requested', 'Job Complete', 'Cancel Job'];
 
   return (
     <>
