@@ -70,6 +70,19 @@ export async function POST(request: NextRequest) {
     }
     console.log('[Payment Confirm] Line items data:', lineItemsData);
     
+    // Get receipt URL from charge
+    console.log('[Payment Confirm] Retrieving receipt URL from charge...');
+    let receiptUrl = null;
+    if (paymentIntent.latest_charge) {
+      try {
+        const charge = await stripe.charges.retrieve(paymentIntent.latest_charge as string);
+        receiptUrl = charge.receipt_url;
+        console.log('[Payment Confirm] Receipt URL:', receiptUrl);
+      } catch (error) {
+        console.error('[Payment Confirm] Failed to retrieve receipt URL:', error);
+      }
+    }
+    
     // Create payment transaction record
     console.log('[Payment Confirm] Creating payment transaction record...');
     const [transaction] = await db
@@ -89,6 +102,7 @@ export async function POST(request: NextRequest) {
           departmentKey: paymentIntent.metadata.departmentKey,
           addOns: paymentIntent.metadata.addOns,
           tierName: paymentIntent.metadata.tierName,
+          receiptUrl: receiptUrl,
         },
         paidAt: new Date(),
       } as any)

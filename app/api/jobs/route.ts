@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { jobs } from "@/lib/db/schema";
+import { jobs, users } from "@/lib/db/schema";
 import { requireAuth } from "@/lib/auth-utils-flexible";
 import { eq, and, or } from "drizzle-orm";
 import { getAssignedDesignerForJobType, mapPackageTypeToJobType } from "@/lib/designer-assignment-helper";
@@ -17,10 +17,28 @@ export async function GET(request: NextRequest) {
     const userRole = (user as any).data?.role || "client";
 
     if (userRole === "admin" || userRole === "manager") {
-      // Admin/Manager: See all jobs
+      // Admin/Manager: See all jobs with customer names
       jobsList = await db
-        .select()
+        .select({
+          id: jobs.id,
+          title: jobs.title,
+          description: jobs.description,
+          status: jobs.status,
+          priority: jobs.priority,
+          clientId: jobs.clientId,
+          designerId: jobs.designerId,
+          departmentId: jobs.departmentId,
+          packageType: jobs.packageType,
+          createdAt: jobs.createdAt,
+          updatedAt: jobs.updatedAt,
+          isDraft: jobs.isDraft,
+          archived: jobs.archived,
+          clientName: users.name,
+          clientFirstName: users.firstName,
+          clientLastName: users.lastName,
+        })
         .from(jobs)
+        .leftJoin(users, eq(jobs.clientId, users.id))
         .where(eq(jobs.archived, archived));
     } else if (userRole === "designer") {
       // Designer: See assigned jobs

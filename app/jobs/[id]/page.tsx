@@ -809,19 +809,25 @@ export default function JobDetail({ params }: JobDetailProps) {
                     )}
 
                     {/* Stripe Receipt Link */}
-                    {payment.stripePaymentIntentId && (
-                      <div className="border-t pt-4">
-                        <a
-                          href={`https://dashboard.stripe.com/payments/${payment.stripePaymentIntentId}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 hover:underline"
-                        >
-                          <FileText className="w-4 h-4" />
-                          View Receipt in Stripe
-                        </a>
-                      </div>
-                    )}
+                    {(() => {
+                      const receiptUrl = payment.metadata?.receiptUrl;
+                      if (receiptUrl) {
+                        return (
+                          <div className="border-t pt-4">
+                            <a
+                              href={receiptUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 hover:underline"
+                            >
+                              <FileText className="w-4 h-4" />
+                              View Receipt
+                            </a>
+                          </div>
+                        );
+                      }
+                      return null;
+                    })()}
 
                     {/* Payment Status */}
                     <div className="flex items-center gap-2 text-sm">
