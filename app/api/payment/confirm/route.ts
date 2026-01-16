@@ -9,8 +9,10 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('[Payment Confirm] Starting payment confirmation');
     const body = await request.json();
     const { paymentIntentId, jobId } = body;
+    console.log('[Payment Confirm] Received:', { paymentIntentId, jobId });
 
     if (!paymentIntentId) {
       return NextResponse.json(
@@ -20,7 +22,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Retrieve payment intent from Stripe
+    console.log('[Payment Confirm] Retrieving payment intent from Stripe...');
     const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+    console.log('[Payment Confirm] Payment intent retrieved:', paymentIntent.status);
 
     if (paymentIntent.status !== 'succeeded') {
       return NextResponse.json(
@@ -30,11 +34,15 @@ export async function POST(request: NextRequest) {
     }
 
     // Get line items from metadata - parse products string if lineItems not available
+    console.log('[Payment Confirm] Parsing line items from metadata...');
+    console.log('[Payment Confirm] Metadata:', paymentIntent.metadata);
     let lineItemsData = [];
     try {
       if (paymentIntent.metadata.lineItems) {
         lineItemsData = JSON.parse(paymentIntent.metadata.lineItems);
+        console.log('[Payment Confirm] Parsed lineItems from metadata');
       } else if (paymentIntent.metadata.products) {
+        console.log('[Payment Confirm] Parsing products string:', paymentIntent.metadata.products);
         // Parse products string like "Virtual Prototypes ($500), Rush Service ($100)"
         // This is a fallback - we'll create basic line items from the products string
         const productsStr = paymentIntent.metadata.products;
@@ -54,11 +62,13 @@ export async function POST(request: NextRequest) {
         }).filter(Boolean);
       }
     } catch (e) {
-      console.error('Error parsing line items:', e);
+      console.error('[Payment Confirm] Error parsing line items:', e);
       lineItemsData = [];
     }
+    console.log('[Payment Confirm] Line items data:', lineItemsData);
     
     // Create payment transaction record
+    console.log('[Payment Confirm] Creating payment transaction record...');
     const [transaction] = await db
       .insert(payments)
       .values({
@@ -80,9 +90,11 @@ export async function POST(request: NextRequest) {
         paidAt: new Date(),
       } as any)
       .returning();
+    console.log('[Payment Confirm] Payment transaction created:', transaction?.id);
 
     // Create line item records
     if (lineItemsData.length > 0 && transaction) {
+      console.log('[Payment Confirm] Creating line item records...');
       const lineItemRecords = lineItemsData.map((item: any) => ({
         paymentId: transaction.id,
         productKey: item.productKey,
@@ -107,8 +119,15 @@ export async function POST(request: NextRequest) {
     });
   } catch (error: any) {
     console.error('Error confirming payment:', error);
+    console.error('Error stack:', error.stack);
+    console.error('Payment Intent ID:', paymentIntentId);
     return NextResponse.json(
-      { error: 'Failed to confirm payment', details: error.message },
+      { 
+        error: 'Failed to confirm payment', 
+        details: error.message,
+        stack: error.stack,
+        paymentIntentId 
+      },
       { status: 500 }
     );
   }
