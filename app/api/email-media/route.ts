@@ -140,21 +140,24 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // Delete from S3 using existing utility
-    try {
-      await deleteFile(mediaItem.fileKey);
-      console.log('[Email Media API] File deleted from S3:', mediaItem.fileKey);
-    } catch (s3Error) {
-      console.error('[Email Media API] Error deleting from S3:', s3Error);
-      // Continue with database deletion even if S3 deletion fails
-    }
-
-    // Delete from database
+    // Delete from database first for fast response
     await db
       .delete(emailMediaLibrary)
       .where(eq(emailMediaLibrary.id, parseInt(id)));
 
     console.log('[Email Media API] Media item deleted from database:', id);
+
+    // Delete from S3 asynchronously (don't wait for it)
+    // This makes the response instant while still cleaning up S3
+    deleteFile(mediaItem.fileKey)
+      .then(() => {
+        console.log('[Email Media API] File deleted from S3:', mediaItem.fileKey);
+      })
+      .catch((s3Error) => {
+        console.error('[Email Media API] Error deleting from S3:', s3Error);
+        // S3 deletion failed but database is already cleaned up
+        // This is acceptable as orphaned S3 files can be cleaned up later
+      });
 
     return NextResponse.json({ success: true });
   } catch (error) {
