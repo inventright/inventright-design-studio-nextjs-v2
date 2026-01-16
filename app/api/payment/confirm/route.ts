@@ -8,10 +8,13 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 });
 
 export async function POST(request: NextRequest) {
+  let paymentIntentId = '';
   try {
     console.log('[Payment Confirm] Starting payment confirmation');
     const body = await request.json();
-    const { paymentIntentId, jobId } = body;
+    const bodyData = body;
+    paymentIntentId = bodyData.paymentIntentId;
+    const jobId = bodyData.jobId;
     console.log('[Payment Confirm] Received:', { paymentIntentId, jobId });
 
     if (!paymentIntentId) {
