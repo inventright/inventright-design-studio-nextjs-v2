@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { sendEmail } from '@/lib/email';
+import { sendTestEmail } from '@/lib/email';
 
 export async function POST(request: NextRequest) {
   try {
@@ -52,11 +52,11 @@ ${errorInfo}
     `;
 
     // Send email to support
-    await sendEmail({
-      to: 'james@inventright.com',
-      subject: `[Error Report] ${error.name}: ${error.message.substring(0, 50)}...`,
-      html: errorDetails,
-    });
+    await sendTestEmail(
+      'james@inventright.com',
+      `[Error Report] ${error.name}: ${error.message.substring(0, 50)}...`,
+      errorDetails
+    );
 
     return NextResponse.json({
       success: true,
