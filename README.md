@@ -50,6 +50,10 @@ WASABI_SECRET_ACCESS_KEY="..."
 WASABI_BUCKET="..."
 WASABI_REGION="us-east-1"
 WASABI_ENDPOINT="https://s3.wasabisys.com"
+
+# Stripe Payment Processing
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="pk_test_..."
+STRIPE_SECRET_KEY="sk_test_..."
 ```
 
 ### Installation
