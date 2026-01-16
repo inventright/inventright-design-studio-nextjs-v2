@@ -385,7 +385,7 @@ export default function JobDetail({ params }: JobDetailProps) {
   }
 
   const statusColors: Record<string, string> = {
-    'New Job': 'bg-purple-600 text-white',
+    'New Job': 'bg-black text-white',
     'Assigned to Designer': 'bg-indigo-600 text-white',
     'Job in Progress': 'bg-purple-500 text-white',
     'Proof Sent': 'bg-green-600 text-white',
