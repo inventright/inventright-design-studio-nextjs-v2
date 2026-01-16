@@ -1516,35 +1516,38 @@ function JobIntakeContent() {
                   </>
                 )}
               </Button>
-            ) : (
-              <div className="space-y-4">
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <p className="text-sm text-blue-800">
-                    <strong>Almost done!</strong> Complete payment to submit your job request.
-                  </p>
-                </div>
-                
-                {paymentClientSecret && (
-                  <StripePaymentForm
-                    clientSecret={paymentClientSecret}
-                    amount={paymentAmount}
-                    lineItems={paymentLineItems}
-                    onSuccess={handlePaymentSuccess}
-                    onError={handlePaymentError}
-                  />
-                )}
-                
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setShowPayment(false)}
-                  className="w-full"
-                >
-                  Back to Form
-                </Button>
-              </div>
             )}
           </form>
+          
+          {/* Payment Form - Outside main form to prevent double submission */}
+          {showPayment && (
+            <div className="space-y-4 mt-4">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <p className="text-sm text-blue-800">
+                  <strong>Almost done!</strong> Complete payment to submit your job request.
+                </p>
+              </div>
+              
+              {paymentClientSecret && (
+                <StripePaymentForm
+                  clientSecret={paymentClientSecret}
+                  amount={paymentAmount}
+                  lineItems={paymentLineItems}
+                  onSuccess={handlePaymentSuccess}
+                  onError={handlePaymentError}
+                />
+              )}
+              
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowPayment(false)}
+                className="w-full"
+              >
+                Back to Form
+              </Button>
+            </div>
+          )}
         </GlassCard>
       </main>
 
