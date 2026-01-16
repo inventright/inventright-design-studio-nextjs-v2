@@ -19,7 +19,10 @@ export async function POST(request: NextRequest) {
       voucherCode,
       userId,
       tierName = 'Default Pricing',
-      tierId = null
+      tierId = null,
+      customerName,
+      customerEmail,
+      customerPhone
     } = body;
 
     if (!departmentKey) {
@@ -217,10 +220,28 @@ export async function POST(request: NextRequest) {
       automatic_payment_methods: {
         enabled: true,
       },
+      description: `${departmentProduct.productName} - ${customerName || 'Customer'}`,
+      receipt_email: customerEmail || undefined,
+      shipping: customerName ? {
+        name: customerName,
+        phone: customerPhone || undefined,
+        address: {
+          line1: 'N/A',
+          city: 'N/A',
+          state: 'N/A',
+          postal_code: '00000',
+          country: 'US',
+        },
+      } : undefined,
       metadata: {
         userId: userId?.toString() || '',
+        customerName: customerName || '',
+        customerEmail: customerEmail || '',
+        customerPhone: customerPhone || '',
         departmentKey,
+        departmentName: departmentProduct.productName,
         quantity: actualQuantity.toString(),
+        products: lineItems.map(item => `${item.productName} ($${item.price})`).join(', '),
         addOns: JSON.stringify(addOns),
         vpAddOns: JSON.stringify(vpAddOns),
         voucherCode: voucherCode || '',

@@ -851,7 +851,10 @@ function JobIntakeContent() {
           vpAddOns,
           voucherCode: appliedVoucher?.code,
           userId: user.id,
-          tierName: 'Default Pricing'
+          tierName: 'Default Pricing',
+          customerName: user.name || '',
+          customerEmail: user.email || '',
+          customerPhone: user.phone || ''
         })
       });
 
