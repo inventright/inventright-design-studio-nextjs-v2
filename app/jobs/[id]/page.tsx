@@ -82,6 +82,10 @@ export default function JobDetail({ params }: JobDetailProps) {
   const [sendingMessage, setSendingMessage] = useState(false);
   const [designers, setDesigners] = useState<Array<{id: number; name: string; email: string}>>([]);
   const [changingDesigner, setChangingDesigner] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedTitle, setEditedTitle] = useState('');
+  const [editedDescription, setEditedDescription] = useState<Record<string, any>>({});
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     console.log('⚡ [Job Details] useEffect triggered!');
@@ -290,6 +294,57 @@ export default function JobDetail({ params }: JobDetailProps) {
     setChangingDesigner(false);
   };
 
+  const handleEditClick = () => {
+    if (!job) return;
+    setEditedTitle(job.title);
+    try {
+      const formData = JSON.parse(job.description || '{}');
+      setEditedDescription(formData);
+    } catch (e) {
+      setEditedDescription({});
+    }
+    setIsEditing(true);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setEditedTitle('');
+    setEditedDescription({});
+  };
+
+  const handleSaveEdit = async () => {
+    setSaving(true);
+    try {
+      const response = await fetch(`/api/jobs/${jobId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: editedTitle,
+          description: JSON.stringify(editedDescription),
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update job');
+      }
+
+      toast.success('Job updated successfully');
+      // Refresh job data
+      const jobResponse = await fetch(`/api/jobs/${jobId}`);
+      if (jobResponse.ok) {
+        const jobData = await jobResponse.json();
+        setJob(jobData);
+      }
+      setIsEditing(false);
+    } catch (error) {
+      console.error('Error updating job:', error);
+      toast.error('Failed to update job');
+    }
+    setSaving(false);
+  };
+
   if (loading) {
     return (
       <>
@@ -367,7 +422,16 @@ export default function JobDetail({ params }: JobDetailProps) {
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <CardTitle className="text-2xl">{job.title}</CardTitle>
+                    {isEditing ? (
+                      <Input 
+                        value={editedTitle}
+                        onChange={(e) => setEditedTitle(e.target.value)}
+                        className="text-2xl font-bold mb-2"
+                        placeholder="Job Title"
+                      />
+                    ) : (
+                      <CardTitle className="text-2xl">{job.title}</CardTitle>
+                    )}
                     <CardDescription>Job ID: {job.id}</CardDescription>
                   </div>
                   <div className="flex items-center gap-2">
@@ -375,11 +439,23 @@ export default function JobDetail({ params }: JobDetailProps) {
                       {job.status}
                     </span>
                     {(user?.role === 'admin' || user?.role === 'manager' || user?.role === 'designer') && (
-                      <Link href={`/job-intake?draftId=${job.id}`}>
-                        <Button variant="outline" size="sm">
-                          Edit Job
-                        </Button>
-                      </Link>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={isEditing ? handleCancelEdit : handleEditClick}
+                      >
+                        {isEditing ? 'Cancel' : 'Edit Job'}
+                      </Button>
+                    )}
+                    {isEditing && (
+                      <Button 
+                        variant="default" 
+                        size="sm"
+                        onClick={handleSaveEdit}
+                        disabled={saving}
+                      >
+                        {saving ? 'Saving...' : 'Save'}
+                      </Button>
                     )}
                   </div>
                 </div>
@@ -459,20 +535,36 @@ export default function JobDetail({ params }: JobDetailProps) {
                           additionalNotes: 'Additional Notes',
                         };
                         
+                        const dataToShow = isEditing ? editedDescription : formData;
+                        
                         return (
                           <div className="space-y-3">
-                            {Object.entries(formData).map(([key, value]) => {
+                            {Object.entries(dataToShow).map(([key, value]) => {
                               // Skip empty values
                               if (!value || (Array.isArray(value) && value.length === 0)) return null;
+                              
+                              // Skip file objects that show [object Object]
+                              if (typeof value === 'object' && !Array.isArray(value)) return null;
                               
                               const label = fieldLabels[key] || key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
                               
                               return (
                                 <div key={key} className="border-b border-gray-100 pb-2">
                                   <p className="text-sm font-semibold text-gray-700 mb-1">{label}:</p>
-                                  <p className="text-sm text-gray-900 whitespace-pre-wrap break-words">
-                                    {Array.isArray(value) ? value.join(', ') : String(value)}
-                                  </p>
+                                  {isEditing ? (
+                                    <Textarea 
+                                      value={Array.isArray(value) ? value.join(', ') : String(value)}
+                                      onChange={(e) => setEditedDescription(prev => ({
+                                        ...prev,
+                                        [key]: e.target.value
+                                      }))}
+                                      className="text-sm min-h-[60px]"
+                                    />
+                                  ) : (
+                                    <p className="text-sm text-gray-900 whitespace-pre-wrap break-words">
+                                      {Array.isArray(value) ? value.join(', ') : String(value)}
+                                    </p>
+                                  )}
                                 </div>
                               );
                             })}
