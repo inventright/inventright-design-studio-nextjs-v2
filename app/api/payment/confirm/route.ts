@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
         userId: parseInt(paymentIntent.metadata.userId) || null,
         stripePaymentIntentId: paymentIntent.id,
         stripeChargeId: paymentIntent.latest_charge as string || null,
-        totalAmount: (paymentIntent.amount / 100).toString(), // Convert from cents
+        amount: (paymentIntent.amount / 100).toString(), // Convert from cents
         subtotal: (paymentIntent.amount / 100).toString(),
         discountAmount: '0',
         currency: paymentIntent.currency.toUpperCase(),
