@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import GlassCard from '@/components/ui/GlassCard';
 import { toast } from 'sonner';
 import Link from 'next/link';
+import { Trash2 } from 'lucide-react';
 
 interface Job {
   id: number;
@@ -260,6 +261,30 @@ function AdminJobsContent() {
                               👁️ View
                             </Button>
                           </Link>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
+                            onClick={async () => {
+                              if (confirm('Are you sure you want to delete this job? This action cannot be undone.')) {
+                                try {
+                                  const response = await fetch(`/api/jobs/${job.id}`, {
+                                    method: 'DELETE',
+                                  });
+                                  if (response.ok) {
+                                    toast.success('Job deleted successfully');
+                                    window.location.reload();
+                                  } else {
+                                    toast.error('Failed to delete job');
+                                  }
+                                } catch (error) {
+                                  toast.error('Error deleting job');
+                                }
+                              }
+                            }}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
                         </div>
                       </td>
                     </tr>
