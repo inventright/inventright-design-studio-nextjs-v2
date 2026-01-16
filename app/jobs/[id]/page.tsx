@@ -80,6 +80,8 @@ export default function JobDetail({ params }: JobDetailProps) {
   const [newMessage, setNewMessage] = useState('');
   const [uploading, setUploading] = useState(false);
   const [sendingMessage, setSendingMessage] = useState(false);
+  const [designers, setDesigners] = useState<Array<{id: number; name: string; email: string}>>([]);
+  const [changingDesigner, setChangingDesigner] = useState(false);
 
   useEffect(() => {
     console.log('⚡ [Job Details] useEffect triggered!');
@@ -131,6 +133,18 @@ export default function JobDetail({ params }: JobDetailProps) {
           setMessages(messagesData);
         } else {
           console.log('⚠️ [Job Details] Messages fetch failed, continuing without messages');
+        }
+
+        // Fetch designers for admin reassignment
+        console.log('👥 [Job Details] Fetching designers...');
+        const designersResponse = await fetch('/api/users');
+        if (designersResponse.ok) {
+          const designersData = await designersResponse.json();
+          const designerUsers = designersData.users?.filter((u: any) => u.role === 'designer') || [];
+          console.log('✅ [Job Details] Designers loaded:', designerUsers.length);
+          setDesigners(designerUsers);
+        } else {
+          console.log('⚠️ [Job Details] Designers fetch failed');
         }
 
         console.log('🎯 [Job Details] Setting loading to false');
@@ -245,6 +259,37 @@ export default function JobDetail({ params }: JobDetailProps) {
     }
   };
 
+  const handleDesignerChange = async (newDesignerId: string) => {
+    setChangingDesigner(true);
+    try {
+      const response = await fetch(`/api/jobs/${jobId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          designerId: newDesignerId ? parseInt(newDesignerId) : null,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update designer');
+      }
+
+      toast.success('Designer updated successfully');
+      // Refresh job data to get updated designer info
+      const jobResponse = await fetch(`/api/jobs/${jobId}`);
+      if (jobResponse.ok) {
+        const jobData = await jobResponse.json();
+        setJob(jobData);
+      }
+    } catch (error) {
+      console.error('Error updating designer:', error);
+      toast.error('Failed to update designer');
+    }
+    setChangingDesigner(false);
+  };
+
   if (loading) {
     return (
       <>
@@ -325,9 +370,18 @@ export default function JobDetail({ params }: JobDetailProps) {
                     <CardTitle className="text-2xl">{job.title}</CardTitle>
                     <CardDescription>Job ID: {job.id}</CardDescription>
                   </div>
-                  <span className={`px-3 py-1 text-sm font-semibold rounded-full ${statusColors[job.status] || 'bg-gray-100 text-gray-800'}`}>
-                    {job.status}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className={`px-3 py-1 text-sm font-semibold rounded-full ${statusColors[job.status] || 'bg-gray-100 text-gray-800'}`}>
+                      {job.status}
+                    </span>
+                    {(user?.data?.role === 'admin' || user?.data?.role === 'manager' || user?.data?.role === 'designer') && (
+                      <Link href={`/job-intake?draftId=${job.id}`}>
+                        <Button variant="outline" size="sm">
+                          Edit Job
+                        </Button>
+                      </Link>
+                    )}
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
@@ -436,15 +490,38 @@ export default function JobDetail({ params }: JobDetailProps) {
             </Card>
 
             {/* Assigned Designer Card */}
-            {job.designerId && job.designerName && (
-              <Card className="border-indigo-200 bg-indigo-50/30">
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <User className="w-5 h-5 text-indigo-600" />
-                    Assigned Designer
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
+            <Card className="border-indigo-200 bg-indigo-50/30">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <User className="w-5 h-5 text-indigo-600" />
+                  Assigned Designer
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {user?.data?.role === 'admin' ? (
+                  <div className="space-y-3">
+                    <Select 
+                      value={job.designerId?.toString() || ''} 
+                      onValueChange={handleDesignerChange}
+                      disabled={changingDesigner}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select a designer" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">Unassigned</SelectItem>
+                        {designers.map((designer) => (
+                          <SelectItem key={designer.id} value={designer.id.toString()}>
+                            {designer.name} ({designer.email})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {changingDesigner && (
+                      <p className="text-xs text-gray-500">Updating designer...</p>
+                    )}
+                  </div>
+                ) : job.designerId && job.designerName ? (
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-semibold">
                       {job.designerName.charAt(0).toUpperCase()}
@@ -456,9 +533,11 @@ export default function JobDetail({ params }: JobDetailProps) {
                       )}
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            )}
+                ) : (
+                  <p className="text-sm text-gray-500">No designer assigned</p>
+                )}
+              </CardContent>
+            </Card>
 
             {/* Timeline Tabs */}
             <Card>

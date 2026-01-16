@@ -178,8 +178,8 @@ export default function ClientDashboard() {
       
       const data = await response.json();
       toast.success('Job duplicated successfully');
-      // Refresh the page to show the new job
-      window.location.reload();
+      // Redirect to job intake form to edit the duplicated draft
+      router.push(`/job-intake?draftId=${data.job.id}`);
     } catch (error) {
       console.error('Error duplicating job:', error);
       toast.error('Failed to duplicate job');
