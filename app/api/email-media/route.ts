@@ -2,16 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { emailMediaLibrary } from '@/lib/db/schema';
 import { eq, desc } from 'drizzle-orm';
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
-
-const s3Client = new S3Client({
-  region: 'us-east-1',
-  endpoint: process.env.WASABI_ENDPOINT,
-  credentials: {
-    accessKeyId: process.env.WASABI_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.WASABI_SECRET_ACCESS_KEY!,
-  },
-});
+import { uploadFile, deleteFile, generateFileKey } from '@/lib/storage';
 
 // GET - Fetch all media library items
 export async function GET(request: NextRequest) {
@@ -62,46 +53,29 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate unique file key
-    const timestamp = Date.now();
-    const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-    const fileKey = `email-media/${timestamp}-${sanitizedFileName}`;
+    // Generate unique file key using existing utility
+    const fileKey = generateFileKey('email-media', file.name);
 
-    // Upload to Wasabi S3
+    // Upload to Wasabi S3 using existing utility
     const buffer = Buffer.from(await file.arrayBuffer());
-    
-    await s3Client.send(
-      new PutObjectCommand({
-        Bucket: process.env.WASABI_BUCKET_NAME!,
-        Key: fileKey,
-        Body: buffer,
-        ContentType: file.type,
-        ACL: 'public-read',
-      })
-    );
+    const { url: fileUrl } = await uploadFile(fileKey, buffer, file.type);
 
-    const fileUrl = `${process.env.WASABI_PUBLIC_URL}/${fileKey}`;
+    console.log('[Email Media API] File uploaded successfully:', { fileKey, fileUrl });
 
-    // Get image dimensions if possible
+    // Get image dimensions if possible (server-side, using sharp if available)
     let width: number | null = null;
     let height: number | null = null;
     
     try {
-      // Create image to get dimensions
-      if (typeof Image !== 'undefined') {
-        const img = new Image();
-        await new Promise((resolve, reject) => {
-          img.onload = () => {
-            width = img.width;
-            height = img.height;
-            resolve(null);
-          };
-          img.onerror = reject;
-          img.src = fileUrl;
-        });
-      }
+      // Try to use sharp for server-side image processing
+      const sharp = require('sharp');
+      const metadata = await sharp(buffer).metadata();
+      width = metadata.width || null;
+      height = metadata.height || null;
+      console.log('[Email Media API] Image dimensions:', { width, height });
     } catch (error) {
-      console.log('[Email Media API] Could not get image dimensions:', error);
+      console.log('[Email Media API] Could not get image dimensions (sharp not available):', error);
+      // Dimensions are optional, continue without them
     }
 
     // Save to database
@@ -119,11 +93,21 @@ export async function POST(request: NextRequest) {
       } as any)
       .returning();
 
+    console.log('[Email Media API] Media item saved to database:', mediaItem.id);
+
     return NextResponse.json(mediaItem);
-  } catch (error) {
+  } catch (error: any) {
     console.error('[Email Media API] Error uploading media:', error);
+    console.error('[Email Media API] Error details:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name,
+    });
     return NextResponse.json(
-      { error: 'Failed to upload media' },
+      { 
+        error: 'Failed to upload media',
+        details: error.message || 'Unknown error'
+      },
       { status: 500 }
     );
   }
@@ -156,14 +140,10 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // Delete from S3
+    // Delete from S3 using existing utility
     try {
-      await s3Client.send(
-        new DeleteObjectCommand({
-          Bucket: process.env.WASABI_BUCKET_NAME!,
-          Key: mediaItem.fileKey,
-        })
-      );
+      await deleteFile(mediaItem.fileKey);
+      console.log('[Email Media API] File deleted from S3:', mediaItem.fileKey);
     } catch (s3Error) {
       console.error('[Email Media API] Error deleting from S3:', s3Error);
       // Continue with database deletion even if S3 deletion fails
@@ -173,6 +153,8 @@ export async function DELETE(request: NextRequest) {
     await db
       .delete(emailMediaLibrary)
       .where(eq(emailMediaLibrary.id, parseInt(id)));
+
+    console.log('[Email Media API] Media item deleted from database:', id);
 
     return NextResponse.json({ success: true });
   } catch (error) {
