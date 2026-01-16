@@ -66,7 +66,7 @@ export default function VouchersPage() {
     usesPerUser: "",
     validFrom: "",
     validUntil: "",
-    departmentId: "",
+    departmentId: "0",
     isActive: true,
     doesNotExpire: false,
   });
@@ -117,7 +117,7 @@ export default function VouchersPage() {
         usesPerUser: formData.usesPerUser ? parseInt(formData.usesPerUser) : null,
         validFrom: formData.validFrom || null,
         validUntil: formData.doesNotExpire ? null : formData.validUntil || null,
-        departmentId: formData.departmentId ? parseInt(formData.departmentId) : null,
+        departmentId: formData.departmentId && formData.departmentId !== "0" ? parseInt(formData.departmentId) : null,
         isActive: formData.isActive,
       };
 
@@ -183,7 +183,7 @@ export default function VouchersPage() {
       validUntil: voucher.validUntil
         ? new Date(voucher.validUntil).toISOString().split("T")[0]
         : "",
-      departmentId: (voucher as any).departmentId?.toString() || "",
+      departmentId: (voucher as any).departmentId?.toString() || "0",
       isActive: voucher.isActive,
       doesNotExpire: !voucher.validUntil,
     });
@@ -200,7 +200,7 @@ export default function VouchersPage() {
       usesPerUser: "",
       validFrom: "",
       validUntil: "",
-      departmentId: "",
+      departmentId: "0",
       isActive: true,
       doesNotExpire: false,
     });
@@ -416,7 +416,7 @@ export default function VouchersPage() {
                     <SelectValue placeholder="All Departments" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Departments</SelectItem>
+                    <SelectItem value="0">All Departments</SelectItem>
                     {departments.map((dept) => (
                       <SelectItem key={dept.id} value={dept.id.toString()}>
                         {dept.name}
