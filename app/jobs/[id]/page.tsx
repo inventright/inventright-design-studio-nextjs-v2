@@ -374,7 +374,7 @@ export default function JobDetail({ params }: JobDetailProps) {
                     <span className={`px-3 py-1 text-sm font-semibold rounded-full ${statusColors[job.status] || 'bg-gray-100 text-gray-800'}`}>
                       {job.status}
                     </span>
-                    {(user?.data?.role === 'admin' || user?.data?.role === 'manager' || user?.data?.role === 'designer') && (
+                    {(user?.role === 'admin' || user?.role === 'manager' || user?.role === 'designer') && (
                       <Link href={`/job-intake?draftId=${job.id}`}>
                         <Button variant="outline" size="sm">
                           Edit Job
@@ -498,7 +498,7 @@ export default function JobDetail({ params }: JobDetailProps) {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {user?.data?.role === 'admin' ? (
+                {user?.role === 'admin' ? (
                   <div className="space-y-3">
                     <Select 
                       value={job.designerId?.toString() || ''} 
