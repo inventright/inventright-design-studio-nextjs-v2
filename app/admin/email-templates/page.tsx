@@ -46,6 +46,7 @@ interface EmailTemplate {
   subject: string;
   body: string;
   triggerEvent: string | null;
+  departmentId: number | null;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -63,14 +64,29 @@ export default function EmailTemplatesPage() {
     subject: "",
     body: "",
     triggerEvent: "",
+    departmentId: "",
     isActive: true,
   });
   const [testEmail, setTestEmail] = useState("");
   const [sendingTest, setSendingTest] = useState(false);
+  const [departments, setDepartments] = useState<Array<{ id: number; name: string }>>([]);
 
   useEffect(() => {
     fetchTemplates();
+    fetchDepartments();
   }, []);
+
+  const fetchDepartments = async () => {
+    try {
+      const response = await fetch("/api/departments");
+      if (response.ok) {
+        const data = await response.json();
+        setDepartments(data);
+      }
+    } catch (error) {
+      console.error("Error fetching departments:", error);
+    }
+  };
 
   const fetchTemplates = async () => {
     try {
@@ -146,6 +162,7 @@ export default function EmailTemplatesPage() {
       subject: template.subject,
       body: template.body,
       triggerEvent: template.triggerEvent || "",
+      departmentId: template.departmentId ? template.departmentId.toString() : "",
       isActive: template.isActive,
     });
     setDialogOpen(true);
@@ -158,6 +175,7 @@ export default function EmailTemplatesPage() {
       subject: "",
       body: "",
       triggerEvent: "",
+      departmentId: "",
       isActive: true,
     });
     setTestEmail("");
@@ -383,6 +401,33 @@ export default function EmailTemplatesPage() {
                         </SelectContent>
                       </Select>
                     </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="department">
+                      Department (Optional)
+                    </Label>
+                    <Select
+                      value={formData.departmentId}
+                      onValueChange={(value) =>
+                        setFormData({
+                          ...formData,
+                          departmentId: value,
+                        })
+                      }
+                    >
+                      <SelectTrigger id="department">
+                        <SelectValue placeholder="Select a department" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">None (All Departments)</SelectItem>
+                        {departments.map((dept) => (
+                          <SelectItem key={dept.id} value={dept.id.toString()}>
+                            {dept.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div className="space-y-2">

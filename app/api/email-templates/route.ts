@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
     await requireAdmin();
 
     const body = await request.json();
-    const { name, subject, body: templateBody, triggerEvent, isActive } = body;
+    const { name, subject, body: templateBody, triggerEvent, departmentId, isActive } = body;
 
     if (!name || !subject || !templateBody) {
       return NextResponse.json(
@@ -45,6 +45,7 @@ export async function POST(request: NextRequest) {
         subject,
         body: templateBody,
         triggerEvent: triggerEvent || null,
+        departmentId: departmentId ? parseInt(departmentId) : null,
         isActive: isActive !== undefined ? isActive : true,
       })
       .returning();
