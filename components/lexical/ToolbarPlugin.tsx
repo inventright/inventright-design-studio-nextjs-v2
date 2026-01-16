@@ -46,7 +46,6 @@ import {
 } from "lucide-react";
 import { INSERT_IMAGE_COMMAND } from "./ImagePlugin";
 import { $isLinkNode, TOGGLE_LINK_COMMAND } from "@lexical/link";
-import { useState } from "react";
 import MediaLibraryModal from "../MediaLibraryModal";
 
 export default function ToolbarPlugin() {

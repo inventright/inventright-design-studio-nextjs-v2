@@ -5,15 +5,7 @@ import { getCurrentUser } from "@/lib/auth-utils-flexible";
 import { uploadFile, generateFileKey } from "@/lib/storage";
 import { eq } from "drizzle-orm";
 
-// Increase body size limit for file uploads (50MB)
-export const config = {
-  api: {
-    bodyParser: {
-      sizeLimit: '50mb',
-    },
-  },
-};
-
+// Note: Body size limit is configured in next.config.js
 // POST /api/files/upload - Upload a file to Wasabi S3
 export async function POST(request: NextRequest) {
   try {
