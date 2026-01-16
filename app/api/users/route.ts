@@ -9,8 +9,22 @@ import { sendPasswordSetupEmail } from '@/lib/email';
 // GET - Fetch all users
 export async function GET(request: NextRequest) {
   try {
-    const allUsers = await db.select().from(users).orderBy(users.lastSignedIn);
+    const { searchParams } = new URL(request.url);
+    const roleFilter = searchParams.get('role');
     
+    let allUsers = await db.select().from(users).orderBy(users.lastSignedIn);
+    
+    // Filter by role if specified
+    if (roleFilter) {
+      allUsers = allUsers.filter(user => user.role === roleFilter);
+    }
+    
+    // Return array directly if role filter is used (for compatibility with filters)
+    if (roleFilter) {
+      return NextResponse.json(allUsers);
+    }
+    
+    // Return wrapped response for admin user management
     return NextResponse.json({
       success: true,
       users: allUsers
