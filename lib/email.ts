@@ -309,3 +309,131 @@ export async function sendTestEmail(to: string, subject: string, body: string) {
     throw error;
   }
 }
+
+/**
+ * Available shortcodes for email templates
+ */
+export const EMAIL_SHORTCODES = [
+  {
+    code: '{{DESIGN_PACKAGE_LINK}}',
+    description: 'Link to the customer\'s Design Package page',
+    example: '<a href="{{DESIGN_PACKAGE_LINK}}">View Your Design Package</a>',
+    requiredData: ['orderId']
+  },
+  {
+    code: '{{CUSTOMER_NAME}}',
+    description: 'Customer\'s full name',
+    example: 'Hello {{CUSTOMER_NAME}},',
+    requiredData: ['customerName']
+  },
+  {
+    code: '{{CUSTOMER_EMAIL}}',
+    description: 'Customer\'s email address',
+    example: 'Your email: {{CUSTOMER_EMAIL}}',
+    requiredData: ['customerEmail']
+  },
+  {
+    code: '{{ORDER_ID}}',
+    description: 'Order/Payment ID',
+    example: 'Order #{{ORDER_ID}}',
+    requiredData: ['orderId']
+  },
+  {
+    code: '{{JOB_ID}}',
+    description: 'Job ID number',
+    example: 'Job #{{JOB_ID}}',
+    requiredData: ['jobId']
+  },
+  {
+    code: '{{CURRENT_DATE}}',
+    description: 'Current date (formatted)',
+    example: 'Date: {{CURRENT_DATE}}',
+    requiredData: []
+  },
+  {
+    code: '{{APP_URL}}',
+    description: 'Base application URL',
+    example: '<a href="{{APP_URL}}">Visit Design Studio</a>',
+    requiredData: []
+  }
+];
+
+/**
+ * Process shortcodes in email template body
+ */
+export function processEmailShortcodes(
+  body: string,
+  data: {
+    orderId?: string;
+    customerName?: string;
+    customerEmail?: string;
+    jobId?: number;
+    [key: string]: any;
+  }
+): string {
+  let processedBody = body;
+  
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://ds.inventright.com';
+  
+  // Replace Design Package link
+  if (data.orderId) {
+    const designPackageUrl = `${baseUrl}/design-package/${data.orderId}`;
+    processedBody = processedBody.replace(/\{\{DESIGN_PACKAGE_LINK\}\}/g, designPackageUrl);
+  }
+  
+  // Replace customer name
+  if (data.customerName) {
+    processedBody = processedBody.replace(/\{\{CUSTOMER_NAME\}\}/g, data.customerName);
+  }
+  
+  // Replace customer email
+  if (data.customerEmail) {
+    processedBody = processedBody.replace(/\{\{CUSTOMER_EMAIL\}\}/g, data.customerEmail);
+  }
+  
+  // Replace order ID
+  if (data.orderId) {
+    processedBody = processedBody.replace(/\{\{ORDER_ID\}\}/g, data.orderId);
+  }
+  
+  // Replace job ID
+  if (data.jobId) {
+    processedBody = processedBody.replace(/\{\{JOB_ID\}\}/g, data.jobId.toString());
+  }
+  
+  // Replace current date
+  const currentDate = new Date().toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+  processedBody = processedBody.replace(/\{\{CURRENT_DATE\}\}/g, currentDate);
+  
+  // Replace app URL
+  processedBody = processedBody.replace(/\{\{APP_URL\}\}/g, baseUrl);
+  
+  return processedBody;
+}
+
+/**
+ * Send email using template with shortcode processing
+ */
+export async function sendTemplateEmail(
+  to: string,
+  subject: string,
+  body: string,
+  shortcodeData: {
+    orderId?: string;
+    customerName?: string;
+    customerEmail?: string;
+    jobId?: number;
+    [key: string]: any;
+  }
+) {
+  // Process shortcodes in both subject and body
+  const processedSubject = processEmailShortcodes(subject, shortcodeData);
+  const processedBody = processEmailShortcodes(body, shortcodeData);
+  
+  // Send using existing test email function
+  return sendTestEmail(to, processedSubject, processedBody);
+}

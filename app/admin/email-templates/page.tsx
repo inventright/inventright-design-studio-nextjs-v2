@@ -463,6 +463,44 @@ export default function EmailTemplatesPage() {
                     />
                     <Label htmlFor="isActive">Active</Label>
                   </div>
+
+                  {/* Shortcode Reference */}
+                  <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <h4 className="text-sm font-semibold text-blue-900 mb-3">Available Shortcodes</h4>
+                    <div className="space-y-2 text-xs">
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <code className="bg-blue-100 px-2 py-1 rounded text-blue-900">{'{{DESIGN_PACKAGE_LINK}}'}</code>
+                          <p className="text-blue-700 mt-1">Link to customer's Design Package page</p>
+                        </div>
+                        <div>
+                          <code className="bg-blue-100 px-2 py-1 rounded text-blue-900">{'{{CUSTOMER_NAME}}'}</code>
+                          <p className="text-blue-700 mt-1">Customer's full name</p>
+                        </div>
+                        <div>
+                          <code className="bg-blue-100 px-2 py-1 rounded text-blue-900">{'{{CUSTOMER_EMAIL}}'}</code>
+                          <p className="text-blue-700 mt-1">Customer's email address</p>
+                        </div>
+                        <div>
+                          <code className="bg-blue-100 px-2 py-1 rounded text-blue-900">{'{{ORDER_ID}}'}</code>
+                          <p className="text-blue-700 mt-1">Order/Payment ID</p>
+                        </div>
+                        <div>
+                          <code className="bg-blue-100 px-2 py-1 rounded text-blue-900">{'{{JOB_ID}}'}</code>
+                          <p className="text-blue-700 mt-1">Job ID number</p>
+                        </div>
+                        <div>
+                          <code className="bg-blue-100 px-2 py-1 rounded text-blue-900">{'{{CURRENT_DATE}}'}</code>
+                          <p className="text-blue-700 mt-1">Current date (formatted)</p>
+                        </div>
+                        <div>
+                          <code className="bg-blue-100 px-2 py-1 rounded text-blue-900">{'{{APP_URL}}'}</code>
+                          <p className="text-blue-700 mt-1">Base application URL</p>
+                        </div>
+                      </div>
+                      <p className="text-blue-600 italic mt-3">Example: Use &lt;a href="{'{{DESIGN_PACKAGE_LINK}}'}"&gt;View Package&lt;/a&gt; to create a clickable link</p>
+                    </div>
+                  </div>
                 </div>
 
                 <DialogFooter className="px-6 py-4 border-t flex-shrink-0">
