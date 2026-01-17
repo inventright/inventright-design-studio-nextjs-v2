@@ -355,6 +355,18 @@ export const EMAIL_SHORTCODES = [
     description: 'Base application URL',
     example: '<a href="{{APP_URL}}">Visit Design Studio</a>',
     requiredData: []
+  },
+  {
+    code: '{{JOB_NAME}}',
+    description: 'Job name/title',
+    example: 'Job: {{JOB_NAME}}',
+    requiredData: ['jobName']
+  },
+  {
+    code: '{{DESIGNER_NAME}}',
+    description: 'Assigned designer\'s name',
+    example: 'Designer: {{DESIGNER_NAME}}',
+    requiredData: ['designerName']
   }
 ];
 
@@ -411,6 +423,16 @@ export function processEmailShortcodes(
   
   // Replace app URL
   processedBody = processedBody.replace(/\{\{APP_URL\}\}/g, baseUrl);
+  
+  // Replace job name
+  if (data.jobName) {
+    processedBody = processedBody.replace(/\{\{JOB_NAME\}\}/g, data.jobName);
+  }
+  
+  // Replace designer name
+  if (data.designerName) {
+    processedBody = processedBody.replace(/\{\{DESIGNER_NAME\}\}/g, data.designerName);
+  }
   
   return processedBody;
 }

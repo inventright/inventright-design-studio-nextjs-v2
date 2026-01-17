@@ -497,6 +497,14 @@ export default function EmailTemplatesPage() {
                           <code className="bg-blue-100 px-2 py-1 rounded text-blue-900">{'{{APP_URL}}'}</code>
                           <p className="text-blue-700 mt-1">Base application URL</p>
                         </div>
+                        <div>
+                          <code className="bg-blue-100 px-2 py-1 rounded text-blue-900">{'{{JOB_NAME}}'}</code>
+                          <p className="text-blue-700 mt-1">Job name/title</p>
+                        </div>
+                        <div>
+                          <code className="bg-blue-100 px-2 py-1 rounded text-blue-900">{'{{DESIGNER_NAME}}'}</code>
+                          <p className="text-blue-700 mt-1">Assigned designer's name</p>
+                        </div>
                       </div>
                       <p className="text-blue-600 italic mt-3">Example: Use &lt;a href="{'{{DESIGN_PACKAGE_LINK}}'}"&gt;View Package&lt;/a&gt; to create a clickable link</p>
                     </div>
