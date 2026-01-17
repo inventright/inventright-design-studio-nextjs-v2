@@ -139,6 +139,7 @@ export const emailTemplates = pgTable("emailTemplates", {
   body: text("body").notNull(),
   triggerEvent: varchar("triggerEvent", { length: 100 }),
   departmentId: integer("departmentId").references(() => departments.id),
+  recipientType: text("recipientType").default("customer"),
   isActive: boolean("isActive").default(true).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),

@@ -55,6 +55,7 @@ export async function PUT(
       updateData.triggerEvent = body.triggerEvent;
     if (body.departmentId !== undefined)
       updateData.departmentId = body.departmentId && body.departmentId !== "0" ? parseInt(body.departmentId) : null;
+    if (body.recipientType !== undefined) updateData.recipientType = body.recipientType;
     if (body.isActive !== undefined) updateData.isActive = body.isActive;
 
     const [template] = await db

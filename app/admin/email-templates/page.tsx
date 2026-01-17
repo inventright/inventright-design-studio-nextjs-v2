@@ -47,6 +47,7 @@ interface EmailTemplate {
   body: string;
   triggerEvent: string | null;
   departmentId: number | null;
+  recipientType: string | null;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -65,6 +66,7 @@ export default function EmailTemplatesPage() {
     body: "",
     triggerEvent: "",
     departmentId: "",
+    recipientType: "customer",
     isActive: true,
   });
   const [testEmail, setTestEmail] = useState("");
@@ -163,6 +165,7 @@ export default function EmailTemplatesPage() {
       body: template.body,
       triggerEvent: template.triggerEvent || "",
       departmentId: template.departmentId ? template.departmentId.toString() : "0",
+      recipientType: template.recipientType || "customer",
       isActive: template.isActive,
     });
     setDialogOpen(true);
@@ -176,6 +179,7 @@ export default function EmailTemplatesPage() {
       body: "",
       triggerEvent: "",
       departmentId: "0",
+      recipientType: "customer",
       isActive: true,
     });
     setTestEmail("");
@@ -431,6 +435,35 @@ export default function EmailTemplatesPage() {
                   </div>
 
                   <div className="space-y-2">
+                    <Label htmlFor="recipientType">
+                      Email Recipient
+                    </Label>
+                    <Select
+                      value={formData.recipientType}
+                      onValueChange={(value) =>
+                        setFormData({
+                          ...formData,
+                          recipientType: value,
+                        })
+                      }
+                    >
+                      <SelectTrigger id="recipientType">
+                        <SelectValue placeholder="Select recipient" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="customer">Customer</SelectItem>
+                        <SelectItem value="designer">Designer</SelectItem>
+                        <SelectItem value="manager">Manager</SelectItem>
+                        <SelectItem value="admin">Admin</SelectItem>
+                        <SelectItem value="custom">Custom Email</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Specify who should receive this email. Extra contacts added to jobs will also be copied.
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
                     <Label htmlFor="subject">Email Subject</Label>
                     <Input
                       id="subject"
@@ -504,6 +537,22 @@ export default function EmailTemplatesPage() {
                         <div>
                           <code className="bg-blue-100 px-2 py-1 rounded text-blue-900">{'{{DESIGNER_NAME}}'}</code>
                           <p className="text-blue-700 mt-1">Assigned designer's name</p>
+                        </div>
+                        <div>
+                          <code className="bg-blue-100 px-2 py-1 rounded text-blue-900">{'{{STATUS}}'}</code>
+                          <p className="text-blue-700 mt-1">Current status</p>
+                        </div>
+                        <div>
+                          <code className="bg-blue-100 px-2 py-1 rounded text-blue-900">{'{{DESIGNER_EMAIL}}'}</code>
+                          <p className="text-blue-700 mt-1">Assigned designer's email</p>
+                        </div>
+                        <div>
+                          <code className="bg-blue-100 px-2 py-1 rounded text-blue-900">{'{{ADMIN_EMAIL}}'}</code>
+                          <p className="text-blue-700 mt-1">Admin email address</p>
+                        </div>
+                        <div>
+                          <code className="bg-blue-100 px-2 py-1 rounded text-blue-900">{'{{MANAGER_EMAIL}}'}</code>
+                          <p className="text-blue-700 mt-1">Manager email address</p>
                         </div>
                       </div>
                       <p className="text-blue-600 italic mt-3">Example: Use &lt;a href="{'{{DESIGN_PACKAGE_LINK}}'}"&gt;View Package&lt;/a&gt; to create a clickable link</p>

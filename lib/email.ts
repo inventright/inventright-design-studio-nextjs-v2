@@ -367,6 +367,30 @@ export const EMAIL_SHORTCODES = [
     description: 'Assigned designer\'s name',
     example: 'Designer: {{DESIGNER_NAME}}',
     requiredData: ['designerName']
+  },
+  {
+    code: '{{STATUS}}',
+    description: 'Current status',
+    example: 'Status: {{STATUS}}',
+    requiredData: ['status']
+  },
+  {
+    code: '{{DESIGNER_EMAIL}}',
+    description: 'Assigned designer\'s email address',
+    example: 'Contact: {{DESIGNER_EMAIL}}',
+    requiredData: ['designerEmail']
+  },
+  {
+    code: '{{ADMIN_EMAIL}}',
+    description: 'Admin email address',
+    example: 'Contact admin: {{ADMIN_EMAIL}}',
+    requiredData: []
+  },
+  {
+    code: '{{MANAGER_EMAIL}}',
+    description: 'Manager email address',
+    example: 'Contact manager: {{MANAGER_EMAIL}}',
+    requiredData: ['managerEmail']
   }
 ];
 
@@ -432,6 +456,25 @@ export function processEmailShortcodes(
   // Replace designer name
   if (data.designerName) {
     processedBody = processedBody.replace(/\{\{DESIGNER_NAME\}\}/g, data.designerName);
+  }
+  
+  // Replace status
+  if (data.status) {
+    processedBody = processedBody.replace(/\{\{STATUS\}\}/g, data.status);
+  }
+  
+  // Replace designer email
+  if (data.designerEmail) {
+    processedBody = processedBody.replace(/\{\{DESIGNER_EMAIL\}\}/g, data.designerEmail);
+  }
+  
+  // Replace admin email (use support email as default)
+  const adminEmail = data.adminEmail || 'support@inventright.com';
+  processedBody = processedBody.replace(/\{\{ADMIN_EMAIL\}\}/g, adminEmail);
+  
+  // Replace manager email
+  if (data.managerEmail) {
+    processedBody = processedBody.replace(/\{\{MANAGER_EMAIL\}\}/g, data.managerEmail);
   }
   
   return processedBody;
