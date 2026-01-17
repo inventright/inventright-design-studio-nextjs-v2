@@ -130,6 +130,20 @@ export type JobStatusHistory = typeof jobStatusHistory.$inferSelect;
 export type InsertJobStatusHistory = typeof jobStatusHistory.$inferInsert;
 
 /**
+ * Extra contacts for jobs (managers, designers, admins copied on emails)
+ */
+export const jobExtraContacts = pgTable("jobExtraContacts", {
+  id: serial("id").primaryKey(),
+  jobId: integer("jobId").references(() => jobs.id, { onDelete: "cascade" }).notNull(),
+  userId: integer("userId").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  addedBy: integer("addedBy").references(() => users.id),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type JobExtraContact = typeof jobExtraContacts.$inferSelect;
+export type InsertJobExtraContact = typeof jobExtraContacts.$inferInsert;
+
+/**
  * Email templates for automated notifications
  */
 export const emailTemplates = pgTable("emailTemplates", {

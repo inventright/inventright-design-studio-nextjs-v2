@@ -11,16 +11,23 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const roleFilter = searchParams.get('role');
+    const rolesFilter = searchParams.get('roles'); // Support multiple roles
     
     let allUsers = await db.select().from(users).orderBy(users.lastSignedIn);
     
-    // Filter by role if specified
+    // Filter by single role if specified
     if (roleFilter) {
       allUsers = allUsers.filter(user => user.role === roleFilter);
     }
     
+    // Filter by multiple roles if specified (comma-separated)
+    if (rolesFilter) {
+      const rolesList = rolesFilter.split(',');
+      allUsers = allUsers.filter(user => rolesList.includes(user.role));
+    }
+    
     // Return array directly if role filter is used (for compatibility with filters)
-    if (roleFilter) {
+    if (roleFilter || rolesFilter) {
       return NextResponse.json(allUsers);
     }
     

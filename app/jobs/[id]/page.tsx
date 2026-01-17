@@ -14,6 +14,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import JobTimeline from "@/components/jobs/JobTimeline";
 import StatusAutomationInfo from "@/components/jobs/StatusAutomationInfo";
+import JobExtraContacts from "@/components/jobs/JobExtraContacts";
 
 interface JobDetailProps {
   params: Promise<{ id: string }>;
@@ -761,6 +762,9 @@ export default function JobDetail({ params }: JobDetailProps) {
             
             {/* Status Automation Info */}
             <StatusAutomationInfo />
+
+            {/* Extra Contacts */}
+            {user && <JobExtraContacts jobId={parseInt(jobId)} userRole={user.role} />}
 
             {/* Payment Receipt */}
             {payment && (
